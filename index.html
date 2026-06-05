@@ -608,6 +608,17 @@
     </div>
   </div>
 
+  <!-- Cardio já feito: informar horário -->
+  <div class="overlay" id="cardio-done-overlay" hidden>
+    <div class="sheet">
+      <div class="sheet-head"><h2 id="cardio-done-title">Registrar cardio</h2><button id="cardio-done-close" aria-label="Fechar">✕</button></div>
+      <div class="field"><label for="cardio-done-start">Começou</label><input id="cardio-done-start" type="time" /></div>
+      <div class="field"><label for="cardio-done-end">Terminou</label><input id="cardio-done-end" type="time" /></div>
+      <button class="cloud-primary" id="cardio-done-ok">Registrar</button>
+      <p class="cloud-note">Ajuste os horários se quiser. A duração é calculada automaticamente.</p>
+    </div>
+  </div>
+
   <!-- Adicionar tipo de cardio -->
   <div class="overlay" id="cardio-add-overlay" hidden>
     <div class="sheet">
@@ -1886,14 +1897,38 @@
       renderCardioButtons();
       showToast((c.emoji || "🏃") + " " + c.label + " · +" + PTS_CARDIO + " pts!");
     }
-    function logCardioDone(label, emoji) {
+    let cardioDonePending = null;
+    const cardioDoneOverlay = document.getElementById("cardio-done-overlay");
+    function openCardioDone(label, emoji) {
+      cardioDonePending = { label: label, emoji: emoji };
+      document.getElementById("cardio-done-title").textContent = (emoji || "🏃") + " " + label;
+      const now = hmNow();
+      document.getElementById("cardio-done-start").value = now;
+      document.getElementById("cardio-done-end").value = now;
+      cardioDoneOverlay.hidden = false;
+    }
+    function minsBetween(a, b) {
+      const pa = a.split(":"), pb = b.split(":");
+      let m = (parseInt(pb[0], 10) * 60 + parseInt(pb[1], 10)) - (parseInt(pa[0], 10) * 60 + parseInt(pa[1], 10));
+      if (m < 0) m += 1440;
+      return m;
+    }
+    document.getElementById("cardio-done-ok").addEventListener("click", function () {
+      const c = cardioDonePending; if (!c) return;
+      const startV = document.getElementById("cardio-done-start").value;
+      const endV = document.getElementById("cardio-done-end").value;
       const id = state.active;
       state.history[id] = state.history[id] || [];
-      state.history[id].push({ date: todayISO(), w: "cardio", t: label, emoji: emoji, pts: PTS_CARDIO });
+      const entry = { date: todayISO(), w: "cardio", t: c.label, emoji: c.emoji, pts: PTS_CARDIO };
+      if (startV && endV) { entry.start = startV; entry.end = endV; entry.dur = Math.max(1, minsBetween(startV, endV)); }
+      state.history[id].push(entry);
       addPoints(PTS_CARDIO);
       saveState(); playSound("win"); renderPoints();
-      showToast((emoji || "🏃") + " " + label + " · +" + PTS_CARDIO + " pts!");
-    }
+      cardioDoneOverlay.hidden = true;
+      showToast((c.emoji || "🏃") + " " + c.label + " · +" + PTS_CARDIO + " pts!");
+    });
+    document.getElementById("cardio-done-close").addEventListener("click", function () { cardioDoneOverlay.hidden = true; });
+    cardioDoneOverlay.addEventListener("click", function (e) { if (e.target === cardioDoneOverlay) cardioDoneOverlay.hidden = true; });
     let cardioChoice = null;
     const cardioChoiceOverlay = document.getElementById("cardio-choice-overlay");
     function openCardioChoice(label, emoji) {
@@ -1902,7 +1937,7 @@
       cardioChoiceOverlay.hidden = false;
     }
     document.getElementById("cardio-choice-start").addEventListener("click", function () { const c = cardioChoice; cardioChoiceOverlay.hidden = true; if (c) startCardio(c.label, c.emoji); });
-    document.getElementById("cardio-choice-done").addEventListener("click", function () { const c = cardioChoice; cardioChoiceOverlay.hidden = true; if (c) logCardioDone(c.label, c.emoji); });
+    document.getElementById("cardio-choice-done").addEventListener("click", function () { const c = cardioChoice; cardioChoiceOverlay.hidden = true; if (c) openCardioDone(c.label, c.emoji); });
     document.getElementById("cardio-choice-cancel").addEventListener("click", function () { cardioChoiceOverlay.hidden = true; });
     cardioChoiceOverlay.addEventListener("click", function (e) { if (e.target === cardioChoiceOverlay) cardioChoiceOverlay.hidden = true; });
 
@@ -2248,6 +2283,8 @@
           clearInterval(ticker); ticker = null;
           clock.textContent = "00:00"; clock.classList.remove("running");
           if (navigator.vibrate) navigator.vibrate([200, 100, 200, 100, 300]);
+          playSound("win");
+          showToast("Descanso acabou! Bora a próxima série 💪");
           setTimeout(function () { clock.textContent = "--:--"; }, 2500);
           return;
         }
