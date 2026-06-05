@@ -198,6 +198,8 @@
     .poke-btn { appearance: none; cursor: pointer; border: 1px solid var(--line); background: var(--surface-2); color: var(--text); font-weight: 700; font-size: 12px; padding: 8px 11px; border-radius: 99px; white-space: nowrap; flex-shrink: 0; }
     .poke-btn:active { border-color: var(--accent); }
 
+    .share-preview { border-radius: 16px; overflow: hidden; margin-bottom: 14px; background: #000; }
+    .share-preview img { width: 100%; display: block; }
     .photo-row { display: flex; align-items: center; gap: 14px; }
     .photo-row .pcol { display: flex; flex-direction: column; gap: 8px; }
     .photo-row .cloud-secondary { margin: 0; }
@@ -621,7 +623,18 @@
     <div class="sheet">
       <div class="sheet-head"><h2>🏆 Ranking da casa</h2><button id="close-rank" aria-label="Fechar">✕</button></div>
       <div id="rank-list"></div>
+      <button class="cloud-primary" id="rank-share" style="margin-top:6px;">📤 Compartilhar meu card</button>
       <p class="cloud-note">A pontuação vale para todos os perfis. Cutuque quem está atrás (ou na frente 😏) pra animar a disputa!</p>
+    </div>
+  </div>
+
+  <!-- Card de compartilhar -->
+  <div class="overlay" id="share-overlay" hidden>
+    <div class="sheet">
+      <div class="sheet-head"><h2>📤 Seu card</h2><button id="close-share" aria-label="Fechar">✕</button></div>
+      <div class="share-preview"><img id="share-img" alt="Card de pontuação" /></div>
+      <button class="cloud-primary" id="share-do">Compartilhar</button>
+      <button class="cloud-secondary" id="share-dl" style="margin-top:10px;">Baixar imagem</button>
     </div>
   </div>
 
@@ -1675,6 +1688,115 @@
     document.getElementById("close-rank").addEventListener("click", function () { rankOverlay.hidden = true; });
     rankOverlay.addEventListener("click", function (e) { if (e.target === rankOverlay) rankOverlay.hidden = true; });
     document.getElementById("points-badge").addEventListener("click", openRanking);
+
+    /* ---------- Card de compartilhar (canvas estilo Wrapped) ---------- */
+    const shareOverlay = document.getElementById("share-overlay");
+    let lastShareBlob = null, lastShareUrl = null;
+    function hexA(hex, a) {
+      hex = (hex || "#c6ff3a").replace("#", "");
+      if (hex.length === 3) hex = hex.split("").map(function (c) { return c + c; }).join("");
+      return "rgba(" + parseInt(hex.slice(0, 2), 16) + "," + parseInt(hex.slice(2, 4), 16) + "," + parseInt(hex.slice(4, 6), 16) + "," + a + ")";
+    }
+    function roundRectPath(ctx, x, y, w, h, r) {
+      ctx.beginPath(); ctx.moveTo(x + r, y);
+      ctx.arcTo(x + w, y, x + w, y + h, r); ctx.arcTo(x + w, y + h, x, y + h, r);
+      ctx.arcTo(x, y + h, x, y, r); ctx.arcTo(x, y, x + w, y, r); ctx.closePath();
+    }
+    function loadImg(src) { return new Promise(function (res, rej) { const i = new Image(); i.onload = function () { res(i); }; i.onerror = rej; i.src = src; }); }
+
+    async function buildShareCard(id) {
+      const u = state.users.find(function (x) { return x.id === id; }) || activeUser();
+      const st = statsFor(id);
+      const ranked = state.users.map(function (x) { return { id: x.id, pts: totalPoints(x.id) }; }).sort(function (a, b) { return b.pts - a.pts; });
+      const pos = ranked.findIndex(function (r) { return r.id === id; }) + 1;
+      const accent = paletteFromAccent(u.color).accent;
+      try { await Promise.all([document.fonts.load('86px "Anton"'), document.fonts.load('800 40px "Manrope"')]); } catch (e) {}
+
+      const W = 1080, H = 1350;
+      const canvas = document.createElement("canvas"); canvas.width = W; canvas.height = H;
+      const ctx = canvas.getContext("2d");
+      ctx.fillStyle = "#0d0f12"; ctx.fillRect(0, 0, W, H);
+      const grad = ctx.createRadialGradient(W / 2, 240, 40, W / 2, 240, 760);
+      grad.addColorStop(0, hexA(accent, 0.20)); grad.addColorStop(1, "rgba(0,0,0,0)");
+      ctx.fillStyle = grad; ctx.fillRect(0, 0, W, 560);
+      ctx.strokeStyle = hexA(accent, 0.5); ctx.lineWidth = 6; roundRectPath(ctx, 22, 22, W - 44, H - 44, 42); ctx.stroke();
+
+      // wordmark
+      ctx.font = '84px "Anton", sans-serif'; ctx.textAlign = "left";
+      const home = "HOME ", gym = "GYM";
+      const wh = ctx.measureText(home).width, wg = ctx.measureText(gym).width;
+      const sx = W / 2 - (wh + wg) / 2;
+      ctx.fillStyle = "#eef1f5"; ctx.fillText(home, sx, 150);
+      ctx.fillStyle = accent; ctx.fillText(gym, sx + wh, 150);
+      ctx.textAlign = "center";
+
+      // avatar
+      const cx = W / 2, cy = 380, r = 150;
+      ctx.save(); ctx.beginPath(); ctx.arc(cx, cy, r, 0, Math.PI * 2); ctx.clip();
+      let drew = false;
+      if (u.photo) { try { const img = await loadImg(u.photo); ctx.drawImage(img, cx - r, cy - r, r * 2, r * 2); drew = true; } catch (e) {} }
+      if (!drew) {
+        ctx.fillStyle = accent; ctx.fillRect(cx - r, cy - r, r * 2, r * 2);
+        ctx.fillStyle = "#0d0f12"; ctx.font = '150px "Anton", sans-serif'; ctx.textBaseline = "middle";
+        ctx.fillText((u.name || "?").trim().charAt(0).toUpperCase(), cx, cy + 8); ctx.textBaseline = "alphabetic";
+      }
+      ctx.restore();
+      ctx.beginPath(); ctx.arc(cx, cy, r, 0, Math.PI * 2); ctx.lineWidth = 10; ctx.strokeStyle = accent; ctx.stroke();
+
+      // nome + posição
+      ctx.fillStyle = "#eef1f5"; ctx.font = '62px "Anton", sans-serif'; ctx.fillText((u.name || "").toUpperCase(), W / 2, 640);
+      const posLabel = pos === 1 ? "🥇 1º DA CASA" : pos === 2 ? "🥈 2º DA CASA" : pos === 3 ? "🥉 3º DA CASA" : pos + "º DA CASA";
+      ctx.fillStyle = accent; ctx.font = '800 38px "Manrope", sans-serif'; ctx.fillText(posLabel, W / 2, 700);
+
+      // pontos
+      ctx.fillStyle = accent; ctx.font = '210px "Anton", sans-serif'; ctx.fillText(String(st.pts), W / 2, 930);
+      ctx.fillStyle = "#8a93a0"; ctx.font = '800 40px "Manrope", sans-serif'; ctx.fillText("PONTOS", W / 2, 988);
+
+      // stats
+      const stats = [[st.treinos, "treinos"], [st.cardios, "cardios"], [st.activeDays, "dias"], [st.streak, "🔥 seq."]];
+      const colW = W / 4;
+      stats.forEach(function (s, i) {
+        const x = colW * i + colW / 2;
+        ctx.fillStyle = "#eef1f5"; ctx.font = '58px "Anton", sans-serif'; ctx.fillText(String(s[0]), x, 1110);
+        ctx.fillStyle = "#8a93a0"; ctx.font = '700 26px "Manrope", sans-serif'; ctx.fillText(s[1], x, 1152);
+      });
+
+      // conquista de topo
+      let topAch = null; ACHIEVEMENTS.forEach(function (a) { if (a.test(st)) topAch = a; });
+      if (topAch) { ctx.fillStyle = "#eef1f5"; ctx.font = '700 34px "Manrope", sans-serif'; ctx.fillText(topAch.icon + "  " + topAch.label, W / 2, 1238); }
+
+      ctx.fillStyle = "#5a6470"; ctx.font = '600 24px "Manrope", sans-serif'; ctx.fillText("home-gym-tracker · v" + APP_VERSION, W / 2, 1300);
+
+      return await new Promise(function (res) { canvas.toBlob(function (b) { res(b); }, "image/png"); });
+    }
+
+    async function openShareCard(id) {
+      showToast("Gerando card...");
+      try {
+        const blob = await buildShareCard(id);
+        if (lastShareUrl) URL.revokeObjectURL(lastShareUrl);
+        lastShareBlob = blob; lastShareUrl = URL.createObjectURL(blob);
+        document.getElementById("share-img").src = lastShareUrl;
+        shareOverlay.hidden = false;
+      } catch (e) { showToast("Não consegui gerar o card ❌"); }
+    }
+    async function shareCard() {
+      if (!lastShareBlob) return;
+      const file = new File([lastShareBlob], "home-gym.png", { type: "image/png" });
+      if (navigator.canShare && navigator.canShare({ files: [file] })) {
+        try { await navigator.share({ files: [file], title: "Home Gym", text: "Minha pontuação no Home Gym! 💪🏆" }); } catch (e) {}
+      } else { downloadCard(); }
+    }
+    function downloadCard() {
+      if (!lastShareUrl) return;
+      const a = document.createElement("a"); a.href = lastShareUrl; a.download = "home-gym-card.png";
+      document.body.appendChild(a); a.click(); document.body.removeChild(a);
+    }
+    document.getElementById("rank-share").addEventListener("click", function () { openShareCard(state.active); });
+    document.getElementById("share-do").addEventListener("click", shareCard);
+    document.getElementById("share-dl").addEventListener("click", downloadCard);
+    document.getElementById("close-share").addEventListener("click", function () { shareOverlay.hidden = true; });
+    shareOverlay.addEventListener("click", function (e) { if (e.target === shareOverlay) shareOverlay.hidden = true; });
 
     /* ---------- Foto de perfil ---------- */
     function resizeImage(file, max, cb) {
