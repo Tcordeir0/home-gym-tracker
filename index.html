@@ -251,6 +251,20 @@
     }
     .video-link:active { border-color: var(--accent); }
     .video-link svg { width: 15px; height: 15px; fill: #ff4d4d; }
+    .foot-actions { display: flex; gap: 8px; align-items: center; flex-shrink: 0; }
+    .demo-btn {
+      appearance: none; cursor: pointer; border: 1px solid var(--line); background: var(--surface-2);
+      color: var(--text); font-family: 'Manrope', sans-serif; font-weight: 700; font-size: 12.5px;
+      padding: 8px 12px; border-radius: 99px; white-space: nowrap;
+    }
+    .demo-btn:active { border-color: var(--accent); }
+    /* Visualizador de demonstração */
+    .demo-frame { background: #f4f4f4; border-radius: 14px; overflow: hidden; margin-bottom: 12px; min-height: 200px; display: flex; align-items: center; justify-content: center; }
+    .demo-frame img { width: 100%; display: block; }
+    .demo-muscle { color: var(--muted); font-weight: 800; margin-bottom: 14px; text-transform: uppercase; font-size: 12px; letter-spacing: 0.6px; }
+    #demo-overlay .sheet { text-align: center; }
+    #demo-overlay .sheet-head { text-align: left; }
+    #demo-yt { display: block; text-decoration: none; }
 
     /* ---------- Concluir treino ---------- */
     .conclude {
@@ -483,6 +497,20 @@
       <button class="cloud-secondary" id="prof-add-cardio">+ Adicionar tipo de cardio</button>
       <button class="cloud-primary" id="prof-save">Salvar</button>
       <button class="cloud-secondary" id="prof-delete" style="color:#ff6b6b; margin-top:14px;" hidden>Excluir este perfil</button>
+    </div>
+  </div>
+
+  <!-- Visualizador de demonstração -->
+  <div class="overlay" id="demo-overlay" hidden>
+    <div class="sheet">
+      <div class="sheet-head">
+        <h2 id="demo-title">Demonstração</h2>
+        <button id="close-demo" aria-label="Fechar">✕</button>
+      </div>
+      <div class="demo-frame"><img id="demo-img" alt="" /></div>
+      <p class="demo-muscle" id="demo-muscle"></p>
+      <a class="cloud-secondary" id="demo-yt" target="_blank" rel="noopener">▶ Ver no YouTube</a>
+      <p class="cloud-note">Animação de 2 quadros (início e fim do movimento). Funciona offline depois da primeira vez que abrir.</p>
     </div>
   </div>
 
@@ -894,6 +922,59 @@
     const ICON_PLAY = '<svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>';
     function ytLink(nome) { return "https://www.youtube.com/results?search_query=" + encodeURIComponent(nome + " execução exercício"); }
 
+    // Demonstrações offline: nome do exercício → id do free-exercise-db (2 fotos em demos/<id>/)
+    const DEMOS = {
+      "Flexão (push-up)": "Pushups",
+      "Flexão inclinada (mãos elevadas)": "Incline_Push-Up",
+      "Flexão com pés elevados": "Decline_Push-Up",
+      "Flexão diamante": "Incline_Push-Up_Close-Grip",
+      "Supino no chão com halteres": "Dumbbell_Floor_Press",
+      "Crucifixo no chão com halteres": "Dumbbell_Flyes",
+      "Pullover com halter": "Bent-Arm_Dumbbell_Pullover",
+      "Remada curvada com halteres": "Bent_Over_Two-Dumbbell_Row",
+      "Remada unilateral (apoio na cadeira)": "One-Arm_Dumbbell_Row",
+      "Remada com barra": "Bent_Over_Barbell_Row",
+      "Barra fixa (pull-up)": "Pullups",
+      "Barra fixa supinada (chin-up)": "Chin-Up",
+      "Remada invertida (na mesa)": "Inverted_Row",
+      "Superman": "Superman",
+      "Remada serrote com kettlebell": "One-Arm_Kettlebell_Row",
+      "Agachamento livre": "Bodyweight_Squat",
+      "Agachamento goblet": "Goblet_Squat",
+      "Afundo": "Bodyweight_Walking_Lunge",
+      "Afundo com halteres": "Dumbbell_Lunges",
+      "Agachamento búlgaro": "Split_Squats",
+      "Búlgaro com halteres": "Split_Squat_with_Dumbbells",
+      "Stiff com halteres": "Stiff-Legged_Dumbbell_Deadlift",
+      "Terra romeno com barra": "Romanian_Deadlift",
+      "Agachamento com barra": "Barbell_Squat",
+      "Panturrilha em pé": "Standing_Calf_Raises",
+      "Swing com kettlebell": "One-Arm_Kettlebell_Swings",
+      "Ponte de glúteo": "Barbell_Glute_Bridge",
+      "Hip thrust com halter": "Barbell_Hip_Thrust",
+      "Coice de glúteo (kickback)": "Glute_Kickback",
+      "Agachamento sumô com halter": "Plie_Dumbbell_Squat",
+      "Desenvolvimento com halteres": "Dumbbell_Shoulder_Press",
+      "Elevação lateral": "Side_Lateral_Raise",
+      "Elevação frontal": "Front_Dumbbell_Raise",
+      "Desenvolvimento com barra": "Standing_Military_Press",
+      "Remada alta com halteres": "Upright_Cable_Row",
+      "Rosca direta com halteres": "Dumbbell_Bicep_Curl",
+      "Rosca martelo": "Hammer_Curls",
+      "Tríceps testa com halteres": "Lying_Dumbbell_Tricep_Extension",
+      "Tríceps mergulho (na cadeira)": "Bench_Dips",
+      "Rosca com barra": "Barbell_Curl",
+      "Tríceps coice com halteres": "Tricep_Dumbbell_Kickback",
+      "Flexão fechada (tríceps)": "Incline_Push-Up_Close-Grip",
+      "Prancha": "Plank",
+      "Prancha lateral": "Side_Bridge",
+      "Abdominal": "Crunches",
+      "Elevação de pernas": "Flat_Bench_Lying_Leg_Raise",
+      "Russian twist com halter": "Russian_Twist",
+      "Mountain climber": "Mountain_Climbers"
+    };
+    function demoFrame(id, n) { return "demos/" + id + "/" + n + ".jpg"; }
+
     function buildCard(ex, key, exIdx) {
       const card = document.createElement("article");
       card.className = "card";
@@ -914,7 +995,10 @@
         '<div class="tip"><b>Dica:</b> ' + ex.dica + '</div>' +
         '<div class="card-foot">' +
           '<div class="sets">' + setsHtml + '</div>' +
-          '<a class="video-link" href="' + ytLink(ex.nome) + '" target="_blank" rel="noopener">' + ICON_PLAY + 'Vídeo</a>' +
+          '<div class="foot-actions">' +
+            (DEMOS[ex.nome] ? '<button class="demo-btn" type="button">👁 Demo</button>' : '') +
+            '<a class="video-link" href="' + ytLink(ex.nome) + '" target="_blank" rel="noopener">' + ICON_PLAY + 'Vídeo</a>' +
+          '</div>' +
         '</div>';
 
       card.querySelectorAll(".set-box").forEach(function (box) {
@@ -927,6 +1011,8 @@
           updateProgress();
         });
       });
+      const demoBtn = card.querySelector(".demo-btn");
+      if (demoBtn) demoBtn.addEventListener("click", function () { openDemo(ex.nome, ex.musculo); });
       return card;
     }
 
@@ -1012,6 +1098,7 @@
       applyTheme(); renderUsers(); buildPanels(); applyChecks(); setFillColor();
       renderCardioButtons(); renderInfoCap();
       if (!document.getElementById("overlay").hidden) renderHistory();
+      if (typeof prefetchDemos === "function") prefetchDemos();
     }
 
     function renderUsers() {
@@ -1220,6 +1307,39 @@
       profOverlay.hidden = true;
       showToast("Treino gerado! Foco: " + focusLabel + " 🔧");
     });
+
+    /* ---------- Visualizador de demonstração (2 quadros) ---------- */
+    let demoTimer = null;
+    const demoOverlay = document.getElementById("demo-overlay");
+    const demoImg = document.getElementById("demo-img");
+    function openDemo(nome, musculo) {
+      const id = DEMOS[nome];
+      if (!id) return;
+      const frames = [demoFrame(id, 0), demoFrame(id, 1)];
+      let idx = 0;
+      document.getElementById("demo-title").textContent = nome;
+      document.getElementById("demo-muscle").textContent = musculo || "";
+      document.getElementById("demo-yt").href = ytLink(nome);
+      demoImg.src = frames[0];
+      clearInterval(demoTimer);
+      demoTimer = setInterval(function () { idx = (idx + 1) % 2; demoImg.src = frames[idx]; }, 800);
+      demoOverlay.hidden = false;
+    }
+    function closeDemo() { clearInterval(demoTimer); demoTimer = null; demoOverlay.hidden = true; }
+    document.getElementById("close-demo").addEventListener("click", closeDemo);
+    demoOverlay.addEventListener("click", function (e) { if (e.target === demoOverlay) closeDemo(); });
+
+    // Prefetch silencioso das demos da ficha atual (pra abrirem offline depois)
+    function prefetchDemos() {
+      const plan = activePlan();
+      const seen = {};
+      ["A", "B", "C"].forEach(function (k) {
+        (plan.treinos[k] || []).forEach(function (ex) {
+          const id = DEMOS[ex.nome];
+          if (id && !seen[id]) { seen[id] = true; fetch(demoFrame(id, 0)).catch(function () {}); fetch(demoFrame(id, 1)).catch(function () {}); }
+        });
+      });
+    }
 
     function escapeHtml(s) { return String(s).replace(/[&<>"']/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]; }); }
 
@@ -1562,6 +1682,7 @@
     setFillColor();
     renderCardioButtons();
     renderInfoCap();
+    prefetchDemos();
     initCloud();
 
     /* Service worker — habilita instalação como app e uso offline */
