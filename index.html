@@ -1,0 +1,471 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <meta name="theme-color" content="#0d0f12" />
+  <title>Home Gym Tracker — Ficha de Treino Full-Body</title>
+  <meta name="description" content="Ficha de treino full-body A/B interativa, mobile-first, com timer de descanso." />
+
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Anton&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+
+  <style>
+    :root {
+      --bg: #0d0f12;
+      --surface: #15181d;
+      --surface-2: #1c2027;
+      --line: #272c34;
+      --text: #eef1f5;
+      --muted: #8a93a0;
+      --accent: #c6ff3a;
+      --accent-dim: #97c916;
+      --a-color: #c6ff3a;
+      --b-color: #3ad1ff;
+      --warm-color: #ff8a3a;
+      --done: #2f8f3a;
+      --radius: 16px;
+      --safe-bottom: env(safe-area-inset-bottom, 0px);
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    html { -webkit-text-size-adjust: 100%; }
+
+    body {
+      font-family: 'Manrope', system-ui, -apple-system, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.45;
+      min-height: 100vh;
+      padding-bottom: calc(96px + var(--safe-bottom));
+      -webkit-font-smoothing: antialiased;
+    }
+
+    .wrap { max-width: 640px; margin: 0 auto; padding: 0 16px; }
+
+    /* ---------- Header ---------- */
+    header {
+      padding: 28px 16px 16px;
+      position: sticky;
+      top: 0;
+      z-index: 20;
+      background: linear-gradient(180deg, var(--bg) 70%, transparent);
+    }
+    .brand {
+      display: flex;
+      align-items: baseline;
+      gap: 10px;
+      max-width: 640px;
+      margin: 0 auto;
+    }
+    .brand h1 {
+      font-family: 'Anton', sans-serif;
+      font-size: clamp(30px, 9vw, 44px);
+      letter-spacing: 0.5px;
+      text-transform: uppercase;
+      line-height: 0.95;
+    }
+    .brand h1 .hl { color: var(--accent); }
+    .brand .tag {
+      font-size: 12px;
+      color: var(--muted);
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+
+    /* ---------- Tabs ---------- */
+    .tabs {
+      display: flex;
+      gap: 8px;
+      max-width: 640px;
+      margin: 14px auto 0;
+      padding: 0 16px;
+      position: sticky;
+      top: 78px;
+      z-index: 19;
+    }
+    .tab {
+      flex: 1;
+      appearance: none;
+      border: 1px solid var(--line);
+      background: var(--surface);
+      color: var(--muted);
+      font-family: 'Manrope', sans-serif;
+      font-weight: 800;
+      font-size: 13px;
+      text-transform: uppercase;
+      letter-spacing: 0.6px;
+      padding: 12px 8px;
+      border-radius: 12px;
+      cursor: pointer;
+      transition: all 0.18s ease;
+    }
+    .tab small { display: block; font-size: 10px; font-weight: 600; opacity: 0.7; letter-spacing: 0.3px; }
+    .tab.active { color: var(--bg); }
+    .tab[data-tab="A"].active { background: var(--a-color); border-color: var(--a-color); }
+    .tab[data-tab="B"].active { background: var(--b-color); border-color: var(--b-color); }
+    .tab[data-tab="warm"].active { background: var(--warm-color); border-color: var(--warm-color); }
+
+    /* ---------- Progress ---------- */
+    .progress {
+      max-width: 640px;
+      margin: 16px auto 4px;
+      padding: 0 16px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .progress .bar {
+      flex: 1;
+      height: 8px;
+      background: var(--surface-2);
+      border-radius: 99px;
+      overflow: hidden;
+    }
+    .progress .bar > span {
+      display: block;
+      height: 100%;
+      width: 0%;
+      background: var(--accent);
+      border-radius: 99px;
+      transition: width 0.3s ease;
+    }
+    .progress .label { font-size: 12px; color: var(--muted); font-weight: 700; white-space: nowrap; }
+
+    /* ---------- Cards ---------- */
+    main { padding-top: 8px; }
+    .panel { display: none; }
+    .panel.active { display: block; animation: fade 0.25s ease; }
+    @keyframes fade { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+
+    .section-note {
+      max-width: 640px; margin: 4px auto 0; padding: 8px 16px 0;
+      font-size: 13px; color: var(--muted);
+    }
+
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      padding: 16px;
+      margin: 12px 0;
+      position: relative;
+      overflow: hidden;
+    }
+    .card::before {
+      content: ""; position: absolute; left: 0; top: 0; bottom: 0; width: 4px;
+      background: var(--accent);
+    }
+    .panel[data-panel="A"] .card::before { background: var(--a-color); }
+    .panel[data-panel="B"] .card::before { background: var(--b-color); }
+    .panel[data-panel="warm"] .card::before { background: var(--warm-color); }
+
+    .card.complete { border-color: var(--done); }
+    .card.complete::before { background: var(--done); }
+
+    .card-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; }
+    .card-head .name { font-size: 17px; font-weight: 800; letter-spacing: 0.2px; }
+    .card-head .muscle {
+      display: inline-block; margin-top: 4px; font-size: 11px; font-weight: 700;
+      text-transform: uppercase; letter-spacing: 0.8px; color: var(--muted);
+    }
+    .scheme {
+      font-family: 'Anton', sans-serif; font-size: 19px; letter-spacing: 0.5px;
+      color: var(--accent); white-space: nowrap;
+    }
+    .panel[data-panel="A"] .scheme { color: var(--a-color); }
+    .panel[data-panel="B"] .scheme { color: var(--b-color); }
+    .panel[data-panel="warm"] .scheme { color: var(--warm-color); }
+
+    .tip {
+      margin-top: 10px; font-size: 13.5px; color: var(--muted);
+      background: var(--surface-2); border-radius: 10px; padding: 9px 11px;
+    }
+    .tip b { color: var(--text); font-weight: 700; }
+
+    .card-foot { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-top: 14px; }
+
+    .sets { display: flex; gap: 8px; flex-wrap: wrap; }
+    .set-box {
+      width: 38px; height: 38px; border-radius: 10px;
+      border: 1.5px solid var(--line); background: var(--surface-2);
+      color: var(--muted); font-weight: 800; font-size: 13px;
+      display: flex; align-items: center; justify-content: center;
+      cursor: pointer; user-select: none;
+      transition: transform 0.1s ease, background 0.15s ease, color 0.15s ease, border-color 0.15s ease;
+    }
+    .set-box:active { transform: scale(0.9); }
+    .set-box.done {
+      background: var(--done); border-color: var(--done); color: #fff;
+    }
+    .set-box.done::after { content: "✓"; }
+    .set-box.done span { display: none; }
+
+    .video-link {
+      display: inline-flex; align-items: center; gap: 6px; flex-shrink: 0;
+      font-size: 12.5px; font-weight: 700; color: var(--text);
+      text-decoration: none; padding: 8px 12px; border-radius: 99px;
+      border: 1px solid var(--line); background: var(--surface-2);
+      transition: border-color 0.15s ease;
+    }
+    .video-link:active { border-color: var(--accent); }
+    .video-link svg { width: 15px; height: 15px; fill: #ff4d4d; }
+
+    /* ---------- Rest Timer (footer) ---------- */
+    .timer {
+      position: fixed; left: 0; right: 0; bottom: 0; z-index: 30;
+      background: rgba(21,24,29,0.92);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border-top: 1px solid var(--line);
+      padding: 10px 16px calc(10px + var(--safe-bottom));
+    }
+    .timer-inner { max-width: 640px; margin: 0 auto; display: flex; align-items: center; gap: 12px; }
+    .timer .clock {
+      font-family: 'Anton', sans-serif; font-size: 34px; letter-spacing: 1px;
+      min-width: 92px; text-align: center; color: var(--text);
+      font-variant-numeric: tabular-nums;
+    }
+    .timer .clock.running { color: var(--accent); }
+    .timer .presets { display: flex; gap: 7px; flex: 1; }
+    .preset {
+      flex: 1; appearance: none; border: 1px solid var(--line);
+      background: var(--surface-2); color: var(--text);
+      font-family: 'Manrope', sans-serif; font-weight: 800; font-size: 14px;
+      padding: 12px 4px; border-radius: 12px; cursor: pointer;
+      transition: all 0.12s ease;
+    }
+    .preset:active { background: var(--accent); color: var(--bg); border-color: var(--accent); }
+    .timer .stop {
+      appearance: none; border: none; background: var(--surface-2);
+      color: var(--muted); width: 44px; height: 44px; border-radius: 12px;
+      font-size: 18px; cursor: pointer; flex-shrink: 0;
+    }
+    .timer .stop:active { background: #3a1f1f; color: #ff6b6b; }
+
+    footer.credit {
+      text-align: center; color: var(--muted); font-size: 12px;
+      padding: 24px 16px 8px;
+    }
+    footer.credit a { color: var(--muted); }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="brand">
+      <h1>HOME <span class="hl">GYM</span></h1>
+      <span class="tag">full-body • A/B</span>
+    </div>
+  </header>
+
+  <nav class="tabs" id="tabs">
+    <button class="tab active" data-tab="A">Treino A<small>Empurrar + Quadríceps</small></button>
+    <button class="tab" data-tab="B">Treino B<small>Puxar + Posterior</small></button>
+    <button class="tab" data-tab="warm">Aquecimento<small>Prepara o corpo</small></button>
+  </nav>
+
+  <div class="progress">
+    <div class="bar"><span id="progress-fill"></span></div>
+    <div class="label" id="progress-label">0%</div>
+  </div>
+
+  <main class="wrap">
+    <section class="panel active" data-panel="A"></section>
+    <section class="panel" data-panel="B"></section>
+    <section class="panel" data-panel="warm"></section>
+  </main>
+
+  <footer class="credit">
+    Feito por <a href="https://github.com/Tcordeir0" target="_blank" rel="noopener">Talys Cordeiro</a> · treine seguro 💪
+  </footer>
+
+  <!-- Rest Timer -->
+  <div class="timer">
+    <div class="timer-inner">
+      <div class="clock" id="clock">--:--</div>
+      <div class="presets">
+        <button class="preset" data-secs="60">60s</button>
+        <button class="preset" data-secs="90">90s</button>
+        <button class="preset" data-secs="120">2min</button>
+      </div>
+      <button class="stop" id="stop" title="Parar">✕</button>
+    </div>
+  </div>
+
+  <script>
+    /* =====================================================================
+       DADOS DOS EXERCÍCIOS
+       Para customizar: edite os objetos abaixo. Campos:
+         nome, musculo, series, reps, dica
+       O link de vídeo é gerado automaticamente buscando no YouTube.
+    ===================================================================== */
+    const TREINOS = {
+      A: [
+        { nome: "Agachamento Goblet", musculo: "Quadríceps / Glúteo", series: 4, reps: "12", dica: "Desça com o peito erguido e os joelhos alinhados aos pés. Halter colado ao peito." },
+        { nome: "Supino com halteres", musculo: "Peito", series: 4, reps: "10", dica: "Cotovelos a ~45° do tronco. Controle a descida, empurre sem travar os cotovelos." },
+        { nome: "Desenvolvimento militar", musculo: "Ombro", series: 3, reps: "10", dica: "Abdômen firme, não arqueie as costas. Suba os halteres até quase se tocarem." },
+        { nome: "Afundo", musculo: "Quadríceps / Glúteo", series: 3, reps: "10/perna", dica: "Passo largo, tronco vertical. O joelho de trás desce em direção ao chão." },
+        { nome: "Tríceps testa com barra", musculo: "Tríceps", series: 3, reps: "12", dica: "Cotovelos parados apontando pro teto. Só o antebraço se move." },
+        { nome: "Elevação lateral", musculo: "Ombro", series: 3, reps: "15", dica: "Suba até a linha dos ombros liderando pelos cotovelos. Sem balançar o corpo." },
+        { nome: "Prancha", musculo: "Core", series: 3, reps: "40s", dica: "Corpo numa linha reta. Glúteo e abdômen contraídos, não deixe o quadril cair." }
+      ],
+      B: [
+        { nome: "Terra romeno (RDL)", musculo: "Posterior / Glúteo", series: 4, reps: "12", dica: "Empurre o quadril pra trás com as pernas quase retas. Costas neutras, barra rente às coxas." },
+        { nome: "Remada curvada", musculo: "Costas", series: 4, reps: "10", dica: "Tronco inclinado ~45°, puxe a barra em direção ao umbigo apertando as escápulas." },
+        { nome: "Remada unilateral", musculo: "Costas", series: 3, reps: "10/lado", dica: "Apoie joelho e mão no banco. Puxe o halter junto ao quadril, sem girar o tronco." },
+        { nome: "Búlgaro", musculo: "Quadríceps / Glúteo", series: 3, reps: "10/perna", dica: "Pé de trás sobre o banco. Desça reto, foco na perna da frente." },
+        { nome: "Rosca direta", musculo: "Bíceps", series: 3, reps: "12", dica: "Cotovelos fixos ao lado do corpo. Suba sem usar impulso dos ombros." },
+        { nome: "Rosca martelo", musculo: "Bíceps / Antebraço", series: 3, reps: "12", dica: "Pegada neutra (polegar pra cima). Controle a descida." },
+        { nome: "Elevação de pernas", musculo: "Core", series: 3, reps: "15", dica: "Lombar colada no chão. Suba as pernas controlando, sem dar impulso." }
+      ],
+      warm: [
+        { nome: "Polichinelo", musculo: "Cardio / Geral", series: 2, reps: "30s", dica: "Eleva os batimentos e aquece o corpo todo. Ritmo constante." },
+        { nome: "Mobilidade de quadril", musculo: "Quadril", series: 1, reps: "10/lado", dica: "Círculos amplos com o joelho elevado, abrindo e fechando o quadril." },
+        { nome: "Rotação de ombros", musculo: "Ombro", series: 1, reps: "15/sentido", dica: "Braços estendidos, círculos pequenos crescendo até amplos. Solta a articulação." },
+        { nome: "Agachamento livre (sem carga)", musculo: "Pernas", series: 2, reps: "12", dica: "Aquece o padrão de movimento. Desça devagar explorando a amplitude." },
+        { nome: "Cat-camel (gato-camelo)", musculo: "Coluna", series: 1, reps: "10", dica: "Em quatro apoios, alterne arquear e arredondar a coluna. Mobiliza a lombar." },
+        { nome: "Alongamento dinâmico de posterior", musculo: "Posterior", series: 1, reps: "10/perna", dica: "Chute controlado tocando a mão oposta. Prepara a cadeia posterior." }
+      ]
+    };
+
+    /* =====================================================================
+       RENDER
+    ===================================================================== */
+    const ICON_PLAY = '<svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>';
+
+    function ytLink(nome) {
+      const q = encodeURIComponent(nome + " execução exercício");
+      return "https://www.youtube.com/results?search_query=" + q;
+    }
+
+    function buildCard(ex, key, idx) {
+      const card = document.createElement("article");
+      card.className = "card";
+      card.dataset.total = ex.series;
+
+      let setsHtml = "";
+      for (let i = 1; i <= ex.series; i++) {
+        setsHtml += '<button class="set-box" data-set="' + i + '" aria-label="Série ' + i + '"><span>' + i + '</span></button>';
+      }
+
+      card.innerHTML =
+        '<div class="card-head">' +
+          '<div>' +
+            '<div class="name">' + ex.nome + '</div>' +
+            '<div class="muscle">' + ex.musculo + '</div>' +
+          '</div>' +
+          '<div class="scheme">' + ex.series + '×' + ex.reps + '</div>' +
+        '</div>' +
+        '<div class="tip"><b>Dica:</b> ' + ex.dica + '</div>' +
+        '<div class="card-foot">' +
+          '<div class="sets">' + setsHtml + '</div>' +
+          '<a class="video-link" href="' + ytLink(ex.nome) + '" target="_blank" rel="noopener">' + ICON_PLAY + 'Vídeo</a>' +
+        '</div>';
+
+      card.querySelectorAll(".set-box").forEach(function (box) {
+        box.addEventListener("click", function () {
+          box.classList.toggle("done");
+          const total = parseInt(card.dataset.total, 10);
+          const done = card.querySelectorAll(".set-box.done").length;
+          card.classList.toggle("complete", done === total);
+          updateProgress();
+        });
+      });
+
+      return card;
+    }
+
+    Object.keys(TREINOS).forEach(function (key) {
+      const panel = document.querySelector('.panel[data-panel="' + key + '"]');
+      TREINOS[key].forEach(function (ex, idx) {
+        panel.appendChild(buildCard(ex, key, idx));
+      });
+    });
+
+    /* =====================================================================
+       PROGRESSO (apenas da aba ativa)
+    ===================================================================== */
+    let activeTab = "A";
+    const fill = document.getElementById("progress-fill");
+    const label = document.getElementById("progress-label");
+
+    function updateProgress() {
+      const panel = document.querySelector('.panel[data-panel="' + activeTab + '"]');
+      const boxes = panel.querySelectorAll(".set-box");
+      const done = panel.querySelectorAll(".set-box.done").length;
+      const pct = boxes.length ? Math.round((done / boxes.length) * 100) : 0;
+      fill.style.width = pct + "%";
+      label.textContent = pct + "%";
+    }
+
+    /* =====================================================================
+       TABS
+    ===================================================================== */
+    document.getElementById("tabs").addEventListener("click", function (e) {
+      const btn = e.target.closest(".tab");
+      if (!btn) return;
+      activeTab = btn.dataset.tab;
+      document.querySelectorAll(".tab").forEach(function (t) { t.classList.toggle("active", t === btn); });
+      document.querySelectorAll(".panel").forEach(function (p) {
+        p.classList.toggle("active", p.dataset.panel === activeTab);
+      });
+      const accentVar = activeTab === "A" ? "--a-color" : activeTab === "B" ? "--b-color" : "--warm-color";
+      fill.style.background = getComputedStyle(document.documentElement).getPropertyValue(accentVar);
+      updateProgress();
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    });
+
+    /* =====================================================================
+       TIMER DE DESCANSO
+    ===================================================================== */
+    const clock = document.getElementById("clock");
+    let remaining = 0, ticker = null;
+
+    function fmt(s) {
+      const m = Math.floor(s / 60);
+      const r = s % 60;
+      return (m < 10 ? "0" : "") + m + ":" + (r < 10 ? "0" : "") + r;
+    }
+
+    function render() { clock.textContent = fmt(remaining); }
+
+    function stopTimer() {
+      clearInterval(ticker);
+      ticker = null;
+      remaining = 0;
+      clock.textContent = "--:--";
+      clock.classList.remove("running");
+    }
+
+    function startTimer(secs) {
+      clearInterval(ticker);
+      remaining = secs;
+      clock.classList.add("running");
+      render();
+      ticker = setInterval(function () {
+        remaining--;
+        if (remaining <= 0) {
+          clearInterval(ticker);
+          ticker = null;
+          clock.textContent = "00:00";
+          clock.classList.remove("running");
+          if (navigator.vibrate) navigator.vibrate([200, 100, 200, 100, 300]);
+          setTimeout(function () { clock.textContent = "--:--"; }, 2500);
+          return;
+        }
+        render();
+      }, 1000);
+    }
+
+    document.querySelectorAll(".preset").forEach(function (p) {
+      p.addEventListener("click", function () { startTimer(parseInt(p.dataset.secs, 10)); });
+    });
+    document.getElementById("stop").addEventListener("click", stopTimer);
+
+    updateProgress();
+  </script>
+</body>
+</html>
