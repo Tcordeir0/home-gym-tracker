@@ -568,7 +568,8 @@
       <div class="chiplist" id="prof-cardios"></div>
       <button class="cloud-secondary" id="prof-add-cardio">+ Adicionar tipo de cardio</button>
       <button class="cloud-primary" id="prof-save">Salvar</button>
-      <button class="cloud-secondary" id="prof-delete" style="color:#ff6b6b; margin-top:14px;" hidden>Excluir este perfil</button>
+      <button class="cloud-secondary" id="prof-reset-pts" style="margin-top:14px;">Zerar pontos deste perfil</button>
+      <button class="cloud-secondary" id="prof-delete" style="color:#ff6b6b; margin-top:10px;" hidden>Excluir este perfil</button>
     </div>
   </div>
 
@@ -1488,6 +1489,14 @@
 
     document.getElementById("prof-add-cardio").addEventListener("click", openCardioAdd);
     document.getElementById("prof-save").addEventListener("click", function () { commitProfileEditor(); showToast("Perfil salvo! ✅"); });
+    document.getElementById("prof-reset-pts").addEventListener("click", async function () {
+      const u = activeUser();
+      if (!(await uiConfirm("Zerar todos os pontos de “" + u.name + "”? (o histórico não é apagado)"))) return;
+      state.scores[state.active] = { byDay: {} };
+      saveState();
+      renderPoints();
+      showToast("Pontos zerados");
+    });
     document.getElementById("close-prof").addEventListener("click", commitProfileEditor);
     profOverlay.addEventListener("click", function (e) { if (e.target === profOverlay) commitProfileEditor(); });
     document.getElementById("prof-delete").addEventListener("click", async function () {
