@@ -209,6 +209,9 @@
       padding: 10px 16px; border-radius: 99px; transition: all 0.15s ease;
     }
     .cardio-btn:active { background: var(--warm-color); color: var(--bg); }
+    .cardio-btn.active { background: var(--warm-color); color: var(--bg); border-color: var(--warm-color); animation: pulse 1.6s ease-in-out infinite; }
+    .cardio-btn.cancel { color: var(--muted); padding: 10px 13px; }
+    @keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.72; } }
 
     /* ---------- Tabs ---------- */
     .tabs {
@@ -409,6 +412,12 @@
     .log-del { appearance: none; border: none; background: transparent; color: var(--muted); font-size: 18px; cursor: pointer; padding: 4px 8px; }
     .log-del:active { color: #ff6b6b; }
     .log-empty { text-align: center; color: var(--muted); font-size: 13px; padding: 24px 0; }
+    .log-wrap { margin-bottom: 8px; }
+    .log-wrap .log-item { margin-bottom: 0; }
+    .log-item.has-detail { cursor: pointer; }
+    .log-info .caret { color: var(--muted); font-size: 13px; }
+    .log-detail { background: var(--surface-2); border: 1px solid var(--line); border-top: none; border-radius: 0 0 12px 12px; padding: 10px 14px; font-size: 12.5px; color: var(--muted); line-height: 1.6; }
+    .log-detail b { color: var(--text); }
 
     .pts-banner { text-align: center; font-family: 'Anton', sans-serif; font-size: 46px; color: var(--accent); line-height: 1; margin-bottom: 16px; }
     .pts-banner small { display: block; font-family: 'Manrope', sans-serif; font-size: 11px; color: var(--muted); font-weight: 700; text-transform: uppercase; letter-spacing: 0.6px; margin-top: 6px; }
@@ -924,7 +933,8 @@
       history: {},  // history[userId] = [{ date, w, t?, emoji? }]
       scores: {},   // scores[userId] = { byDay: { "AAAA-MM-DD": pontos } }
       soundOn: true,
-      pokes: {}     // pokes[targetId] = { fromName, msg, date }
+      pokes: {},    // pokes[targetId] = { fromName, msg, date }
+      session: {}   // session[userId] = { [treino]: {start,startHM,sets[]}, cardio:{...} }
     };
 
     function loadState() {
@@ -947,6 +957,7 @@
           raw.scores = raw.scores || {};
           if (typeof raw.soundOn !== "boolean") raw.soundOn = true;
           raw.pokes = raw.pokes || {};
+          raw.session = raw.session || {};
           return raw;
         }
       } catch (e) {}
@@ -978,6 +989,8 @@
       const d = new Date();
       return d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0") + "-" + String(d.getDate()).padStart(2, "0");
     }
+    function hmNow() { const d = new Date(); return String(d.getHours()).padStart(2, "0") + ":" + String(d.getMinutes()).padStart(2, "0"); }
+    function sess() { state.session = state.session || {}; state.session[state.active] = state.session[state.active] || {}; return state.session[state.active]; }
 
     /* =====================================================================
        PONTOS, SOM E CONQUISTAS (por perfil — vale para qualquer perfil)
@@ -1213,6 +1226,11 @@
           const nowDone = !box.classList.contains("done");
           box.classList.toggle("done", nowDone);
           setDone(key, exIdx, setIdx, nowDone);
+          if (nowDone) {
+            const s = sess();
+            if (!s[key]) s[key] = { start: Date.now(), startHM: hmNow(), sets: [] };
+            s[key].sets.push(hmNow());
+          }
           addPoints(nowDone ? PTS_SET : -PTS_SET);
           if (nowDone) playSound("ding");
           saveState();
@@ -1339,14 +1357,29 @@
     function renderCardioButtons() {
       const wrap = document.querySelector(".cardio-actions");
       wrap.innerHTML = "";
-      const cardios = activeUser().cardios || DEFAULT_CARDIOS;
-      cardios.forEach(function (c) {
+      const pend = sess().cardio;
+      if (pend) {
         const b = document.createElement("button");
-        b.className = "cardio-btn";
-        b.innerHTML = (c.emoji || "🏃") + " " + escapeHtml(c.label);
-        b.addEventListener("click", function () { registrarCardio(c.label, c.emoji); });
+        b.className = "cardio-btn active";
+        b.innerHTML = "⏹ Terminei " + (pend.emoji || "🏃") + " " + escapeHtml(pend.label) + " · desde " + pend.startHM;
+        b.addEventListener("click", finishCardio);
         wrap.appendChild(b);
-      });
+        const x = document.createElement("button");
+        x.className = "cardio-btn cancel";
+        x.textContent = "✕";
+        x.title = "Cancelar";
+        x.addEventListener("click", function () { delete sess().cardio; saveState(); renderCardioButtons(); showToast("Cardio cancelado"); });
+        wrap.appendChild(x);
+      } else {
+        const cardios = activeUser().cardios || DEFAULT_CARDIOS;
+        cardios.forEach(function (c) {
+          const b = document.createElement("button");
+          b.className = "cardio-btn";
+          b.innerHTML = "▶ " + (c.emoji || "🏃") + " " + escapeHtml(c.label);
+          b.addEventListener("click", function () { startCardio(c.label, c.emoji); });
+          wrap.appendChild(b);
+        });
+      }
     }
 
     function renderInfoCap() {
@@ -1670,7 +1703,15 @@
     function concluirTreino(key) {
       const id = state.active;
       state.history[id] = state.history[id] || [];
-      state.history[id].push({ date: todayISO(), w: key });
+      const s = sess()[key];
+      const entry = { date: todayISO(), w: key };
+      if (s) {
+        entry.start = s.startHM; entry.end = hmNow();
+        entry.dur = Math.max(1, Math.round((Date.now() - s.start) / 60000));
+        entry.setsT = s.sets;
+        delete sess()[key];
+      }
+      state.history[id].push(entry);
       const c = checksFor();
       c[key] = {};
       addPoints(PTS_TREINO);
@@ -1681,15 +1722,26 @@
       showToast("Treino " + key + " concluído · +" + PTS_TREINO + " pts! 🔥");
     }
 
-    function registrarCardio(label, emoji) {
+    // Cardio cronometrado: inicia (pendente) e finaliza
+    function startCardio(label, emoji) {
+      sess().cardio = { label: label, emoji: emoji, start: Date.now(), startHM: hmNow() };
+      saveState();
+      renderCardioButtons();
+      showToast("⏱️ " + (emoji || "🏃") + " " + label + " iniciado!");
+    }
+    function finishCardio() {
+      const c = sess().cardio;
+      if (!c) return;
       const id = state.active;
       state.history[id] = state.history[id] || [];
-      state.history[id].push({ date: todayISO(), w: "cardio", t: label, emoji: emoji });
+      state.history[id].push({ date: todayISO(), w: "cardio", t: c.label, emoji: c.emoji, start: c.startHM, end: hmNow(), dur: Math.max(1, Math.round((Date.now() - c.start) / 60000)) });
+      delete sess().cardio;
       addPoints(PTS_CARDIO);
       saveState();
       playSound("win");
       renderPoints();
-      showToast((emoji || "🏃") + " " + label + " · +" + PTS_CARDIO + " pts!");
+      renderCardioButtons();
+      showToast((c.emoji || "🏃") + " " + c.label + " · +" + PTS_CARDIO + " pts!");
     }
 
     const toastEl = document.getElementById("toast");
@@ -1756,19 +1808,31 @@
           titulo = "Treino " + w;
           badge = w;
         }
-        return '<div class="log-item">' +
-          '<div class="log-badge ' + w + '">' + badge + '</div>' +
-          '<div class="log-info"><div class="d">' + fmtDate(item.e.date) + '</div><div class="w">' + titulo + '</div></div>' +
-          '<button class="log-del" data-idx="' + item.i + '" aria-label="Remover">🗑</button>' +
+        const timeStr = (item.e.start && item.e.end) ? (item.e.start + "–" + item.e.end + (item.e.dur ? " · " + item.e.dur + "min" : "")) : "";
+        const hasDetail = item.e.setsT && item.e.setsT.length;
+        return '<div class="log-wrap">' +
+          '<div class="log-item' + (hasDetail ? " has-detail" : "") + '">' +
+            '<div class="log-badge ' + w + '">' + badge + '</div>' +
+            '<div class="log-info"><div class="d">' + fmtDate(item.e.date) + (timeStr ? ' · ' + timeStr : '') + '</div><div class="w">' + titulo + (hasDetail ? ' <span class="caret">⌄</span>' : '') + '</div></div>' +
+            '<button class="log-del" data-idx="' + item.i + '" aria-label="Remover">🗑</button>' +
+          '</div>' +
+          (hasDetail ? '<div class="log-detail" hidden><b>Séries:</b> ' + item.e.setsT.join(" · ") + '</div>' : '') +
         '</div>';
       }).join("");
 
       logEl.querySelectorAll(".log-del").forEach(function (btn) {
-        btn.addEventListener("click", function () {
+        btn.addEventListener("click", function (e) {
+          e.stopPropagation();
           const idx = parseInt(btn.dataset.idx, 10);
           state.history[state.active].splice(idx, 1);
           saveState();
           renderHistory();
+        });
+      });
+      logEl.querySelectorAll(".log-item.has-detail").forEach(function (it) {
+        it.addEventListener("click", function () {
+          const d = it.nextElementSibling;
+          if (d && d.classList.contains("log-detail")) d.hidden = !d.hidden;
         });
       });
     }
@@ -1873,6 +1937,7 @@
       state.scores = state.scores || {};
       if (typeof state.soundOn !== "boolean") state.soundOn = true;
       state.pokes = state.pokes || {};
+      state.session = state.session || {};
       state.users.forEach(function (u, i) {
         if (!u.color) u.color = COLOR_SWATCHES[i % COLOR_SWATCHES.length];
         if (!Array.isArray(u.equipment)) u.equipment = ["bodyweight", "dumbbell"];
