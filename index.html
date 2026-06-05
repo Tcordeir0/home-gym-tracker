@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
   <meta name="theme-color" content="#0d0f12" />
   <title>Home Gym Tracker — Ficha de Treino Full-Body</title>
-  <meta name="description" content="Ficha de treino full-body A/B interativa, mobile-first, com timer de descanso." />
+  <meta name="description" content="Fichas de treino full-body A/B por perfil, mobile-first, com timer de descanso e histórico." />
 
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -30,7 +30,6 @@
     }
 
     * { box-sizing: border-box; margin: 0; padding: 0; }
-
     html { -webkit-text-size-adjust: 100%; }
 
     body {
@@ -46,64 +45,66 @@
     .wrap { max-width: 640px; margin: 0 auto; padding: 0 16px; }
 
     /* ---------- Header ---------- */
-    header {
-      padding: 28px 16px 16px;
-      position: sticky;
-      top: 0;
-      z-index: 20;
-      background: linear-gradient(180deg, var(--bg) 70%, transparent);
-    }
+    header { padding: 26px 16px 10px; }
     .brand {
-      display: flex;
-      align-items: baseline;
-      gap: 10px;
-      max-width: 640px;
-      margin: 0 auto;
+      display: flex; align-items: center; justify-content: space-between;
+      gap: 10px; max-width: 640px; margin: 0 auto;
     }
     .brand h1 {
       font-family: 'Anton', sans-serif;
-      font-size: clamp(30px, 9vw, 44px);
-      letter-spacing: 0.5px;
-      text-transform: uppercase;
-      line-height: 0.95;
+      font-size: clamp(28px, 8.5vw, 42px);
+      letter-spacing: 0.5px; text-transform: uppercase; line-height: 0.95;
     }
     .brand h1 .hl { color: var(--accent); }
-    .brand .tag {
-      font-size: 12px;
-      color: var(--muted);
-      font-weight: 600;
-      text-transform: uppercase;
-      letter-spacing: 1px;
+    .hist-btn {
+      appearance: none; border: 1px solid var(--line); background: var(--surface);
+      color: var(--text); font-family: 'Manrope', sans-serif; font-weight: 700;
+      font-size: 13px; padding: 9px 13px; border-radius: 99px; cursor: pointer;
+      display: inline-flex; align-items: center; gap: 6px; white-space: nowrap;
     }
+    .hist-btn:active { border-color: var(--accent); }
+
+    /* ---------- User switcher ---------- */
+    .users {
+      display: flex; align-items: center; gap: 8px;
+      max-width: 640px; margin: 12px auto 0;
+    }
+    .user-pill {
+      appearance: none; border: 1px solid var(--line); background: var(--surface);
+      color: var(--muted); font-family: 'Manrope', sans-serif; font-weight: 800;
+      font-size: 14px; padding: 10px 16px; border-radius: 99px; cursor: pointer;
+      display: inline-flex; align-items: center; gap: 7px;
+      transition: all 0.15s ease;
+    }
+    .user-pill .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--muted); }
+    .user-pill.active { background: var(--accent); border-color: var(--accent); color: var(--bg); }
+    .user-pill.active .dot { background: var(--bg); }
+    .user-edit {
+      appearance: none; border: 1px solid var(--line); background: var(--surface);
+      color: var(--muted); width: 38px; height: 38px; border-radius: 50%;
+      cursor: pointer; font-size: 15px; margin-left: auto;
+    }
+    .user-edit:active { color: var(--accent); }
+
+    .focus-cap {
+      max-width: 640px; margin: 10px auto 0; font-size: 13px; color: var(--muted); font-weight: 600;
+    }
+    .focus-cap b { color: var(--accent); font-weight: 800; }
+    .info-cap { margin-top: 6px; font-size: 12px; font-weight: 600; line-height: 1.5; color: var(--muted); }
 
     /* ---------- Tabs ---------- */
     .tabs {
-      display: flex;
-      gap: 8px;
-      max-width: 640px;
-      margin: 14px auto 0;
-      padding: 0 16px;
-      position: sticky;
-      top: 78px;
-      z-index: 19;
+      display: flex; gap: 8px; max-width: 640px; margin: 14px auto 0;
+      padding: 8px 16px; position: sticky; top: 0; z-index: 19;
+      background: linear-gradient(180deg, var(--bg) 80%, transparent);
     }
     .tab {
-      flex: 1;
-      appearance: none;
-      border: 1px solid var(--line);
-      background: var(--surface);
-      color: var(--muted);
-      font-family: 'Manrope', sans-serif;
-      font-weight: 800;
-      font-size: 13px;
-      text-transform: uppercase;
-      letter-spacing: 0.6px;
-      padding: 12px 8px;
-      border-radius: 12px;
-      cursor: pointer;
-      transition: all 0.18s ease;
+      flex: 1; appearance: none; border: 1px solid var(--line); background: var(--surface);
+      color: var(--muted); font-family: 'Manrope', sans-serif; font-weight: 800;
+      font-size: 13px; text-transform: uppercase; letter-spacing: 0.6px;
+      padding: 12px 8px; border-radius: 12px; cursor: pointer; transition: all 0.18s ease;
     }
-    .tab small { display: block; font-size: 10px; font-weight: 600; opacity: 0.7; letter-spacing: 0.3px; }
+    .tab small { display: block; font-size: 10px; font-weight: 600; opacity: 0.7; letter-spacing: 0.3px; text-transform: none; }
     .tab.active { color: var(--bg); }
     .tab[data-tab="A"].active { background: var(--a-color); border-color: var(--a-color); }
     .tab[data-tab="B"].active { background: var(--b-color); border-color: var(--b-color); }
@@ -111,28 +112,11 @@
 
     /* ---------- Progress ---------- */
     .progress {
-      max-width: 640px;
-      margin: 16px auto 4px;
-      padding: 0 16px;
-      display: flex;
-      align-items: center;
-      gap: 12px;
+      max-width: 640px; margin: 14px auto 4px; padding: 0 16px;
+      display: flex; align-items: center; gap: 12px;
     }
-    .progress .bar {
-      flex: 1;
-      height: 8px;
-      background: var(--surface-2);
-      border-radius: 99px;
-      overflow: hidden;
-    }
-    .progress .bar > span {
-      display: block;
-      height: 100%;
-      width: 0%;
-      background: var(--accent);
-      border-radius: 99px;
-      transition: width 0.3s ease;
-    }
+    .progress .bar { flex: 1; height: 8px; background: var(--surface-2); border-radius: 99px; overflow: hidden; }
+    .progress .bar > span { display: block; height: 100%; width: 0%; background: var(--accent); border-radius: 99px; transition: width 0.3s ease; }
     .progress .label { font-size: 12px; color: var(--muted); font-weight: 700; white-space: nowrap; }
 
     /* ---------- Cards ---------- */
@@ -141,129 +125,158 @@
     .panel.active { display: block; animation: fade 0.25s ease; }
     @keyframes fade { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
 
-    .section-note {
-      max-width: 640px; margin: 4px auto 0; padding: 8px 16px 0;
-      font-size: 13px; color: var(--muted);
-    }
-
     .card {
-      background: var(--surface);
-      border: 1px solid var(--line);
-      border-radius: var(--radius);
-      padding: 16px;
-      margin: 12px 0;
-      position: relative;
-      overflow: hidden;
+      background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius);
+      padding: 16px; margin: 12px 0; position: relative; overflow: hidden;
     }
-    .card::before {
-      content: ""; position: absolute; left: 0; top: 0; bottom: 0; width: 4px;
-      background: var(--accent);
-    }
+    .card::before { content: ""; position: absolute; left: 0; top: 0; bottom: 0; width: 4px; background: var(--accent); }
     .panel[data-panel="A"] .card::before { background: var(--a-color); }
     .panel[data-panel="B"] .card::before { background: var(--b-color); }
     .panel[data-panel="warm"] .card::before { background: var(--warm-color); }
-
     .card.complete { border-color: var(--done); }
     .card.complete::before { background: var(--done); }
 
     .card-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; }
     .card-head .name { font-size: 17px; font-weight: 800; letter-spacing: 0.2px; }
-    .card-head .muscle {
-      display: inline-block; margin-top: 4px; font-size: 11px; font-weight: 700;
-      text-transform: uppercase; letter-spacing: 0.8px; color: var(--muted);
-    }
-    .scheme {
-      font-family: 'Anton', sans-serif; font-size: 19px; letter-spacing: 0.5px;
-      color: var(--accent); white-space: nowrap;
-    }
+    .card-head .muscle { display: inline-block; margin-top: 4px; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.8px; color: var(--muted); }
+    .scheme { font-family: 'Anton', sans-serif; font-size: 19px; letter-spacing: 0.5px; color: var(--accent); white-space: nowrap; }
     .panel[data-panel="A"] .scheme { color: var(--a-color); }
     .panel[data-panel="B"] .scheme { color: var(--b-color); }
     .panel[data-panel="warm"] .scheme { color: var(--warm-color); }
 
-    .tip {
-      margin-top: 10px; font-size: 13.5px; color: var(--muted);
-      background: var(--surface-2); border-radius: 10px; padding: 9px 11px;
-    }
+    .tip { margin-top: 10px; font-size: 13.5px; color: var(--muted); background: var(--surface-2); border-radius: 10px; padding: 9px 11px; }
     .tip b { color: var(--text); font-weight: 700; }
 
     .card-foot { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-top: 14px; }
-
     .sets { display: flex; gap: 8px; flex-wrap: wrap; }
     .set-box {
-      width: 38px; height: 38px; border-radius: 10px;
-      border: 1.5px solid var(--line); background: var(--surface-2);
-      color: var(--muted); font-weight: 800; font-size: 13px;
-      display: flex; align-items: center; justify-content: center;
-      cursor: pointer; user-select: none;
+      width: 38px; height: 38px; border-radius: 10px; border: 1.5px solid var(--line);
+      background: var(--surface-2); color: var(--muted); font-weight: 800; font-size: 13px;
+      display: flex; align-items: center; justify-content: center; cursor: pointer; user-select: none;
       transition: transform 0.1s ease, background 0.15s ease, color 0.15s ease, border-color 0.15s ease;
     }
     .set-box:active { transform: scale(0.9); }
-    .set-box.done {
-      background: var(--done); border-color: var(--done); color: #fff;
-    }
+    .set-box.done { background: var(--done); border-color: var(--done); color: #fff; }
     .set-box.done::after { content: "✓"; }
     .set-box.done span { display: none; }
 
     .video-link {
       display: inline-flex; align-items: center; gap: 6px; flex-shrink: 0;
-      font-size: 12.5px; font-weight: 700; color: var(--text);
-      text-decoration: none; padding: 8px 12px; border-radius: 99px;
-      border: 1px solid var(--line); background: var(--surface-2);
+      font-size: 12.5px; font-weight: 700; color: var(--text); text-decoration: none;
+      padding: 8px 12px; border-radius: 99px; border: 1px solid var(--line); background: var(--surface-2);
       transition: border-color 0.15s ease;
     }
     .video-link:active { border-color: var(--accent); }
     .video-link svg { width: 15px; height: 15px; fill: #ff4d4d; }
 
+    /* ---------- Concluir treino ---------- */
+    .conclude {
+      width: 100%; appearance: none; border: none; cursor: pointer;
+      font-family: 'Manrope', sans-serif; font-weight: 800; font-size: 15px;
+      padding: 16px; border-radius: var(--radius); margin: 6px 0 4px;
+      color: var(--bg); letter-spacing: 0.3px;
+    }
+    .panel[data-panel="A"] .conclude { background: var(--a-color); }
+    .panel[data-panel="B"] .conclude { background: var(--b-color); }
+    .conclude:active { filter: brightness(0.9); }
+    .panel-note { font-size: 12.5px; color: var(--muted); text-align: center; margin-top: 6px; }
+
     /* ---------- Rest Timer (footer) ---------- */
     .timer {
       position: fixed; left: 0; right: 0; bottom: 0; z-index: 30;
-      background: rgba(21,24,29,0.92);
-      backdrop-filter: blur(12px);
-      -webkit-backdrop-filter: blur(12px);
-      border-top: 1px solid var(--line);
-      padding: 10px 16px calc(10px + var(--safe-bottom));
+      background: rgba(21,24,29,0.92); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
+      border-top: 1px solid var(--line); padding: 10px 16px calc(10px + var(--safe-bottom));
     }
     .timer-inner { max-width: 640px; margin: 0 auto; display: flex; align-items: center; gap: 12px; }
     .timer .clock {
-      font-family: 'Anton', sans-serif; font-size: 34px; letter-spacing: 1px;
-      min-width: 92px; text-align: center; color: var(--text);
-      font-variant-numeric: tabular-nums;
+      font-family: 'Anton', sans-serif; font-size: 34px; letter-spacing: 1px; min-width: 92px;
+      text-align: center; color: var(--text); font-variant-numeric: tabular-nums;
     }
     .timer .clock.running { color: var(--accent); }
     .timer .presets { display: flex; gap: 7px; flex: 1; }
     .preset {
-      flex: 1; appearance: none; border: 1px solid var(--line);
-      background: var(--surface-2); color: var(--text);
-      font-family: 'Manrope', sans-serif; font-weight: 800; font-size: 14px;
-      padding: 12px 4px; border-radius: 12px; cursor: pointer;
-      transition: all 0.12s ease;
+      flex: 1; appearance: none; border: 1px solid var(--line); background: var(--surface-2); color: var(--text);
+      font-family: 'Manrope', sans-serif; font-weight: 800; font-size: 14px; padding: 12px 4px;
+      border-radius: 12px; cursor: pointer; transition: all 0.12s ease;
     }
     .preset:active { background: var(--accent); color: var(--bg); border-color: var(--accent); }
     .timer .stop {
-      appearance: none; border: none; background: var(--surface-2);
-      color: var(--muted); width: 44px; height: 44px; border-radius: 12px;
-      font-size: 18px; cursor: pointer; flex-shrink: 0;
+      appearance: none; border: none; background: var(--surface-2); color: var(--muted);
+      width: 44px; height: 44px; border-radius: 12px; font-size: 18px; cursor: pointer; flex-shrink: 0;
     }
     .timer .stop:active { background: #3a1f1f; color: #ff6b6b; }
 
-    footer.credit {
-      text-align: center; color: var(--muted); font-size: 12px;
-      padding: 24px 16px 8px;
-    }
+    footer.credit { text-align: center; color: var(--muted); font-size: 12px; padding: 24px 16px 8px; }
     footer.credit a { color: var(--muted); }
+
+    /* ---------- Toast ---------- */
+    .toast {
+      position: fixed; left: 50%; transform: translateX(-50%) translateY(20px);
+      bottom: calc(110px + var(--safe-bottom)); z-index: 50;
+      background: var(--done); color: #fff; font-weight: 700; font-size: 14px;
+      padding: 12px 20px; border-radius: 99px; opacity: 0; pointer-events: none;
+      transition: opacity 0.25s ease, transform 0.25s ease; box-shadow: 0 8px 24px rgba(0,0,0,0.4);
+    }
+    .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+    /* ---------- History overlay ---------- */
+    .overlay { position: fixed; inset: 0; z-index: 60; background: rgba(0,0,0,0.6); display: flex; align-items: flex-end; justify-content: center; }
+    .overlay[hidden] { display: none; }
+    .sheet {
+      width: 100%; max-width: 640px; max-height: 90vh; overflow-y: auto;
+      background: var(--bg); border-top-left-radius: 22px; border-top-right-radius: 22px;
+      border: 1px solid var(--line); padding: 18px 16px calc(24px + var(--safe-bottom));
+      animation: slideup 0.28s ease;
+    }
+    @keyframes slideup { from { transform: translateY(40px); opacity: 0.6; } to { transform: none; opacity: 1; } }
+    .sheet-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; }
+    .sheet-head h2 { font-family: 'Anton', sans-serif; font-size: 24px; text-transform: uppercase; letter-spacing: 0.5px; }
+    .sheet-head button { appearance: none; border: 1px solid var(--line); background: var(--surface); color: var(--text); width: 38px; height: 38px; border-radius: 50%; font-size: 16px; cursor: pointer; }
+
+    .stats { display: flex; gap: 10px; margin-bottom: 18px; }
+    .stat { flex: 1; background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 14px 10px; text-align: center; }
+    .stat .num { font-family: 'Anton', sans-serif; font-size: 30px; color: var(--accent); line-height: 1; }
+    .stat .lbl { font-size: 11px; color: var(--muted); font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; margin-top: 6px; }
+
+    .cal { background: var(--surface); border: 1px solid var(--line); border-radius: 16px; padding: 14px; margin-bottom: 18px; }
+    .cal-head { text-align: center; font-weight: 800; font-size: 14px; margin-bottom: 12px; text-transform: capitalize; }
+    .cal-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; }
+    .cal-dow { text-align: center; font-size: 10px; color: var(--muted); font-weight: 800; padding-bottom: 4px; }
+    .cal-day { aspect-ratio: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; font-size: 12px; color: var(--muted); border-radius: 9px; position: relative; }
+    .cal-day.today { outline: 1.5px solid var(--line); }
+    .cal-day.has { color: var(--text); font-weight: 700; }
+    .cal-marks { display: flex; gap: 2px; margin-top: 2px; height: 5px; }
+    .cal-marks i { width: 5px; height: 5px; border-radius: 50%; display: block; }
+    .cal-marks i.A { background: var(--a-color); }
+    .cal-marks i.B { background: var(--b-color); }
+
+    .log h3, .sheet h3 { font-size: 13px; text-transform: uppercase; letter-spacing: 0.6px; color: var(--muted); margin: 4px 0 10px; }
+    .log-item { display: flex; align-items: center; gap: 12px; padding: 12px 14px; background: var(--surface); border: 1px solid var(--line); border-radius: 12px; margin-bottom: 8px; }
+    .log-badge { font-family: 'Anton', sans-serif; font-size: 16px; width: 34px; height: 34px; border-radius: 9px; display: flex; align-items: center; justify-content: center; color: var(--bg); flex-shrink: 0; }
+    .log-badge.A { background: var(--a-color); }
+    .log-badge.B { background: var(--b-color); }
+    .log-info { flex: 1; }
+    .log-info .d { font-weight: 700; font-size: 14px; }
+    .log-info .w { font-size: 12px; color: var(--muted); }
+    .log-del { appearance: none; border: none; background: transparent; color: var(--muted); font-size: 18px; cursor: pointer; padding: 4px 8px; }
+    .log-del:active { color: #ff6b6b; }
+    .log-empty { text-align: center; color: var(--muted); font-size: 13px; padding: 24px 0; }
   </style>
 </head>
 <body>
   <header>
     <div class="brand">
       <h1>HOME <span class="hl">GYM</span></h1>
-      <span class="tag">full-body • A/B</span>
+      <button class="hist-btn" id="open-hist">📅 Histórico</button>
     </div>
+    <div class="users" id="users"></div>
+    <div class="focus-cap" id="focus-cap"></div>
+    <div class="focus-cap info-cap">🏋️ Halteres ajustáveis 30 kg + peso do corpo &nbsp;·&nbsp; 🏖️ Cardio: corrida ou natação na praia, 2–3×/semana (20–30 min)</div>
   </header>
 
   <nav class="tabs" id="tabs">
-    <button class="tab active" data-tab="A">Treino A<small>Empurrar + Quadríceps</small></button>
-    <button class="tab" data-tab="B">Treino B<small>Puxar + Posterior</small></button>
+    <button class="tab active" data-tab="A">Treino A<small></small></button>
+    <button class="tab" data-tab="B">Treino B<small></small></button>
     <button class="tab" data-tab="warm">Aquecimento<small>Prepara o corpo</small></button>
   </nav>
 
@@ -295,68 +308,157 @@
     </div>
   </div>
 
+  <!-- Toast -->
+  <div class="toast" id="toast"></div>
+
+  <!-- History overlay -->
+  <div class="overlay" id="overlay" hidden>
+    <div class="sheet">
+      <div class="sheet-head">
+        <h2 id="hist-title">Histórico</h2>
+        <button id="close-hist" aria-label="Fechar">✕</button>
+      </div>
+      <div class="stats" id="hist-stats"></div>
+      <div class="cal" id="hist-cal"></div>
+      <h3>Sessões registradas</h3>
+      <div class="log" id="hist-log"></div>
+    </div>
+  </div>
+
   <script>
     /* =====================================================================
-       DADOS DOS EXERCÍCIOS
-       Para customizar: edite os objetos abaixo. Campos:
-         nome, musculo, series, reps, dica
+       FICHAS POR PERFIL
+       Cada perfil tem o seu próprio treino, com foco diferente.
+       Para customizar / criar uma ficha nova, edite o objeto PLANS abaixo.
+       Campos de cada exercício: nome, musculo, series, reps, dica.
        O link de vídeo é gerado automaticamente buscando no YouTube.
     ===================================================================== */
-    const TREINOS = {
-      A: [
-        { nome: "Agachamento Goblet", musculo: "Quadríceps / Glúteo", series: 4, reps: "12", dica: "Desça com o peito erguido e os joelhos alinhados aos pés. Halter colado ao peito." },
-        { nome: "Supino com halteres", musculo: "Peito", series: 4, reps: "10", dica: "Cotovelos a ~45° do tronco. Controle a descida, empurre sem travar os cotovelos." },
-        { nome: "Desenvolvimento militar", musculo: "Ombro", series: 3, reps: "10", dica: "Abdômen firme, não arqueie as costas. Suba os halteres até quase se tocarem." },
-        { nome: "Afundo", musculo: "Quadríceps / Glúteo", series: 3, reps: "10/perna", dica: "Passo largo, tronco vertical. O joelho de trás desce em direção ao chão." },
-        { nome: "Tríceps testa com barra", musculo: "Tríceps", series: 3, reps: "12", dica: "Cotovelos parados apontando pro teto. Só o antebraço se move." },
-        { nome: "Elevação lateral", musculo: "Ombro", series: 3, reps: "15", dica: "Suba até a linha dos ombros liderando pelos cotovelos. Sem balançar o corpo." },
-        { nome: "Prancha", musculo: "Core", series: 3, reps: "40s", dica: "Corpo numa linha reta. Glúteo e abdômen contraídos, não deixe o quadril cair." }
-      ],
-      B: [
-        { nome: "Terra romeno (RDL)", musculo: "Posterior / Glúteo", series: 4, reps: "12", dica: "Empurre o quadril pra trás com as pernas quase retas. Costas neutras, barra rente às coxas." },
-        { nome: "Remada curvada", musculo: "Costas", series: 4, reps: "10", dica: "Tronco inclinado ~45°, puxe a barra em direção ao umbigo apertando as escápulas." },
-        { nome: "Remada unilateral", musculo: "Costas", series: 3, reps: "10/lado", dica: "Apoie joelho e mão no banco. Puxe o halter junto ao quadril, sem girar o tronco." },
-        { nome: "Búlgaro", musculo: "Quadríceps / Glúteo", series: 3, reps: "10/perna", dica: "Pé de trás sobre o banco. Desça reto, foco na perna da frente." },
-        { nome: "Rosca direta", musculo: "Bíceps", series: 3, reps: "12", dica: "Cotovelos fixos ao lado do corpo. Suba sem usar impulso dos ombros." },
-        { nome: "Rosca martelo", musculo: "Bíceps / Antebraço", series: 3, reps: "12", dica: "Pegada neutra (polegar pra cima). Controle a descida." },
-        { nome: "Elevação de pernas", musculo: "Core", series: 3, reps: "15", dica: "Lombar colada no chão. Suba as pernas controlando, sem dar impulso." }
-      ],
-      warm: [
-        { nome: "Polichinelo", musculo: "Cardio / Geral", series: 2, reps: "30s", dica: "Eleva os batimentos e aquece o corpo todo. Ritmo constante." },
-        { nome: "Mobilidade de quadril", musculo: "Quadril", series: 1, reps: "10/lado", dica: "Círculos amplos com o joelho elevado, abrindo e fechando o quadril." },
-        { nome: "Rotação de ombros", musculo: "Ombro", series: 1, reps: "15/sentido", dica: "Braços estendidos, círculos pequenos crescendo até amplos. Solta a articulação." },
-        { nome: "Agachamento livre (sem carga)", musculo: "Pernas", series: 2, reps: "12", dica: "Aquece o padrão de movimento. Desça devagar explorando a amplitude." },
-        { nome: "Cat-camel (gato-camelo)", musculo: "Coluna", series: 1, reps: "10", dica: "Em quatro apoios, alterne arquear e arredondar a coluna. Mobiliza a lombar." },
-        { nome: "Alongamento dinâmico de posterior", musculo: "Posterior", series: 1, reps: "10/perna", dica: "Chute controlado tocando a mão oposta. Prepara a cadeia posterior." }
-      ]
+
+    // Aquecimento é compartilhado pelos dois perfis (mobilidade geral).
+    const AQUECIMENTO = [
+      { nome: "Polichinelo", musculo: "Cardio / Geral", series: 2, reps: "30s", dica: "Eleva os batimentos e aquece o corpo todo. Ritmo constante." },
+      { nome: "Mobilidade de quadril", musculo: "Quadril", series: 1, reps: "10/lado", dica: "Círculos amplos com o joelho elevado, abrindo e fechando o quadril." },
+      { nome: "Rotação de ombros", musculo: "Ombro", series: 1, reps: "15/sentido", dica: "Braços estendidos, círculos pequenos crescendo até amplos. Solta a articulação." },
+      { nome: "Agachamento livre (sem carga)", musculo: "Pernas", series: 2, reps: "12", dica: "Aquece o padrão de movimento. Desça devagar explorando a amplitude." },
+      { nome: "Cat-camel (gato-camelo)", musculo: "Coluna", series: 1, reps: "10", dica: "Em quatro apoios, alterne arquear e arredondar a coluna. Mobiliza a lombar." },
+      { nome: "Alongamento dinâmico de posterior", musculo: "Posterior", series: 1, reps: "10/perna", dica: "Chute controlado tocando a mão oposta. Prepara a cadeia posterior." }
+    ];
+
+    const PLANS = {
+      // ---------------- TALYS — foco PEITO ----------------
+      // Equipamento: halteres ajustáveis (30 kg) + peso do corpo. Sem banco nem barra fixa.
+      u1: {
+        focus: "Peito",
+        labels: { A: "Peito + Empurrar", B: "Puxar + Pernas", warm: "Prepara o corpo" },
+        treinos: {
+          A: [
+            { nome: "Supino no chão (floor press) com halteres", musculo: "Peito", series: 4, reps: "10", dica: "Deitado no chão, um halter em cada mão. Empurre até esticar os braços e desça até o cotovelo tocar o chão." },
+            { nome: "Flexão (push-up)", musculo: "Peito", series: 4, reps: "máx", dica: "Corpo reto, desça até o peito quase tocar o chão. Quanto mais lento, mais difícil." },
+            { nome: "Crucifixo no chão com halteres", musculo: "Peito", series: 3, reps: "12", dica: "Deitado no chão, cotovelos levemente flexionados. Abra os braços até os cotovelos tocarem o chão e volte apertando o peito." },
+            { nome: "Flexão com pés elevados", musculo: "Peito superior / Ombro", series: 3, reps: "12", dica: "Pés apoiados no sofá ou na cama. Quanto mais alto, mais foco na parte de cima do peito e ombro." },
+            { nome: "Desenvolvimento militar com halteres", musculo: "Ombro", series: 3, reps: "10", dica: "Em pé, abdômen firme, não arqueie as costas. Suba até quase encostar os halteres no topo." },
+            { nome: "Tríceps testa com halteres (no chão)", musculo: "Tríceps", series: 3, reps: "12", dica: "Deitado, cotovelos apontando pro teto. Desça os halteres perto da testa, só o antebraço se move." },
+            { nome: "Prancha", musculo: "Core", series: 3, reps: "40s", dica: "Corpo numa linha reta. Glúteo e abdômen contraídos, não deixe o quadril cair." }
+          ],
+          B: [
+            { nome: "Terra romeno (RDL) com halteres", musculo: "Posterior / Glúteo", series: 4, reps: "12", dica: "Empurre o quadril pra trás com as pernas quase retas. Costas neutras, halteres rentes às coxas." },
+            { nome: "Remada curvada com halteres", musculo: "Costas", series: 4, reps: "10", dica: "Tronco inclinado a ~45°, puxe os halteres em direção ao umbigo apertando as escápulas." },
+            { nome: "Remada unilateral (apoio na cadeira)", musculo: "Costas", series: 3, reps: "10/lado", dica: "Apoie mão e joelho numa cadeira firme. Puxe o halter junto ao quadril, sem girar o tronco." },
+            { nome: "Agachamento Goblet", musculo: "Quadríceps / Glúteo", series: 4, reps: "12", dica: "Segure um halter colado ao peito. Peito erguido, joelhos alinhados aos pés." },
+            { nome: "Afundo com halteres", musculo: "Quadríceps / Glúteo", series: 3, reps: "10/perna", dica: "Um halter em cada mão. Passo largo, tronco vertical, joelho de trás desce em direção ao chão." },
+            { nome: "Rosca direta com halteres", musculo: "Bíceps", series: 3, reps: "12", dica: "Cotovelos fixos ao lado do corpo. Suba sem usar impulso dos ombros." },
+            { nome: "Elevação de pernas", musculo: "Core", series: 3, reps: "15", dica: "Lombar colada no chão. Suba as pernas controlando, sem dar impulso." }
+          ]
+        }
+      },
+      // ---------------- ANDRESSA — foco GLÚTEOS ----------------
+      // Equipamento: halteres ajustáveis (30 kg) + peso do corpo. Sem banco nem barra fixa.
+      u2: {
+        focus: "Glúteos",
+        labels: { A: "Glúteos + Posterior", B: "Superior + Core", warm: "Prepara o corpo" },
+        treinos: {
+          A: [
+            { nome: "Hip thrust (apoio no sofá)", musculo: "Glúteo", series: 4, reps: "15", dica: "Costas apoiadas na beira do sofá, um halter sobre o quadril. Suba e aperte o glúteo no topo por 1s." },
+            { nome: "Agachamento sumô com halter", musculo: "Glúteo / Adutor", series: 4, reps: "15", dica: "Pés afastados e pontas pra fora, segurando um halter entre as pernas. Desça mantendo os joelhos abertos." },
+            { nome: "Afundo búlgaro com halteres", musculo: "Glúteo / Quadríceps", series: 3, reps: "10/perna", dica: "Pé de trás apoiado no sofá ou numa cadeira. Desça reto focando o glúteo da perna da frente." },
+            { nome: "Stiff com halteres", musculo: "Posterior / Glúteo", series: 3, reps: "12", dica: "Quadril pra trás, pernas quase retas, halteres descendo rente às pernas. Sinta o posterior alongar." },
+            { nome: "Abdução de quadril", musculo: "Glúteo médio", series: 3, reps: "20", dica: "Deitada de lado, abra a perna de cima controlando. Pode apoiar um halter na coxa pra dificultar." },
+            { nome: "Coice de glúteo (kickback)", musculo: "Glúteo", series: 3, reps: "15/perna", dica: "Em quatro apoios, empurre o calcanhar pro teto contraindo o glúteo no topo." },
+            { nome: "Prancha lateral", musculo: "Core", series: 3, reps: "30s/lado", dica: "Corpo alinhado, quadril elevado, sem deixar cair." }
+          ],
+          B: [
+            { nome: "Flexão (push-up)", musculo: "Peito", series: 3, reps: "12", dica: "Pode apoiar os joelhos no início. Desça controlando até o peito perto do chão." },
+            { nome: "Remada com halter (apoio na cadeira)", musculo: "Costas", series: 3, reps: "12", dica: "Apoie mão e joelho numa cadeira. Puxe o halter junto ao quadril apertando as costas." },
+            { nome: "Desenvolvimento de ombros com halteres", musculo: "Ombro", series: 3, reps: "12", dica: "Suba os halteres acima da cabeça sem arquear as costas." },
+            { nome: "Rosca bíceps com halteres", musculo: "Bíceps", series: 3, reps: "12", dica: "Cotovelos fixos ao lado do corpo, suba sem impulso." },
+            { nome: "Elevação pélvica unilateral", musculo: "Glúteo", series: 3, reps: "12/perna", dica: "Deitada, uma perna estendida. Suba o quadril com a outra perna apertando o glúteo." },
+            { nome: "Abdominal bicicleta", musculo: "Core", series: 3, reps: "20", dica: "Cotovelo em direção ao joelho oposto, movimento controlado." },
+            { nome: "Prancha", musculo: "Core", series: 3, reps: "40s", dica: "Linha reta da cabeça aos pés, abdômen firme." }
+          ]
+        }
+      }
     };
 
-    /* =====================================================================
-       RENDER
-    ===================================================================== */
-    const ICON_PLAY = '<svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>';
+    // injeta o aquecimento compartilhado em cada perfil
+    Object.keys(PLANS).forEach(function (id) { PLANS[id].treinos.warm = AQUECIMENTO; });
 
-    function ytLink(nome) {
-      const q = encodeURIComponent(nome + " execução exercício");
-      return "https://www.youtube.com/results?search_query=" + q;
+    /* =====================================================================
+       ESTADO PERSISTENTE (localStorage)
+    ===================================================================== */
+    const STORAGE_KEY = "hgt_v2";
+    const DEFAULT_STATE = {
+      users: [{ id: "u1", name: "Talys" }, { id: "u2", name: "Andressa" }],
+      active: "u1",
+      checks: {},   // checks[userId][treino][exIdx][setIdx] = true
+      history: {}   // history[userId] = [{ date: "AAAA-MM-DD", w: "A"|"B" }]
+    };
+
+    function loadState() {
+      try {
+        const raw = JSON.parse(localStorage.getItem(STORAGE_KEY));
+        if (raw && Array.isArray(raw.users)) return raw;
+      } catch (e) {}
+      return JSON.parse(JSON.stringify(DEFAULT_STATE));
+    }
+    function saveState() { try { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); } catch (e) {} }
+
+    let state = loadState();
+
+    function activeUser() { return state.users.find(function (u) { return u.id === state.active; }) || state.users[0]; }
+    function activePlan() { return PLANS[state.active] || PLANS.u1; }
+    function checksFor() { const id = state.active; state.checks[id] = state.checks[id] || {}; return state.checks[id]; }
+    function isDone(key, ex, set) { const c = checksFor()[key]; return !!(c && c[ex] && c[ex][set]); }
+    function setDone(key, ex, set, val) {
+      const c = checksFor();
+      c[key] = c[key] || {}; c[key][ex] = c[key][ex] || {}; c[key][ex][set] = val;
+      saveState();
+    }
+    function todayISO() {
+      const d = new Date();
+      return d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0") + "-" + String(d.getDate()).padStart(2, "0");
     }
 
-    function buildCard(ex, key, idx) {
+    /* =====================================================================
+       RENDER DOS CARDS
+    ===================================================================== */
+    const ICON_PLAY = '<svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>';
+    function ytLink(nome) { return "https://www.youtube.com/results?search_query=" + encodeURIComponent(nome + " execução exercício"); }
+
+    function buildCard(ex, key, exIdx) {
       const card = document.createElement("article");
       card.className = "card";
       card.dataset.total = ex.series;
+      card.dataset.key = key;
+      card.dataset.ex = exIdx;
 
       let setsHtml = "";
-      for (let i = 1; i <= ex.series; i++) {
-        setsHtml += '<button class="set-box" data-set="' + i + '" aria-label="Série ' + i + '"><span>' + i + '</span></button>';
+      for (let i = 0; i < ex.series; i++) {
+        setsHtml += '<button class="set-box" data-set="' + i + '" aria-label="Série ' + (i + 1) + '"><span>' + (i + 1) + '</span></button>';
       }
 
       card.innerHTML =
         '<div class="card-head">' +
-          '<div>' +
-            '<div class="name">' + ex.nome + '</div>' +
-            '<div class="muscle">' + ex.musculo + '</div>' +
-          '</div>' +
+          '<div><div class="name">' + ex.nome + '</div><div class="muscle">' + ex.musculo + '</div></div>' +
           '<div class="scheme">' + ex.series + '×' + ex.reps + '</div>' +
         '</div>' +
         '<div class="tip"><b>Dica:</b> ' + ex.dica + '</div>' +
@@ -367,26 +469,62 @@
 
       card.querySelectorAll(".set-box").forEach(function (box) {
         box.addEventListener("click", function () {
-          box.classList.toggle("done");
-          const total = parseInt(card.dataset.total, 10);
-          const done = card.querySelectorAll(".set-box.done").length;
-          card.classList.toggle("complete", done === total);
+          const setIdx = parseInt(box.dataset.set, 10);
+          const nowDone = !box.classList.contains("done");
+          box.classList.toggle("done", nowDone);
+          setDone(key, exIdx, setIdx, nowDone);
+          refreshCard(card);
           updateProgress();
         });
       });
-
       return card;
     }
 
-    Object.keys(TREINOS).forEach(function (key) {
-      const panel = document.querySelector('.panel[data-panel="' + key + '"]');
-      TREINOS[key].forEach(function (ex, idx) {
-        panel.appendChild(buildCard(ex, key, idx));
+    function refreshCard(card) {
+      const total = parseInt(card.dataset.total, 10);
+      const done = card.querySelectorAll(".set-box.done").length;
+      card.classList.toggle("complete", done === total);
+    }
+
+    // Reconstrói as 3 abas com a ficha do perfil ativo
+    function buildPanels() {
+      const plan = activePlan();
+      ["A", "B", "warm"].forEach(function (key) {
+        const panel = document.querySelector('.panel[data-panel="' + key + '"]');
+        panel.innerHTML = "";
+        plan.treinos[key].forEach(function (ex, idx) { panel.appendChild(buildCard(ex, key, idx)); });
+        if (key === "A" || key === "B") {
+          const btn = document.createElement("button");
+          btn.className = "conclude";
+          btn.textContent = "✓ Concluir Treino " + key + " de hoje";
+          btn.addEventListener("click", function () { concluirTreino(key); });
+          const note = document.createElement("p");
+          note.className = "panel-note";
+          note.textContent = "Registra a data no histórico e zera as marcações pro próximo treino.";
+          panel.appendChild(btn);
+          panel.appendChild(note);
+        }
+        const small = document.querySelector('.tab[data-tab="' + key + '"] small');
+        if (small) small.textContent = plan.labels[key];
       });
-    });
+      document.getElementById("focus-cap").innerHTML = "🎯 Ficha de <b>" + escapeHtml(activeUser().name) + "</b> · foco em <b>" + plan.focus + "</b>";
+    }
+
+    function applyChecks() {
+      document.querySelectorAll(".card").forEach(function (card) {
+        const key = card.dataset.key;
+        const ex = parseInt(card.dataset.ex, 10);
+        card.querySelectorAll(".set-box").forEach(function (box) {
+          const setIdx = parseInt(box.dataset.set, 10);
+          box.classList.toggle("done", isDone(key, ex, setIdx));
+        });
+        refreshCard(card);
+      });
+      updateProgress();
+    }
 
     /* =====================================================================
-       PROGRESSO (apenas da aba ativa)
+       PROGRESSO
     ===================================================================== */
     let activeTab = "A";
     const fill = document.getElementById("progress-fill");
@@ -409,9 +547,7 @@
       if (!btn) return;
       activeTab = btn.dataset.tab;
       document.querySelectorAll(".tab").forEach(function (t) { t.classList.toggle("active", t === btn); });
-      document.querySelectorAll(".panel").forEach(function (p) {
-        p.classList.toggle("active", p.dataset.panel === activeTab);
-      });
+      document.querySelectorAll(".panel").forEach(function (p) { p.classList.toggle("active", p.dataset.panel === activeTab); });
       const accentVar = activeTab === "A" ? "--a-color" : activeTab === "B" ? "--b-color" : "--warm-color";
       fill.style.background = getComputedStyle(document.documentElement).getPropertyValue(accentVar);
       updateProgress();
@@ -419,27 +555,158 @@
     });
 
     /* =====================================================================
+       PERFIS
+    ===================================================================== */
+    const usersEl = document.getElementById("users");
+
+    function renderUsers() {
+      usersEl.innerHTML = "";
+      state.users.forEach(function (u) {
+        const b = document.createElement("button");
+        b.className = "user-pill" + (u.id === state.active ? " active" : "");
+        b.innerHTML = '<span class="dot"></span>' + escapeHtml(u.name);
+        b.addEventListener("click", function () {
+          if (state.active === u.id) return;
+          state.active = u.id;
+          saveState();
+          renderUsers();
+          buildPanels();
+          applyChecks();
+        });
+        usersEl.appendChild(b);
+      });
+      const edit = document.createElement("button");
+      edit.className = "user-edit";
+      edit.title = "Renomear perfil ativo";
+      edit.textContent = "✎";
+      edit.addEventListener("click", function () {
+        const u = activeUser();
+        const novo = prompt("Nome do perfil:", u.name);
+        if (novo && novo.trim()) { u.name = novo.trim().slice(0, 14); saveState(); renderUsers(); buildPanels(); }
+      });
+      usersEl.appendChild(edit);
+    }
+
+    function escapeHtml(s) { return String(s).replace(/[&<>"']/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]; }); }
+
+    /* =====================================================================
+       CONCLUIR TREINO + HISTÓRICO
+    ===================================================================== */
+    function concluirTreino(key) {
+      const id = state.active;
+      state.history[id] = state.history[id] || [];
+      state.history[id].push({ date: todayISO(), w: key });
+      const c = checksFor();
+      c[key] = {};
+      saveState();
+      applyChecks();
+      showToast("Treino " + key + " registrado, " + activeUser().name + "! 🔥");
+    }
+
+    const toastEl = document.getElementById("toast");
+    let toastTimer = null;
+    function showToast(msg) {
+      toastEl.textContent = msg;
+      toastEl.classList.add("show");
+      clearTimeout(toastTimer);
+      toastTimer = setTimeout(function () { toastEl.classList.remove("show"); }, 2600);
+    }
+
+    const overlay = document.getElementById("overlay");
+    document.getElementById("open-hist").addEventListener("click", openHistory);
+    document.getElementById("close-hist").addEventListener("click", closeHistory);
+    overlay.addEventListener("click", function (e) { if (e.target === overlay) closeHistory(); });
+    function openHistory() { renderHistory(); overlay.hidden = false; }
+    function closeHistory() { overlay.hidden = true; }
+
+    const MONTHS = ["janeiro", "fevereiro", "março", "abril", "maio", "junho", "julho", "agosto", "setembro", "outubro", "novembro", "dezembro"];
+    const DOW = ["D", "S", "T", "Q", "Q", "S", "S"];
+
+    function renderHistory() {
+      const u = activeUser();
+      const list = (state.history[state.active] || []).slice();
+      document.getElementById("hist-title").textContent = "Histórico — " + u.name;
+
+      const today = new Date();
+      const ym = todayISO().slice(0, 7);
+      const monthCount = list.filter(function (e) { return e.date.slice(0, 7) === ym; }).length;
+      const sevenAgo = new Date(); sevenAgo.setDate(sevenAgo.getDate() - 6);
+      const weekStart = new Date(sevenAgo.toDateString());
+      const weekCount = list.filter(function (e) { return new Date(e.date + "T00:00:00") >= weekStart; }).length;
+
+      document.getElementById("hist-stats").innerHTML =
+        statBox(list.length, "Total") + statBox(monthCount, "Este mês") + statBox(weekCount, "7 dias");
+
+      renderCalendar(today, list);
+
+      const logEl = document.getElementById("hist-log");
+      if (!list.length) {
+        logEl.innerHTML = '<div class="log-empty">Nenhum treino registrado ainda.<br>Conclua um treino para começar! 💪</div>';
+        return;
+      }
+      const sorted = list.map(function (e, i) { return { e: e, i: i }; })
+        .sort(function (a, b) { return a.e.date < b.e.date ? 1 : a.e.date > b.e.date ? -1 : b.i - a.i; });
+
+      logEl.innerHTML = sorted.map(function (item) {
+        return '<div class="log-item">' +
+          '<div class="log-badge ' + item.e.w + '">' + item.e.w + '</div>' +
+          '<div class="log-info"><div class="d">' + fmtDate(item.e.date) + '</div><div class="w">Treino ' + item.e.w + '</div></div>' +
+          '<button class="log-del" data-idx="' + item.i + '" aria-label="Remover">🗑</button>' +
+        '</div>';
+      }).join("");
+
+      logEl.querySelectorAll(".log-del").forEach(function (btn) {
+        btn.addEventListener("click", function () {
+          const idx = parseInt(btn.dataset.idx, 10);
+          state.history[state.active].splice(idx, 1);
+          saveState();
+          renderHistory();
+        });
+      });
+    }
+
+    function statBox(num, lbl) { return '<div class="stat"><div class="num">' + num + '</div><div class="lbl">' + lbl + '</div></div>'; }
+
+    function renderCalendar(refDate, list) {
+      const y = refDate.getFullYear(), m = refDate.getMonth();
+      const first = new Date(y, m, 1).getDay();
+      const days = new Date(y, m + 1, 0).getDate();
+      const todayStr = todayISO();
+      const monthKey = y + "-" + String(m + 1).padStart(2, "0");
+
+      const byDay = {};
+      list.forEach(function (e) {
+        if (e.date.slice(0, 7) === monthKey) {
+          const d = parseInt(e.date.slice(8), 10);
+          byDay[d] = byDay[d] || {};
+          byDay[d][e.w] = true;
+        }
+      });
+
+      let html = '<div class="cal-head">' + MONTHS[m] + " " + y + '</div><div class="cal-grid">';
+      DOW.forEach(function (d) { html += '<div class="cal-dow">' + d + '</div>'; });
+      for (let i = 0; i < first; i++) html += '<div></div>';
+      for (let d = 1; d <= days; d++) {
+        const marks = byDay[d];
+        const dateStr = monthKey + "-" + String(d).padStart(2, "0");
+        let mh = "";
+        if (marks) { if (marks.A) mh += '<i class="A"></i>'; if (marks.B) mh += '<i class="B"></i>'; }
+        html += '<div class="cal-day' + (marks ? " has" : "") + (dateStr === todayStr ? " today" : "") + '">' + d + '<div class="cal-marks">' + mh + '</div></div>';
+      }
+      html += '</div>';
+      document.getElementById("hist-cal").innerHTML = html;
+    }
+
+    function fmtDate(iso) { const p = iso.split("-"); return p[2] + "/" + p[1] + "/" + p[0]; }
+
+    /* =====================================================================
        TIMER DE DESCANSO
     ===================================================================== */
     const clock = document.getElementById("clock");
     let remaining = 0, ticker = null;
-
-    function fmt(s) {
-      const m = Math.floor(s / 60);
-      const r = s % 60;
-      return (m < 10 ? "0" : "") + m + ":" + (r < 10 ? "0" : "") + r;
-    }
-
+    function fmt(s) { const m = Math.floor(s / 60), r = s % 60; return (m < 10 ? "0" : "") + m + ":" + (r < 10 ? "0" : "") + r; }
     function render() { clock.textContent = fmt(remaining); }
-
-    function stopTimer() {
-      clearInterval(ticker);
-      ticker = null;
-      remaining = 0;
-      clock.textContent = "--:--";
-      clock.classList.remove("running");
-    }
-
+    function stopTimer() { clearInterval(ticker); ticker = null; remaining = 0; clock.textContent = "--:--"; clock.classList.remove("running"); }
     function startTimer(secs) {
       clearInterval(ticker);
       remaining = secs;
@@ -448,10 +715,8 @@
       ticker = setInterval(function () {
         remaining--;
         if (remaining <= 0) {
-          clearInterval(ticker);
-          ticker = null;
-          clock.textContent = "00:00";
-          clock.classList.remove("running");
+          clearInterval(ticker); ticker = null;
+          clock.textContent = "00:00"; clock.classList.remove("running");
           if (navigator.vibrate) navigator.vibrate([200, 100, 200, 100, 300]);
           setTimeout(function () { clock.textContent = "--:--"; }, 2500);
           return;
@@ -459,13 +724,15 @@
         render();
       }, 1000);
     }
-
-    document.querySelectorAll(".preset").forEach(function (p) {
-      p.addEventListener("click", function () { startTimer(parseInt(p.dataset.secs, 10)); });
-    });
+    document.querySelectorAll(".preset").forEach(function (p) { p.addEventListener("click", function () { startTimer(parseInt(p.dataset.secs, 10)); }); });
     document.getElementById("stop").addEventListener("click", stopTimer);
 
-    updateProgress();
+    /* =====================================================================
+       INIT
+    ===================================================================== */
+    renderUsers();
+    buildPanels();
+    applyChecks();
   </script>
 </body>
 </html>
