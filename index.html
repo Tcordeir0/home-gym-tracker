@@ -54,6 +54,14 @@
 
     .wrap { max-width: 640px; margin: 0 auto; padding: 0 16px; }
 
+    /* Ícones */
+    .ico { display: inline-block; vertical-align: -0.16em; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .ico.spin { animation: spin 0.9s linear infinite; }
+    .ico.flicker { animation: pulse 1.6s ease-in-out infinite; transform-origin: center; }
+    .user-edit, .stop, .sheet-head button, .log-del, .hist-btn[data-icon] { display: inline-flex; align-items: center; justify-content: center; }
+    .ach-ico { display: inline-flex; }
+
     /* ---------- Header ---------- */
     header { padding: 26px 16px 10px; }
     .brand {
@@ -441,8 +449,8 @@
     <div class="brand">
       <h1>HOME <span class="hl">GYM</span></h1>
       <div class="head-actions">
-        <button class="hist-btn" id="open-cloud" hidden>☁️</button>
-        <button class="hist-btn" id="open-hist">📅 Histórico</button>
+        <button class="hist-btn" id="open-cloud" hidden data-icon="cloud"></button>
+        <button class="hist-btn" id="open-hist"><span data-icon="calendar-days"></span>Histórico</button>
       </div>
     </div>
     <div class="users" id="users"></div>
@@ -485,7 +493,7 @@
         <button class="preset" data-secs="90">90s</button>
         <button class="preset" data-secs="120">2min</button>
       </div>
-      <button class="stop" id="stop" title="Parar">✕</button>
+      <button class="stop" id="stop" title="Parar" data-icon="x"></button>
     </div>
   </div>
 
@@ -497,12 +505,12 @@
     <div class="sheet">
       <div class="sheet-head">
         <h2 id="hist-title">Histórico</h2>
-        <button id="close-hist" aria-label="Fechar">✕</button>
+        <button id="close-hist" aria-label="Fechar" data-icon="x"></button>
       </div>
       <div class="pts-banner" id="hist-pts"></div>
       <div class="stats" id="hist-stats"></div>
       <div class="cal" id="hist-cal"></div>
-      <h3>🏆 Conquistas</h3>
+      <h3><span data-icon="trophy" data-size="16"></span> Conquistas</h3>
       <div class="ach-grid" id="hist-ach"></div>
       <h3>Sessões registradas</h3>
       <div class="log" id="hist-log"></div>
@@ -521,8 +529,8 @@
   <div class="overlay" id="cloud-overlay" hidden>
     <div class="sheet">
       <div class="sheet-head">
-        <h2>☁️ Sincronização</h2>
-        <button id="close-cloud" aria-label="Fechar">✕</button>
+        <h2><span data-icon="cloud" data-size="20"></span> Sincronização</h2>
+        <button id="close-cloud" aria-label="Fechar" data-icon="x"></button>
       </div>
       <div class="cloud-status" id="cloud-status"></div>
 
@@ -536,10 +544,10 @@
       <!-- estado: logado -->
       <div id="cloud-account" hidden>
         <button class="cloud-primary" id="cloud-sync-now">↻ Sincronizar agora</button>
-        <button class="cloud-secondary" id="cloud-signout">Sair desta conta</button>
+        <button class="cloud-secondary" id="cloud-signout"><span data-icon="log-out"></span> Sair desta conta</button>
       </div>
 
-      <div class="snd-row"><span>🔊 Som ao marcar / concluir</span><button class="snd-btn" id="snd-toggle"></button></div>
+      <div class="snd-row"><span><span data-icon="volume-2"></span> Som ao marcar / concluir</span><button class="snd-btn" id="snd-toggle"></button></div>
       <p class="cloud-note">Use o <b>mesmo email e senha</b> em todos os aparelhos para o histórico ficar igual. Os dados são protegidos por regras de acesso (RLS) — só quem está logado vê.</p>
     </div>
   </div>
@@ -549,14 +557,14 @@
     <div class="sheet">
       <div class="sheet-head">
         <h2>Editar perfil</h2>
-        <button id="close-prof" aria-label="Fechar">✕</button>
+        <button id="close-prof" aria-label="Fechar" data-icon="x"></button>
       </div>
       <div class="field"><label for="prof-name">Nome</label><input id="prof-name" maxlength="16" placeholder="Nome do perfil" /></div>
       <h3>Foto</h3>
       <div class="photo-row">
         <span id="prof-photo-preview"></span>
         <div class="pcol">
-          <button class="cloud-secondary" id="prof-photo-btn">Escolher foto</button>
+          <button class="cloud-secondary" id="prof-photo-btn"><span data-icon="image"></span> Escolher foto</button>
           <button class="cloud-secondary" id="prof-photo-remove">Remover</button>
         </div>
         <input type="file" id="prof-photo-input" accept="image/*" hidden />
@@ -565,7 +573,7 @@
       <div class="swatches" id="prof-colors"></div>
       <h3>Equipamento disponível</h3>
       <div class="checklist" id="prof-equip"></div>
-      <button class="cloud-secondary" id="prof-gen" style="margin-top:12px;">🔧 Montar treino com este equipamento</button>
+      <button class="cloud-secondary" id="prof-gen" style="margin-top:12px;"><span data-icon="wrench"></span> Montar treino com este equipamento</button>
       <h3>Tipos de cardio</h3>
       <div class="chiplist" id="prof-cardios"></div>
       <button class="cloud-secondary" id="prof-add-cardio">+ Adicionar tipo de cardio</button>
@@ -602,8 +610,8 @@
   <div class="overlay" id="cardio-choice-overlay" hidden>
     <div class="sheet">
       <p class="confirm-msg" id="cardio-choice-msg"></p>
-      <button class="cloud-primary" id="cardio-choice-start">▶ Começar agora (cronometrar)</button>
-      <button class="cloud-secondary" id="cardio-choice-done" style="margin-top:10px">✓ Já fiz (registrar)</button>
+      <button class="cloud-primary" id="cardio-choice-start"><span data-icon="play"></span> Começar agora (cronometrar)</button>
+      <button class="cloud-secondary" id="cardio-choice-done" style="margin-top:10px"><span data-icon="check"></span> Já fiz (registrar)</button>
       <button class="cloud-secondary" id="cardio-choice-cancel" style="margin-top:10px">Cancelar</button>
     </div>
   </div>
@@ -611,7 +619,7 @@
   <!-- Cardio já feito: informar horário -->
   <div class="overlay" id="cardio-done-overlay" hidden>
     <div class="sheet">
-      <div class="sheet-head"><h2 id="cardio-done-title">Registrar cardio</h2><button id="cardio-done-close" aria-label="Fechar">✕</button></div>
+      <div class="sheet-head"><h2 id="cardio-done-title">Registrar cardio</h2><button id="cardio-done-close" aria-label="Fechar" data-icon="x"></button></div>
       <div class="field"><label for="cardio-done-start">Começou</label><input id="cardio-done-start" type="time" /></div>
       <div class="field"><label for="cardio-done-end">Terminou</label><input id="cardio-done-end" type="time" /></div>
       <button class="cloud-primary" id="cardio-done-ok">Registrar</button>
@@ -622,7 +630,7 @@
   <!-- Adicionar tipo de cardio -->
   <div class="overlay" id="cardio-add-overlay" hidden>
     <div class="sheet">
-      <div class="sheet-head"><h2>Novo cardio</h2><button id="cardio-add-close" aria-label="Fechar">✕</button></div>
+      <div class="sheet-head"><h2>Novo cardio</h2><button id="cardio-add-close" aria-label="Fechar" data-icon="x"></button></div>
       <div class="field"><label for="cardio-add-name">Nome</label><input id="cardio-add-name" maxlength="18" placeholder="Ex.: Bicicleta, Caminhada" /></div>
       <div class="field"><label for="cardio-add-emoji">Emoji</label><input id="cardio-add-emoji" maxlength="3" placeholder="🚴" /></div>
       <button class="cloud-primary" id="cardio-add-ok">Adicionar</button>
@@ -632,9 +640,9 @@
   <!-- Ranking -->
   <div class="overlay" id="rank-overlay" hidden>
     <div class="sheet">
-      <div class="sheet-head"><h2>🏆 Ranking da casa</h2><button id="close-rank" aria-label="Fechar">✕</button></div>
+      <div class="sheet-head"><h2><span data-icon="trophy" data-size="22"></span> Ranking da casa</h2><button id="close-rank" aria-label="Fechar" data-icon="x"></button></div>
       <div id="rank-list"></div>
-      <button class="cloud-primary" id="rank-share" style="margin-top:6px;">📤 Compartilhar meu card</button>
+      <button class="cloud-primary" id="rank-share" style="margin-top:6px;"><span data-icon="share-2"></span> Compartilhar meu card</button>
       <p class="cloud-note">A pontuação vale para todos os perfis. Cutuque quem está atrás (ou na frente 😏) pra animar a disputa!</p>
     </div>
   </div>
@@ -642,10 +650,10 @@
   <!-- Card de compartilhar -->
   <div class="overlay" id="share-overlay" hidden>
     <div class="sheet">
-      <div class="sheet-head"><h2>📤 Seu card</h2><button id="close-share" aria-label="Fechar">✕</button></div>
+      <div class="sheet-head"><h2><span data-icon="share-2" data-size="22"></span> Seu card</h2><button id="close-share" aria-label="Fechar" data-icon="x"></button></div>
       <div class="share-preview"><img id="share-img" alt="Card de pontuação" /></div>
-      <button class="cloud-primary" id="share-do">Compartilhar</button>
-      <button class="cloud-secondary" id="share-dl" style="margin-top:10px;">Baixar imagem</button>
+      <button class="cloud-primary" id="share-do"><span data-icon="share-2"></span> Compartilhar</button>
+      <button class="cloud-secondary" id="share-dl" style="margin-top:10px;"><span data-icon="download"></span> Baixar imagem</button>
     </div>
   </div>
 
@@ -654,11 +662,11 @@
     <div class="sheet">
       <div class="sheet-head">
         <h2 id="demo-title">Demonstração</h2>
-        <button id="close-demo" aria-label="Fechar">✕</button>
+        <button id="close-demo" aria-label="Fechar" data-icon="x"></button>
       </div>
       <div class="demo-frame"><img id="demo-img" alt="" /></div>
       <p class="demo-muscle" id="demo-muscle"></p>
-      <a class="cloud-secondary" id="demo-yt" target="_blank" rel="noopener">▶ Ver no YouTube</a>
+      <a class="cloud-secondary" id="demo-yt" target="_blank" rel="noopener"><span data-icon="play"></span> Ver no YouTube</a>
       <p class="cloud-note">Animação de 2 quadros (início e fim do movimento). Funciona offline depois da primeira vez que abrir.</p>
     </div>
   </div>
@@ -667,8 +675,8 @@
   <div class="overlay" id="gen-overlay" hidden>
     <div class="sheet">
       <div class="sheet-head">
-        <h2>🔧 Montar treino</h2>
-        <button id="close-gen" aria-label="Fechar">✕</button>
+        <h2><span data-icon="wrench" data-size="22"></span> Montar treino</h2>
+        <button id="close-gen" aria-label="Fechar" data-icon="x"></button>
       </div>
       <div class="cloud-status" id="gen-equip-note"></div>
       <h3>Foco</h3>
@@ -692,6 +700,58 @@
 
     // Versão do app (atualizada automaticamente pelo release-please)
     const APP_VERSION = "0.2.0"; // x-release-please-version
+
+    /* Ícones (Lucide, ISC) — SVG inline, herdam a cor (currentColor) */
+    const ICONS = {
+      "award": "<path d=\"m15.477 12.89 1.515 8.526a.5.5 0 0 1-.81.47l-3.58-2.687a1 1 0 0 0-1.197 0l-3.586 2.686a.5.5 0 0 1-.81-.469l1.514-8.526\" /> <circle cx=\"12\" cy=\"8\" r=\"6\" />",
+      "bell": "<path d=\"M10.268 21a2 2 0 0 0 3.464 0\" /> <path d=\"M3.262 15.326A1 1 0 0 0 4 17h16a1 1 0 0 0 .74-1.673C19.41 13.956 18 12.499 18 8A6 6 0 0 0 6 8c0 4.499-1.411 5.956-2.738 7.326\" />",
+      "calendar-check": "<path d=\"M8 2v4\" /> <path d=\"M16 2v4\" /> <rect width=\"18\" height=\"18\" x=\"3\" y=\"4\" rx=\"2\" /> <path d=\"M3 10h18\" /> <path d=\"m9 16 2 2 4-4\" />",
+      "calendar-days": "<path d=\"M8 2v4\" /> <path d=\"M16 2v4\" /> <rect width=\"18\" height=\"18\" x=\"3\" y=\"4\" rx=\"2\" /> <path d=\"M3 10h18\" /> <path d=\"M8 14h.01\" /> <path d=\"M12 14h.01\" /> <path d=\"M16 14h.01\" /> <path d=\"M8 18h.01\" /> <path d=\"M12 18h.01\" /> <path d=\"M16 18h.01\" />",
+      "check": "<path d=\"M20 6 9 17l-5-5\" />",
+      "cloud": "<path d=\"M17.5 19H9a7 7 0 1 1 6.71-9h1.79a4.5 4.5 0 1 1 0 9Z\" />",
+      "download": "<path d=\"M12 15V3\" /> <path d=\"M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4\" /> <path d=\"m7 10 5 5 5-5\" />",
+      "dumbbell": "<path d=\"M17.596 12.768a2 2 0 1 0 2.829-2.829l-1.768-1.767a2 2 0 0 0 2.828-2.829l-2.828-2.828a2 2 0 0 0-2.829 2.828l-1.767-1.768a2 2 0 1 0-2.829 2.829z\" /> <path d=\"m2.5 21.5 1.4-1.4\" /> <path d=\"m20.1 3.9 1.4-1.4\" /> <path d=\"M5.343 21.485a2 2 0 1 0 2.829-2.828l1.767 1.768a2 2 0 1 0 2.829-2.829l-6.364-6.364a2 2 0 1 0-2.829 2.829l1.768 1.767a2 2 0 0 0-2.828 2.829z\" /> <path d=\"m9.6 14.4 4.8-4.8\" />",
+      "eye": "<path d=\"M2.062 12.348a1 1 0 0 1 0-.696 10.75 10.75 0 0 1 19.876 0 1 1 0 0 1 0 .696 10.75 10.75 0 0 1-19.876 0\" /> <circle cx=\"12\" cy=\"12\" r=\"3\" />",
+      "flame": "<path d=\"M12 3q1 4 4 6.5t3 5.5a1 1 0 0 1-14 0 5 5 0 0 1 1-3 1 1 0 0 0 5 0c0-2-1.5-3-1.5-5q0-2 2.5-4\" />",
+      "hand": "<path d=\"M18 11V6a2 2 0 0 0-2-2a2 2 0 0 0-2 2\" /> <path d=\"M14 10V4a2 2 0 0 0-2-2a2 2 0 0 0-2 2v2\" /> <path d=\"M10 10.5V6a2 2 0 0 0-2-2a2 2 0 0 0-2 2v8\" /> <path d=\"M18 8a2 2 0 1 1 4 0v6a8 8 0 0 1-8 8h-2c-2.8 0-4.5-.86-5.99-2.34l-3.6-3.6a2 2 0 0 1 2.83-2.82L7 15\" />",
+      "heart-pulse": "<path d=\"M2 9.5a5.5 5.5 0 0 1 9.591-3.676.56.56 0 0 0 .818 0A5.49 5.49 0 0 1 22 9.5c0 2.29-1.5 4-3 5.5l-5.492 5.313a2 2 0 0 1-3 .019L5 15c-1.5-1.5-3-3.2-3-5.5\" /> <path d=\"M3.22 13H9.5l.5-1 2 4.5 2-7 1.5 3.5h5.27\" />",
+      "image": "<rect width=\"18\" height=\"18\" x=\"3\" y=\"3\" rx=\"2\" ry=\"2\" /> <circle cx=\"9\" cy=\"9\" r=\"2\" /> <path d=\"m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21\" />",
+      "log-out": "<path d=\"m16 17 5-5-5-5\" /> <path d=\"M21 12H9\" /> <path d=\"M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4\" />",
+      "medal": "<path d=\"M7.21 15 2.66 7.14a2 2 0 0 1 .13-2.2L4.4 2.8A2 2 0 0 1 6 2h12a2 2 0 0 1 1.6.8l1.6 2.14a2 2 0 0 1 .14 2.2L16.79 15\" /> <path d=\"M11 12 5.12 2.2\" /> <path d=\"m13 12 5.88-9.8\" /> <path d=\"M8 7h8\" /> <circle cx=\"12\" cy=\"17\" r=\"5\" /> <path d=\"M12 18v-2h-.5\" />",
+      "moon": "<path d=\"M20.985 12.486a9 9 0 1 1-9.473-9.472c.405-.022.617.46.402.803a6 6 0 0 0 8.268 8.268c.344-.215.825-.004.803.401\" />",
+      "pencil": "<path d=\"M21.174 6.812a1 1 0 0 0-3.986-3.987L3.842 16.174a2 2 0 0 0-.5.83l-1.321 4.352a.5.5 0 0 0 .623.622l4.353-1.32a2 2 0 0 0 .83-.497z\" /> <path d=\"m15 5 4 4\" />",
+      "play": "<path d=\"M5 5a2 2 0 0 1 3.008-1.728l11.997 6.998a2 2 0 0 1 .003 3.458l-12 7A2 2 0 0 1 5 19z\" />",
+      "plus": "<path d=\"M5 12h14\" /> <path d=\"M12 5v14\" />",
+      "rotate-ccw": "<path d=\"M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8\" /> <path d=\"M3 3v5h5\" />",
+      "settings": "<path d=\"M9.671 4.136a2.34 2.34 0 0 1 4.659 0 2.34 2.34 0 0 0 3.319 1.915 2.34 2.34 0 0 1 2.33 4.033 2.34 2.34 0 0 0 0 3.831 2.34 2.34 0 0 1-2.33 4.033 2.34 2.34 0 0 0-3.319 1.915 2.34 2.34 0 0 1-4.659 0 2.34 2.34 0 0 0-3.32-1.915 2.34 2.34 0 0 1-2.33-4.033 2.34 2.34 0 0 0 0-3.831A2.34 2.34 0 0 1 6.35 6.051a2.34 2.34 0 0 0 3.319-1.915\" /> <circle cx=\"12\" cy=\"12\" r=\"3\" />",
+      "share-2": "<circle cx=\"18\" cy=\"5\" r=\"3\" /> <circle cx=\"6\" cy=\"12\" r=\"3\" /> <circle cx=\"18\" cy=\"19\" r=\"3\" /> <line x1=\"8.59\" x2=\"15.42\" y1=\"13.51\" y2=\"17.49\" /> <line x1=\"15.41\" x2=\"8.59\" y1=\"6.51\" y2=\"10.49\" />",
+      "smartphone": "<rect width=\"14\" height=\"20\" x=\"5\" y=\"2\" rx=\"2\" ry=\"2\" /> <path d=\"M12 18h.01\" />",
+      "sparkles": "<path d=\"M11.017 2.814a1 1 0 0 1 1.966 0l1.051 5.558a2 2 0 0 0 1.594 1.594l5.558 1.051a1 1 0 0 1 0 1.966l-5.558 1.051a2 2 0 0 0-1.594 1.594l-1.051 5.558a1 1 0 0 1-1.966 0l-1.051-5.558a2 2 0 0 0-1.594-1.594l-5.558-1.051a1 1 0 0 1 0-1.966l5.558-1.051a2 2 0 0 0 1.594-1.594z\" /> <path d=\"M20 2v4\" /> <path d=\"M22 4h-4\" /> <circle cx=\"4\" cy=\"20\" r=\"2\" />",
+      "square": "<rect width=\"18\" height=\"18\" x=\"3\" y=\"3\" rx=\"2\" />",
+      "star": "<path d=\"M11.525 2.295a.53.53 0 0 1 .95 0l2.31 4.679a2.123 2.123 0 0 0 1.595 1.16l5.166.756a.53.53 0 0 1 .294.904l-3.736 3.638a2.123 2.123 0 0 0-.611 1.878l.882 5.14a.53.53 0 0 1-.771.56l-4.618-2.428a2.122 2.122 0 0 0-1.973 0L6.396 21.01a.53.53 0 0 1-.77-.56l.881-5.139a2.122 2.122 0 0 0-.611-1.879L2.16 9.795a.53.53 0 0 1 .294-.906l5.165-.755a2.122 2.122 0 0 0 1.597-1.16z\" />",
+      "sun": "<circle cx=\"12\" cy=\"12\" r=\"4\" /> <path d=\"M12 2v2\" /> <path d=\"M12 20v2\" /> <path d=\"m4.93 4.93 1.41 1.41\" /> <path d=\"m17.66 17.66 1.41 1.41\" /> <path d=\"M2 12h2\" /> <path d=\"M20 12h2\" /> <path d=\"m6.34 17.66-1.41 1.41\" /> <path d=\"m19.07 4.93-1.41 1.41\" />",
+      "target": "<circle cx=\"12\" cy=\"12\" r=\"10\" /> <circle cx=\"12\" cy=\"12\" r=\"6\" /> <circle cx=\"12\" cy=\"12\" r=\"2\" />",
+      "timer": "<line x1=\"10\" x2=\"14\" y1=\"2\" y2=\"2\" /> <line x1=\"12\" x2=\"15\" y1=\"14\" y2=\"11\" /> <circle cx=\"12\" cy=\"14\" r=\"8\" />",
+      "trash-2": "<path d=\"M10 11v6\" /> <path d=\"M14 11v6\" /> <path d=\"M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6\" /> <path d=\"M3 6h18\" /> <path d=\"M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2\" />",
+      "trophy": "<path d=\"M10 14.66v1.626a2 2 0 0 1-.976 1.696A5 5 0 0 0 7 21.978\" /> <path d=\"M14 14.66v1.626a2 2 0 0 0 .976 1.696A5 5 0 0 1 17 21.978\" /> <path d=\"M18 9h1.5a1 1 0 0 0 0-5H18\" /> <path d=\"M4 22h16\" /> <path d=\"M6 9a6 6 0 0 0 12 0V3a1 1 0 0 0-1-1H7a1 1 0 0 0-1 1z\" /> <path d=\"M6 9H4.5a1 1 0 0 1 0-5H6\" />",
+      "user-plus": "<path d=\"M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2\" /> <circle cx=\"9\" cy=\"7\" r=\"4\" /> <line x1=\"19\" x2=\"19\" y1=\"8\" y2=\"14\" /> <line x1=\"22\" x2=\"16\" y1=\"11\" y2=\"11\" />",
+      "vibrate": "<path d=\"m2 8 2 2-2 2 2 2-2 2\" /> <path d=\"m22 8-2 2 2 2-2 2 2 2\" /> <rect width=\"8\" height=\"14\" x=\"8\" y=\"5\" rx=\"1\" />",
+      "volume-2": "<path d=\"M11 4.702a.705.705 0 0 0-1.203-.498L6.413 7.587A1.4 1.4 0 0 1 5.416 8H3a1 1 0 0 0-1 1v6a1 1 0 0 0 1 1h2.416a1.4 1.4 0 0 1 .997.413l3.383 3.384A.705.705 0 0 0 11 19.298z\" /> <path d=\"M16 9a5 5 0 0 1 0 6\" /> <path d=\"M19.364 18.364a9 9 0 0 0 0-12.728\" />",
+      "volume-x": "<path d=\"M11 4.702a.705.705 0 0 0-1.203-.498L6.413 7.587A1.4 1.4 0 0 1 5.416 8H3a1 1 0 0 0-1 1v6a1 1 0 0 0 1 1h2.416a1.4 1.4 0 0 1 .997.413l3.383 3.384A.705.705 0 0 0 11 19.298z\" /> <line x1=\"22\" x2=\"16\" y1=\"9\" y2=\"15\" /> <line x1=\"16\" x2=\"22\" y1=\"9\" y2=\"15\" />",
+      "wrench": "<path d=\"M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.106-3.105c.32-.322.863-.22.983.218a6 6 0 0 1-8.259 7.057l-7.91 7.91a1 1 0 0 1-2.999-3l7.91-7.91a6 6 0 0 1 7.057-8.259c.438.12.54.662.219.984z\" />",
+      "x": "<path d=\"M18 6 6 18\" /> <path d=\"m6 6 12 12\" />",
+      "zap": "<path d=\"M4 14a1 1 0 0 1-.78-1.63l9.9-10.2a.5.5 0 0 1 .86.46l-1.92 6.02A1 1 0 0 0 13 10h7a1 1 0 0 1 .78 1.63l-9.9 10.2a.5.5 0 0 1-.86-.46l1.92-6.02A1 1 0 0 0 11 14z\" />"
+    };
+    function icon(name, size, cls) {
+      const s = size || 18;
+      return '<svg class="ico' + (cls ? " " + cls : "") + '" width="' + s + '" height="' + s + '" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' + (ICONS[name] || "") + '</svg>';
+    }
+    function hydrateIcons(root) {
+      (root || document).querySelectorAll("[data-icon]").forEach(function (el) {
+        const sz = el.getAttribute("data-size");
+        el.innerHTML = icon(el.getAttribute("data-icon"), sz ? parseInt(sz, 10) : 18);
+      });
+    }
 
     /* =====================================================================
        FICHAS POR PERFIL
@@ -1034,7 +1094,7 @@
     function scoreOf(id) { state.scores[id] = state.scores[id] || { byDay: {} }; if (!state.scores[id].byDay) state.scores[id].byDay = {}; return state.scores[id]; }
     function addPoints(n) { const s = scoreOf(state.active); const d = todayISO(); s.byDay[d] = Math.max(0, (s.byDay[d] || 0) + n); }
     function totalPoints(id) { const s = state.scores[id]; if (!s || !s.byDay) return 0; return Object.keys(s.byDay).reduce(function (a, k) { return a + s.byDay[k]; }, 0); }
-    function renderPoints() { const el = document.getElementById("points-badge"); if (el) el.textContent = "⭐ " + totalPoints(state.active) + " pts"; }
+    function renderPoints() { const el = document.getElementById("points-badge"); if (el) el.innerHTML = icon("star", 15) + " " + totalPoints(state.active) + " pts"; }
 
     let audioCtx = null;
     function playSound(kind) {
@@ -1058,14 +1118,14 @@
     }
 
     const ACHIEVEMENTS = [
-      { icon: "🥇", label: "Começou!", desc: "1º treino", test: function (s) { return s.treinos >= 1; } },
-      { icon: "🔥", label: "Pegando o ritmo", desc: "5 treinos", test: function (s) { return s.treinos >= 5; } },
-      { icon: "💪", label: "Dedicado", desc: "15 treinos", test: function (s) { return s.treinos >= 15; } },
-      { icon: "🏊", label: "Cardio na veia", desc: "5 cardios", test: function (s) { return s.cardios >= 5; } },
-      { icon: "📅", label: "Constante", desc: "7 dias ativos", test: function (s) { return s.activeDays >= 7; } },
-      { icon: "⚡", label: "Sequência 3", desc: "3 dias seguidos", test: function (s) { return s.streak >= 3; } },
-      { icon: "⭐", label: "500 pontos", desc: "500 pts", test: function (s) { return s.pts >= 500; } },
-      { icon: "🌟", label: "1000 pontos", desc: "1000 pts", test: function (s) { return s.pts >= 1000; } }
+      { icon: "sparkles", label: "Começou!", desc: "1º treino", test: function (s) { return s.treinos >= 1; } },
+      { icon: "flame", label: "Pegando o ritmo", desc: "5 treinos", test: function (s) { return s.treinos >= 5; } },
+      { icon: "dumbbell", label: "Dedicado", desc: "15 treinos", test: function (s) { return s.treinos >= 15; } },
+      { icon: "heart-pulse", label: "Cardio na veia", desc: "5 cardios", test: function (s) { return s.cardios >= 5; } },
+      { icon: "calendar-check", label: "Constante", desc: "7 dias ativos", test: function (s) { return s.activeDays >= 7; } },
+      { icon: "zap", label: "Sequência 3", desc: "3 dias seguidos", test: function (s) { return s.streak >= 3; } },
+      { icon: "star", label: "500 pontos", desc: "500 pts", test: function (s) { return s.pts >= 500; } },
+      { icon: "award", label: "1000 pontos", desc: "1000 pts", test: function (s) { return s.pts >= 1000; } }
     ];
     function statsFor(id) {
       const list = state.history[id] || [];
@@ -1283,7 +1343,7 @@
         '<div class="card-foot">' +
           '<div class="sets">' + setsHtml + '</div>' +
           '<div class="foot-actions">' +
-            (DEMOS[ex.nome] ? '<button class="demo-btn" type="button">👁 Demo</button>' : '') +
+            (DEMOS[ex.nome] ? '<button class="demo-btn" type="button">' + icon("eye", 15) + ' Demo</button>' : '') +
             '<a class="video-link" href="' + ytLink(ex.nome) + '" target="_blank" rel="noopener">' + ICON_PLAY + 'Vídeo</a>' +
           '</div>' +
         '</div>';
@@ -1328,7 +1388,7 @@
         if (key === "A" || key === "B" || key === "C") {
           const btn = document.createElement("button");
           btn.className = "conclude";
-          btn.textContent = "✓ Concluir Treino " + key + " de hoje";
+          btn.innerHTML = icon("check") + " Concluir Treino " + key + " de hoje";
           btn.addEventListener("click", function () { concluirTreino(key); });
           const note = document.createElement("p");
           note.className = "panel-note";
@@ -1339,7 +1399,7 @@
         const small = document.querySelector('.tab[data-tab="' + key + '"] small');
         if (small) small.textContent = plan.labels[key];
       });
-      document.getElementById("focus-cap").innerHTML = "🎯 Ficha de <b>" + escapeHtml(activeUser().name) + "</b> · foco em <b>" + plan.focus + "</b>";
+      document.getElementById("focus-cap").innerHTML = icon("target", 14) + " Ficha de <b>" + escapeHtml(activeUser().name) + "</b> · foco em <b>" + plan.focus + "</b>";
     }
 
     function applyChecks() {
@@ -1413,11 +1473,11 @@
         usersEl.appendChild(b);
       });
       const add = document.createElement("button");
-      add.className = "user-edit"; add.title = "Novo perfil"; add.textContent = "+";
+      add.className = "user-edit"; add.title = "Novo perfil"; add.innerHTML = icon("user-plus");
       add.addEventListener("click", addProfile);
       usersEl.appendChild(add);
       const edit = document.createElement("button");
-      edit.className = "user-edit"; edit.title = "Editar perfil ativo"; edit.textContent = "✎";
+      edit.className = "user-edit"; edit.title = "Editar perfil ativo"; edit.innerHTML = icon("pencil");
       edit.addEventListener("click", openProfileEditor);
       usersEl.appendChild(edit);
     }
@@ -1429,12 +1489,12 @@
       if (pend) {
         const b = document.createElement("button");
         b.className = "cardio-btn active";
-        b.innerHTML = "⏹ Terminei " + (pend.emoji || "🏃") + " " + escapeHtml(pend.label) + " · desde " + pend.startHM;
+        b.innerHTML = icon("square", 16) + " Terminei " + (pend.emoji || "") + " " + escapeHtml(pend.label) + " · desde " + pend.startHM;
         b.addEventListener("click", finishCardio);
         wrap.appendChild(b);
         const x = document.createElement("button");
         x.className = "cardio-btn cancel";
-        x.textContent = "✕";
+        x.innerHTML = icon("x", 16);
         x.title = "Cancelar";
         x.addEventListener("click", function () { delete sess().cardio; saveState(); renderCardioButtons(); showToast("Cardio cancelado"); });
         wrap.appendChild(x);
@@ -1456,7 +1516,7 @@
         const o = EQUIPMENT_OPTIONS.find(function (e) { return e.key === k; });
         return o ? o.label : k;
       });
-      document.querySelector(".info-cap").innerHTML = "🏋️ " + (labels.length ? escapeHtml(labels.join(" · ")) : "Sem equipamento (peso do corpo)");
+      document.querySelector(".info-cap").innerHTML = icon("dumbbell", 14) + " " + (labels.length ? escapeHtml(labels.join(" · ")) : "Sem equipamento (peso do corpo)");
     }
 
     function addProfile() {
@@ -1711,12 +1771,12 @@
     function renderRanking() {
       const ranked = state.users.map(function (u) { return { u: u, pts: totalPoints(u.id), week: weekPoints(u.id) }; })
         .sort(function (a, b) { return b.pts - a.pts; });
-      const medals = ["🥇", "🥈", "🥉"];
+      const medalColors = ["#ffd24a", "#cdd3da", "#e0915a"];
       const el = document.getElementById("rank-list");
       el.innerHTML = ranked.map(function (r, i) {
         const me = r.u.id === state.active;
-        const pos = medals[i] || (i + 1) + "º";
-        const btn = me ? "" : '<button class="poke-btn" data-id="' + r.u.id + '">😏 Cutucar</button>';
+        const pos = i < 3 ? '<span style="color:' + medalColors[i] + '">' + icon("medal", 26) + '</span>' : (i + 1) + "º";
+        const btn = me ? "" : '<button class="poke-btn" data-id="' + r.u.id + '">' + icon("hand", 15) + ' Cutucar</button>';
         return '<div class="rank-item' + (me ? " me" : "") + '">' +
           '<span class="rank-pos">' + pos + '</span>' +
           avatarHtml(r.u, 44) +
@@ -1807,7 +1867,7 @@
 
       // conquista de topo
       let topAch = null; ACHIEVEMENTS.forEach(function (a) { if (a.test(st)) topAch = a; });
-      if (topAch) { ctx.fillStyle = "#eef1f5"; ctx.font = '700 34px "Manrope", sans-serif'; ctx.fillText(topAch.icon + "  " + topAch.label, W / 2, 1238); }
+      if (topAch) { ctx.fillStyle = "#eef1f5"; ctx.font = '700 34px "Manrope", sans-serif'; ctx.fillText(topAch.label, W / 2, 1238); }
 
       ctx.fillStyle = "#5a6470"; ctx.font = '600 24px "Manrope", sans-serif'; ctx.fillText("home-gym-tracker · v" + APP_VERSION, W / 2, 1300);
 
@@ -2012,7 +2072,7 @@
       document.getElementById("hist-pts").innerHTML = totalPoints(state.active) + '<small>pontos de ' + escapeHtml(u.name) + '</small>';
       document.getElementById("hist-ach").innerHTML = ACHIEVEMENTS.map(function (a) {
         const on = a.test(st);
-        return '<div class="ach' + (on ? " on" : "") + '"><span class="ico">' + a.icon + '</span><div><div class="t">' + a.label + '</div><div class="d">' + a.desc + '</div></div></div>';
+        return '<div class="ach' + (on ? " on" : "") + '"><span class="ach-ico">' + icon(a.icon, 22) + '</span><div><div class="t">' + a.label + '</div><div class="d">' + a.desc + '</div></div></div>';
       }).join("");
 
       renderCalendar(today, list);
@@ -2044,7 +2104,7 @@
           '<div class="log-item' + (hasDetail ? " has-detail" : "") + '">' +
             '<div class="log-badge ' + w + '">' + badge + '</div>' +
             '<div class="log-info"><div class="d">' + fmtDate(item.e.date) + (timeStr ? ' · ' + timeStr : '') + '</div><div class="w">' + titulo + (hasDetail ? ' <span class="caret">⌄</span>' : '') + '</div></div>' +
-            '<button class="log-del" data-idx="' + item.i + '" aria-label="Remover">🗑</button>' +
+            '<button class="log-del" data-idx="' + item.i + '" aria-label="Remover">' + icon("trash-2", 16) + '</button>' +
           '</div>' +
           (hasDetail ? '<div class="log-detail" hidden><b>Séries:</b> ' + item.e.setsT.join(" · ") + '</div>' : '') +
         '</div>';
@@ -2339,6 +2399,7 @@
     renderInfoCap();
     renderPoints();
     prefetchDemos();
+    hydrateIcons();
     document.getElementById("app-ver").textContent = "v" + APP_VERSION + " · alpha";
     initCloud();
 
