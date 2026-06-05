@@ -13,6 +13,9 @@ create table if not exists public.app_state (
 -- Segurança em nível de linha: cada conta só acessa o próprio registro
 alter table public.app_state enable row level security;
 
+-- Garante que o papel "authenticated" (logado) pode operar na tabela via Data API
+grant select, insert, update on public.app_state to authenticated;
+
 drop policy if exists "own_select" on public.app_state;
 drop policy if exists "own_insert" on public.app_state;
 drop policy if exists "own_update" on public.app_state;
