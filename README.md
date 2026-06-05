@@ -27,6 +27,15 @@ As fichas usam apenas **um par de halteres ajustáveis (30 kg)** e o **peso do c
 
 Os dados (marcações e histórico) ficam no **`localStorage` do navegador de cada aparelho**, separados por perfil. Ou seja: o histórico do celular de uma pessoa **não** sincroniza automaticamente com o de outro aparelho. Os 2 perfis servem para quando o **mesmo** aparelho é usado pelos dois. Para sincronizar entre celulares no futuro, dá para plugar um backend (ex.: Supabase).
 
+## Instalar como app (PWA)
+
+É um **PWA instalável** com ícone próprio (halter), funciona **offline** após a primeira abertura.
+
+- **iPhone (Safari):** abra o link → Compartilhar → **Adicionar à Tela de Início**.
+- **Android (Chrome):** abra o link → menu **⋮** → **Instalar app** / **Adicionar à tela inicial**.
+
+Arquivos do PWA: `manifest.webmanifest`, `sw.js` (service worker) e os ícones PNG (`icon-192`, `icon-512`, `apple-touch-icon`, `favicon`). Ao publicar mudanças, incremente a versão do cache (`hgt-vN`) em `sw.js` para forçar a atualização nos aparelhos.
+
 ## Como rodar
 
 Não há instalação:
