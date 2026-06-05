@@ -73,6 +73,31 @@
       display: inline-flex; align-items: center; gap: 6px; white-space: nowrap;
     }
     .hist-btn:active { border-color: var(--accent); }
+    .head-actions { display: flex; gap: 8px; align-items: center; }
+
+    /* Nuvem / login */
+    .cloud-status { font-size: 13px; color: var(--muted); margin-bottom: 14px; line-height: 1.5; }
+    .cloud-status b { color: var(--text); }
+    .cloud-status .ok { color: var(--done); font-weight: 800; }
+    .field { display: block; margin-bottom: 10px; }
+    .field label { display: block; font-size: 12px; color: var(--muted); font-weight: 700; margin-bottom: 5px; }
+    .field input {
+      width: 100%; appearance: none; border: 1px solid var(--line); background: var(--surface-2);
+      color: var(--text); font-family: 'Manrope', sans-serif; font-size: 15px; padding: 12px 14px; border-radius: 12px;
+    }
+    .field input:focus { outline: none; border-color: var(--accent); }
+    .cloud-primary {
+      width: 100%; appearance: none; border: none; cursor: pointer; margin-top: 6px;
+      font-family: 'Manrope', sans-serif; font-weight: 800; font-size: 15px;
+      padding: 14px; border-radius: 12px; color: var(--bg); background: var(--accent);
+    }
+    .cloud-primary:active { filter: brightness(0.9); }
+    .cloud-secondary {
+      width: 100%; appearance: none; cursor: pointer; margin-top: 8px;
+      border: 1px solid var(--line); background: var(--surface); color: var(--text);
+      font-family: 'Manrope', sans-serif; font-weight: 800; font-size: 14px; padding: 12px; border-radius: 12px;
+    }
+    .cloud-note { font-size: 12px; color: var(--muted); margin-top: 12px; line-height: 1.5; }
 
     /* ---------- User switcher ---------- */
     .users {
@@ -305,7 +330,10 @@
   <header>
     <div class="brand">
       <h1>HOME <span class="hl">GYM</span></h1>
-      <button class="hist-btn" id="open-hist">📅 Histórico</button>
+      <div class="head-actions">
+        <button class="hist-btn" id="open-cloud" hidden>☁️</button>
+        <button class="hist-btn" id="open-hist">📅 Histórico</button>
+      </div>
     </div>
     <div class="users" id="users"></div>
     <div class="focus-cap" id="focus-cap"></div>
@@ -377,7 +405,42 @@
     </div>
   </div>
 
+  <!-- Cloud / login overlay -->
+  <div class="overlay" id="cloud-overlay" hidden>
+    <div class="sheet">
+      <div class="sheet-head">
+        <h2>☁️ Sincronização</h2>
+        <button id="close-cloud" aria-label="Fechar">✕</button>
+      </div>
+      <div class="cloud-status" id="cloud-status"></div>
+
+      <!-- estado: deslogado -->
+      <div id="cloud-login">
+        <div class="field"><label for="cloud-email">Email da conta compartilhada</label><input id="cloud-email" type="email" autocomplete="username" inputmode="email" placeholder="voces@email.com" /></div>
+        <div class="field"><label for="cloud-pass">Senha</label><input id="cloud-pass" type="password" autocomplete="current-password" placeholder="••••••••" /></div>
+        <button class="cloud-primary" id="cloud-signin">Entrar e sincronizar</button>
+      </div>
+
+      <!-- estado: logado -->
+      <div id="cloud-account" hidden>
+        <button class="cloud-primary" id="cloud-sync-now">↻ Sincronizar agora</button>
+        <button class="cloud-secondary" id="cloud-signout">Sair desta conta</button>
+      </div>
+
+      <p class="cloud-note">Use o <b>mesmo email e senha</b> nos dois celulares para que o histórico fique igual nos dois. Os dados são protegidos por regras de acesso (RLS) — só quem está logado vê.</p>
+    </div>
+  </div>
+
+  <script src="./supabase.min.js"></script>
   <script>
+    /* =====================================================================
+       CONFIGURAÇÃO DA NUVEM (Supabase)
+       Cole aqui o Project URL e a anon key (Supabase → Settings → API).
+       Deixe em branco para usar só localmente (sem sincronização).
+    ===================================================================== */
+    const SUPABASE_URL = "";
+    const SUPABASE_ANON_KEY = "";
+
     /* =====================================================================
        FICHAS POR PERFIL
        Cada perfil tem o seu próprio treino, com foco diferente.
@@ -498,7 +561,8 @@
       } catch (e) {}
       return JSON.parse(JSON.stringify(DEFAULT_STATE));
     }
-    function saveState() { try { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); } catch (e) {} }
+    function saveLocal() { try { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); } catch (e) {} }
+    function saveState() { saveLocal(); if (typeof pushToCloud === "function") pushToCloud(false); }
 
     let state = loadState();
 
@@ -870,6 +934,124 @@
     });
 
     /* =====================================================================
+       SINCRONIZAÇÃO NA NUVEM (Supabase) — conta compartilhada
+    ===================================================================== */
+    var sb = null;          // cliente supabase
+    var cloudUser = null;   // usuário autenticado
+    var pushTimer = null;
+
+    function cloudConfigured() { return !!(SUPABASE_URL && SUPABASE_ANON_KEY && window.supabase); }
+
+    function applyRemoteState(remote) {
+      if (!remote || !Array.isArray(remote.users)) return false;
+      state = remote;
+      state.checks = state.checks || {};
+      state.history = state.history || {};
+      if (!state.users.some(function (u) { return u.id === state.active; })) state.active = state.users[0].id;
+      saveLocal();
+      applyTheme(); renderUsers(); buildPanels(); applyChecks(); setFillColor();
+      if (!document.getElementById("overlay").hidden) renderHistory();
+      return true;
+    }
+
+    async function pullFromCloud(initial) {
+      if (!sb || !cloudUser) return;
+      try {
+        const res = await sb.from("app_state").select("data").eq("user_id", cloudUser.id).maybeSingle();
+        if (res.error) throw res.error;
+        if (res.data && res.data.data && Array.isArray(res.data.data.users)) {
+          applyRemoteState(res.data.data);
+          if (initial) showToast("Sincronizado da nuvem ☁️");
+        } else if (initial) {
+          pushToCloud(true); // nuvem vazia: envia o que já existe localmente
+          showToast("Nuvem ligada — dados enviados ☁️");
+        }
+      } catch (e) {
+        showToast("Erro ao puxar da nuvem ❌");
+      }
+      updateCloudUI();
+    }
+
+    function pushToCloud(immediate) {
+      if (!sb || !cloudUser) return;
+      clearTimeout(pushTimer);
+      const doPush = function () {
+        sb.from("app_state").upsert({ user_id: cloudUser.id, data: state, updated_at: new Date().toISOString() })
+          .then(function (res) { if (res.error) showToast("Erro ao salvar na nuvem ❌"); });
+      };
+      if (immediate) doPush(); else pushTimer = setTimeout(doPush, 1500);
+    }
+
+    function updateCloudUI() {
+      const btn = document.getElementById("open-cloud");
+      const statusEl = document.getElementById("cloud-status");
+      const loginBox = document.getElementById("cloud-login");
+      const accountBox = document.getElementById("cloud-account");
+      if (!cloudConfigured()) { btn.hidden = true; return; }
+      btn.hidden = false;
+      if (cloudUser) {
+        btn.textContent = "☁️✓";
+        statusEl.innerHTML = "Conectado como <b>" + escapeHtml(cloudUser.email || "conta") + "</b> · <span class=\"ok\">sincronizando</span>";
+        loginBox.hidden = true;
+        accountBox.hidden = false;
+      } else {
+        btn.textContent = "☁️";
+        statusEl.innerHTML = "Entre com a <b>mesma conta</b> nos dois celulares para o histórico ficar igual.";
+        loginBox.hidden = false;
+        accountBox.hidden = true;
+      }
+    }
+
+    function initCloud() {
+      if (!cloudConfigured()) { updateCloudUI(); return; }
+      sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+      sb.auth.getSession().then(function (res) {
+        cloudUser = (res.data && res.data.session) ? res.data.session.user : null;
+        updateCloudUI();
+        if (cloudUser) pullFromCloud(true);
+      });
+      sb.auth.onAuthStateChange(function (_evt, session) {
+        cloudUser = session ? session.user : null;
+        updateCloudUI();
+      });
+      document.addEventListener("visibilitychange", function () {
+        if (!document.hidden && cloudUser) pullFromCloud(false);
+      });
+    }
+
+    const cloudOverlay = document.getElementById("cloud-overlay");
+    document.getElementById("open-cloud").addEventListener("click", function () { updateCloudUI(); cloudOverlay.hidden = false; });
+    document.getElementById("close-cloud").addEventListener("click", function () { cloudOverlay.hidden = true; });
+    cloudOverlay.addEventListener("click", function (e) { if (e.target === cloudOverlay) cloudOverlay.hidden = true; });
+
+    document.getElementById("cloud-signin").addEventListener("click", async function () {
+      if (!sb) { showToast("Sincronização não configurada"); return; }
+      const email = document.getElementById("cloud-email").value.trim();
+      const pass = document.getElementById("cloud-pass").value;
+      if (!email || !pass) { showToast("Preencha email e senha"); return; }
+      const btn = this; btn.disabled = true; btn.textContent = "Entrando...";
+      try {
+        const res = await sb.auth.signInWithPassword({ email: email, password: pass });
+        if (res.error) throw res.error;
+        cloudUser = res.data.user;
+        document.getElementById("cloud-pass").value = "";
+        updateCloudUI();
+        await pullFromCloud(true);
+      } catch (e) {
+        showToast("Login falhou: " + (e.message || "verifique os dados"));
+      }
+      btn.disabled = false; btn.textContent = "Entrar e sincronizar";
+    });
+
+    document.getElementById("cloud-sync-now").addEventListener("click", function () { pullFromCloud(true); });
+    document.getElementById("cloud-signout").addEventListener("click", async function () {
+      if (sb) await sb.auth.signOut();
+      cloudUser = null;
+      updateCloudUI();
+      showToast("Saiu da conta");
+    });
+
+    /* =====================================================================
        TIMER DE DESCANSO
     ===================================================================== */
     const clock = document.getElementById("clock");
@@ -905,6 +1087,7 @@
     buildPanels();
     applyChecks();
     setFillColor();
+    initCloud();
 
     /* Service worker — habilita instalação como app e uso offline */
     if ("serviceWorker" in navigator) {
