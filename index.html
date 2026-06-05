@@ -595,6 +595,16 @@
     </div>
   </div>
 
+  <!-- Cardio: começar agora ou já fiz -->
+  <div class="overlay" id="cardio-choice-overlay" hidden>
+    <div class="sheet">
+      <p class="confirm-msg" id="cardio-choice-msg"></p>
+      <button class="cloud-primary" id="cardio-choice-start">▶ Começar agora (cronometrar)</button>
+      <button class="cloud-secondary" id="cardio-choice-done" style="margin-top:10px">✓ Já fiz (registrar)</button>
+      <button class="cloud-secondary" id="cardio-choice-cancel" style="margin-top:10px">Cancelar</button>
+    </div>
+  </div>
+
   <!-- Adicionar tipo de cardio -->
   <div class="overlay" id="cardio-add-overlay" hidden>
     <div class="sheet">
@@ -1375,8 +1385,8 @@
         cardios.forEach(function (c) {
           const b = document.createElement("button");
           b.className = "cardio-btn";
-          b.innerHTML = "▶ " + (c.emoji || "🏃") + " " + escapeHtml(c.label);
-          b.addEventListener("click", function () { startCardio(c.label, c.emoji); });
+          b.innerHTML = (c.emoji || "🏃") + " " + escapeHtml(c.label);
+          b.addEventListener("click", function () { openCardioChoice(c.label, c.emoji); });
           wrap.appendChild(b);
         });
       }
@@ -1705,12 +1715,14 @@
       state.history[id] = state.history[id] || [];
       const s = sess()[key];
       const entry = { date: todayISO(), w: key };
+      const setPts = (s ? s.sets.length : 0) * PTS_SET;
       if (s) {
         entry.start = s.startHM; entry.end = hmNow();
         entry.dur = Math.max(1, Math.round((Date.now() - s.start) / 60000));
         entry.setsT = s.sets;
         delete sess()[key];
       }
+      entry.pts = PTS_TREINO + setPts; // pontos do treino + das séries (pra descontar se apagar)
       state.history[id].push(entry);
       const c = checksFor();
       c[key] = {};
@@ -1734,7 +1746,7 @@
       if (!c) return;
       const id = state.active;
       state.history[id] = state.history[id] || [];
-      state.history[id].push({ date: todayISO(), w: "cardio", t: c.label, emoji: c.emoji, start: c.startHM, end: hmNow(), dur: Math.max(1, Math.round((Date.now() - c.start) / 60000)) });
+      state.history[id].push({ date: todayISO(), w: "cardio", t: c.label, emoji: c.emoji, start: c.startHM, end: hmNow(), dur: Math.max(1, Math.round((Date.now() - c.start) / 60000)), pts: PTS_CARDIO });
       delete sess().cardio;
       addPoints(PTS_CARDIO);
       saveState();
@@ -1743,6 +1755,25 @@
       renderCardioButtons();
       showToast((c.emoji || "🏃") + " " + c.label + " · +" + PTS_CARDIO + " pts!");
     }
+    function logCardioDone(label, emoji) {
+      const id = state.active;
+      state.history[id] = state.history[id] || [];
+      state.history[id].push({ date: todayISO(), w: "cardio", t: label, emoji: emoji, pts: PTS_CARDIO });
+      addPoints(PTS_CARDIO);
+      saveState(); playSound("win"); renderPoints();
+      showToast((emoji || "🏃") + " " + label + " · +" + PTS_CARDIO + " pts!");
+    }
+    let cardioChoice = null;
+    const cardioChoiceOverlay = document.getElementById("cardio-choice-overlay");
+    function openCardioChoice(label, emoji) {
+      cardioChoice = { label: label, emoji: emoji };
+      document.getElementById("cardio-choice-msg").textContent = (emoji || "🏃") + " " + label;
+      cardioChoiceOverlay.hidden = false;
+    }
+    document.getElementById("cardio-choice-start").addEventListener("click", function () { const c = cardioChoice; cardioChoiceOverlay.hidden = true; if (c) startCardio(c.label, c.emoji); });
+    document.getElementById("cardio-choice-done").addEventListener("click", function () { const c = cardioChoice; cardioChoiceOverlay.hidden = true; if (c) logCardioDone(c.label, c.emoji); });
+    document.getElementById("cardio-choice-cancel").addEventListener("click", function () { cardioChoiceOverlay.hidden = true; });
+    cardioChoiceOverlay.addEventListener("click", function (e) { if (e.target === cardioChoiceOverlay) cardioChoiceOverlay.hidden = true; });
 
     const toastEl = document.getElementById("toast");
     let toastTimer = null;
@@ -1824,9 +1855,16 @@
         btn.addEventListener("click", function (e) {
           e.stopPropagation();
           const idx = parseInt(btn.dataset.idx, 10);
-          state.history[state.active].splice(idx, 1);
+          const removed = state.history[state.active].splice(idx, 1)[0];
+          if (removed) {
+            const pts = (removed.pts != null) ? removed.pts
+              : (removed.w === "cardio" ? PTS_CARDIO : PTS_TREINO + (removed.setsT ? removed.setsT.length : 0) * PTS_SET);
+            const sc = scoreOf(state.active);
+            sc.byDay[removed.date] = Math.max(0, (sc.byDay[removed.date] || 0) - pts);
+          }
           saveState();
           renderHistory();
+          renderPoints();
         });
       });
       logEl.querySelectorAll(".log-item.has-detail").forEach(function (it) {
