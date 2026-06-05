@@ -32,6 +32,7 @@
       --accent-dim: #97c916;
       --a-color: #c6ff3a;
       --b-color: #3ad1ff;
+      --c-color: #a78bfa;
       --warm-color: #ff8a3a;
       --done: #2f8f3a;
       --radius: 16px;
@@ -111,20 +112,21 @@
 
     /* ---------- Tabs ---------- */
     .tabs {
-      display: flex; gap: 8px; max-width: 640px; margin: 14px auto 0;
+      display: flex; gap: 6px; max-width: 640px; margin: 14px auto 0;
       padding: 8px 16px; position: sticky; top: 0; z-index: 19;
       background: linear-gradient(180deg, var(--bg) 80%, transparent);
     }
     .tab {
-      flex: 1; appearance: none; border: 1px solid var(--line); background: var(--surface);
+      flex: 1; min-width: 0; appearance: none; border: 1px solid var(--line); background: var(--surface);
       color: var(--muted); font-family: 'Manrope', sans-serif; font-weight: 800;
-      font-size: 13px; text-transform: uppercase; letter-spacing: 0.6px;
-      padding: 12px 8px; border-radius: 12px; cursor: pointer; transition: all 0.18s ease;
+      font-size: 12px; text-transform: uppercase; letter-spacing: 0.3px;
+      padding: 11px 4px; border-radius: 12px; cursor: pointer; transition: all 0.18s ease;
     }
-    .tab small { display: block; font-size: 10px; font-weight: 600; opacity: 0.7; letter-spacing: 0.3px; text-transform: none; }
+    .tab small { display: block; font-size: 9px; font-weight: 600; opacity: 0.7; letter-spacing: 0.2px; text-transform: none; line-height: 1.25; margin-top: 2px; }
     .tab.active { color: var(--bg); }
     .tab[data-tab="A"].active { background: var(--a-color); border-color: var(--a-color); }
     .tab[data-tab="B"].active { background: var(--b-color); border-color: var(--b-color); }
+    .tab[data-tab="C"].active { background: var(--c-color); border-color: var(--c-color); }
     .tab[data-tab="warm"].active { background: var(--warm-color); border-color: var(--warm-color); }
 
     /* ---------- Progress ---------- */
@@ -149,6 +151,7 @@
     .card::before { content: ""; position: absolute; left: 0; top: 0; bottom: 0; width: 4px; background: var(--accent); }
     .panel[data-panel="A"] .card::before { background: var(--a-color); }
     .panel[data-panel="B"] .card::before { background: var(--b-color); }
+    .panel[data-panel="C"] .card::before { background: var(--c-color); }
     .panel[data-panel="warm"] .card::before { background: var(--warm-color); }
     .card.complete { border-color: var(--done); }
     .card.complete::before { background: var(--done); }
@@ -159,6 +162,7 @@
     .scheme { font-family: 'Anton', sans-serif; font-size: 19px; letter-spacing: 0.5px; color: var(--accent); white-space: nowrap; }
     .panel[data-panel="A"] .scheme { color: var(--a-color); }
     .panel[data-panel="B"] .scheme { color: var(--b-color); }
+    .panel[data-panel="C"] .scheme { color: var(--c-color); }
     .panel[data-panel="warm"] .scheme { color: var(--warm-color); }
 
     .tip { margin-top: 10px; font-size: 13.5px; color: var(--muted); background: var(--surface-2); border-radius: 10px; padding: 9px 11px; }
@@ -195,6 +199,7 @@
     }
     .panel[data-panel="A"] .conclude { background: var(--a-color); }
     .panel[data-panel="B"] .conclude { background: var(--b-color); }
+    .panel[data-panel="C"] .conclude { background: var(--c-color); }
     .conclude:active { filter: brightness(0.9); }
     .panel-note { font-size: 12.5px; color: var(--muted); text-align: center; margin-top: 6px; }
 
@@ -266,20 +271,23 @@
     .cal-marks i { width: 5px; height: 5px; border-radius: 50%; display: block; }
     .cal-marks i.A { background: var(--a-color); }
     .cal-marks i.B { background: var(--b-color); }
-    .cal-marks i.C { background: var(--warm-color); }
-    .cal-legend { display: flex; flex-wrap: wrap; gap: 12px; justify-content: center; margin-top: 12px; font-size: 11px; color: var(--muted); font-weight: 600; }
+    .cal-marks i.C { background: var(--c-color); }
+    .cal-marks i.cardio { background: var(--warm-color); }
+    .cal-legend { display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; margin-top: 12px; font-size: 11px; color: var(--muted); font-weight: 600; }
     .cal-legend span { display: inline-flex; align-items: center; gap: 5px; }
     .cal-legend i { width: 8px; height: 8px; border-radius: 50%; display: block; }
     .cal-legend i.A { background: var(--a-color); }
     .cal-legend i.B { background: var(--b-color); }
-    .cal-legend i.C { background: var(--warm-color); }
+    .cal-legend i.C { background: var(--c-color); }
+    .cal-legend i.cardio { background: var(--warm-color); }
 
     .log h3, .sheet h3 { font-size: 13px; text-transform: uppercase; letter-spacing: 0.6px; color: var(--muted); margin: 4px 0 10px; }
     .log-item { display: flex; align-items: center; gap: 12px; padding: 12px 14px; background: var(--surface); border: 1px solid var(--line); border-radius: 12px; margin-bottom: 8px; }
     .log-badge { font-family: 'Anton', sans-serif; font-size: 16px; width: 34px; height: 34px; border-radius: 9px; display: flex; align-items: center; justify-content: center; color: var(--bg); flex-shrink: 0; }
     .log-badge.A { background: var(--a-color); }
     .log-badge.B { background: var(--b-color); }
-    .log-badge.C { background: var(--warm-color); }
+    .log-badge.C { background: var(--c-color); }
+    .log-badge.cardio { background: var(--warm-color); }
     .log-info { flex: 1; }
     .log-info .d { font-weight: 700; font-size: 14px; }
     .log-info .w { font-size: 12px; color: var(--muted); }
@@ -311,7 +319,8 @@
   <nav class="tabs" id="tabs">
     <button class="tab active" data-tab="A">Treino A<small></small></button>
     <button class="tab" data-tab="B">Treino B<small></small></button>
-    <button class="tab" data-tab="warm">Aquecimento<small>Prepara o corpo</small></button>
+    <button class="tab" data-tab="C">Treino C<small></small></button>
+    <button class="tab" data-tab="warm">Aquec.<small>Prepara o corpo</small></button>
   </nav>
 
   <div class="progress">
@@ -322,6 +331,7 @@
   <main class="wrap">
     <section class="panel active" data-panel="A"></section>
     <section class="panel" data-panel="B"></section>
+    <section class="panel" data-panel="C"></section>
     <section class="panel" data-panel="warm"></section>
   </main>
 
@@ -391,7 +401,7 @@
       // Equipamento: halteres ajustáveis (30 kg) + peso do corpo. Sem banco nem barra fixa.
       u1: {
         focus: "Peito",
-        labels: { A: "Peito + Empurrar", B: "Puxar + Pernas", warm: "Prepara o corpo" },
+        labels: { A: "Peito + Empurrar", B: "Puxar + Pernas", C: "Pernas completo", warm: "Prepara o corpo" },
         treinos: {
           A: [
             { nome: "Supino no chão (floor press) com halteres", musculo: "Peito", series: 4, reps: "10", dica: "Deitado no chão, um halter em cada mão. Empurre até esticar os braços e desça até o cotovelo tocar o chão." },
@@ -410,6 +420,15 @@
             { nome: "Afundo com halteres", musculo: "Quadríceps / Glúteo", series: 3, reps: "10/perna", dica: "Um halter em cada mão. Passo largo, tronco vertical, joelho de trás desce em direção ao chão." },
             { nome: "Rosca direta com halteres", musculo: "Bíceps", series: 3, reps: "12", dica: "Cotovelos fixos ao lado do corpo. Suba sem usar impulso dos ombros." },
             { nome: "Elevação de pernas", musculo: "Core", series: 3, reps: "15", dica: "Lombar colada no chão. Suba as pernas controlando, sem dar impulso." }
+          ],
+          C: [
+            { nome: "Agachamento Goblet", musculo: "Quadríceps / Glúteo", series: 4, reps: "12", dica: "Halter colado ao peito, peito erguido. Desça até as coxas ficarem paralelas ao chão." },
+            { nome: "Afundo búlgaro com halteres", musculo: "Quadríceps / Glúteo", series: 3, reps: "10/perna", dica: "Pé de trás apoiado no sofá/cadeira. Desça reto, foco na perna da frente." },
+            { nome: "Stiff com halteres", musculo: "Posterior", series: 4, reps: "12", dica: "Quadril pra trás, pernas quase retas, costas neutras. Sinta o posterior alongar." },
+            { nome: "Agachamento sumô com halter", musculo: "Adutor / Glúteo", series: 3, reps: "15", dica: "Pés afastados e pontas pra fora, segurando um halter entre as pernas." },
+            { nome: "Elevação de panturrilha com halteres", musculo: "Panturrilha", series: 4, reps: "20", dica: "Em pé, suba na ponta dos pés o máximo possível e desça controlando." },
+            { nome: "Prancha", musculo: "Core", series: 3, reps: "40s", dica: "Corpo numa linha reta, glúteo e abdômen contraídos." },
+            { nome: "Abdominal bicicleta", musculo: "Core", series: 3, reps: "20", dica: "Cotovelo em direção ao joelho oposto, movimento controlado." }
           ]
         }
       },
@@ -417,7 +436,7 @@
       // Equipamento: halteres ajustáveis (30 kg) + peso do corpo. Sem banco nem barra fixa.
       u2: {
         focus: "Glúteos",
-        labels: { A: "Glúteos + Posterior", B: "Superior + Core", warm: "Prepara o corpo" },
+        labels: { A: "Glúteos + Posterior", B: "Superior + Core", C: "Glúteo + Core", warm: "Prepara o corpo" },
         treinos: {
           A: [
             { nome: "Hip thrust (apoio no sofá)", musculo: "Glúteo", series: 4, reps: "15", dica: "Costas apoiadas na beira do sofá, um halter sobre o quadril. Suba e aperte o glúteo no topo por 1s." },
@@ -436,6 +455,15 @@
             { nome: "Elevação pélvica unilateral", musculo: "Glúteo", series: 3, reps: "12/perna", dica: "Deitada, uma perna estendida. Suba o quadril com a outra perna apertando o glúteo." },
             { nome: "Abdominal bicicleta", musculo: "Core", series: 3, reps: "20", dica: "Cotovelo em direção ao joelho oposto, movimento controlado." },
             { nome: "Prancha", musculo: "Core", series: 3, reps: "40s", dica: "Linha reta da cabeça aos pés, abdômen firme." }
+          ],
+          C: [
+            { nome: "Agachamento sumô com halter", musculo: "Glúteo / Adutor", series: 4, reps: "15", dica: "Pés afastados e pontas pra fora, halter entre as pernas. Desça com os joelhos abertos." },
+            { nome: "Hip thrust (apoio no sofá)", musculo: "Glúteo", series: 4, reps: "15", dica: "Costas na beira do sofá, halter sobre o quadril. Aperte o glúteo no topo por 1s." },
+            { nome: "Coice de glúteo (kickback)", musculo: "Glúteo", series: 3, reps: "15/perna", dica: "Em quatro apoios, empurre o calcanhar pro teto contraindo o glúteo no topo." },
+            { nome: "Abdução de quadril", musculo: "Glúteo médio", series: 3, reps: "20", dica: "Deitada de lado, abra a perna de cima controlando. Pode apoiar um halter na coxa." },
+            { nome: "Elevação de panturrilha", musculo: "Panturrilha", series: 4, reps: "20", dica: "Na ponta dos pés, suba o máximo e desça devagar. Segure halteres pra dificultar." },
+            { nome: "Prancha", musculo: "Core", series: 3, reps: "40s", dica: "Linha reta da cabeça aos pés, abdômen firme." },
+            { nome: "Abdominal bicicleta", musculo: "Core", series: 3, reps: "20", dica: "Cotovelo em direção ao joelho oposto, movimento controlado." }
           ]
         }
       }
@@ -458,7 +486,15 @@
     function loadState() {
       try {
         const raw = JSON.parse(localStorage.getItem(STORAGE_KEY));
-        if (raw && Array.isArray(raw.users)) return raw;
+        if (raw && Array.isArray(raw.users)) {
+          // migração: cardio antigo era w:"C" (tinha campo t); Treino C agora também usa "C"
+          if (raw.history) {
+            Object.keys(raw.history).forEach(function (uid) {
+              (raw.history[uid] || []).forEach(function (e) { if (e.w === "C" && e.t) e.w = "cardio"; });
+            });
+          }
+          return raw;
+        }
       } catch (e) {}
       return JSON.parse(JSON.stringify(DEFAULT_STATE));
     }
@@ -482,8 +518,8 @@
 
     // Paleta por perfil: Talys (verde) x Andressa (rosa/feminino)
     const THEMES = {
-      u1: { accent: "#c6ff3a", a: "#c6ff3a", b: "#3ad1ff", warm: "#ff8a3a" },
-      u2: { accent: "#ff5fa8", a: "#ff5fa8", b: "#c98bff", warm: "#ff8ab0" }
+      u1: { accent: "#c6ff3a", a: "#c6ff3a", b: "#3ad1ff", c: "#a78bfa", warm: "#ff8a3a" },
+      u2: { accent: "#ff5fa8", a: "#ff5fa8", b: "#c98bff", c: "#5ed4c0", warm: "#ff8ab0" }
     };
     function applyTheme() {
       const t = THEMES[state.active] || THEMES.u1;
@@ -491,10 +527,11 @@
       s.setProperty("--accent", t.accent);
       s.setProperty("--a-color", t.a);
       s.setProperty("--b-color", t.b);
+      s.setProperty("--c-color", t.c);
       s.setProperty("--warm-color", t.warm);
     }
     function setFillColor() {
-      const v = activeTab === "A" ? "--a-color" : activeTab === "B" ? "--b-color" : "--warm-color";
+      const v = activeTab === "A" ? "--a-color" : activeTab === "B" ? "--b-color" : activeTab === "C" ? "--c-color" : "--warm-color";
       fill.style.background = getComputedStyle(document.documentElement).getPropertyValue(v);
     }
 
@@ -549,11 +586,11 @@
     // Reconstrói as 3 abas com a ficha do perfil ativo
     function buildPanels() {
       const plan = activePlan();
-      ["A", "B", "warm"].forEach(function (key) {
+      ["A", "B", "C", "warm"].forEach(function (key) {
         const panel = document.querySelector('.panel[data-panel="' + key + '"]');
         panel.innerHTML = "";
         plan.treinos[key].forEach(function (ex, idx) { panel.appendChild(buildCard(ex, key, idx)); });
-        if (key === "A" || key === "B") {
+        if (key === "A" || key === "B" || key === "C") {
           const btn = document.createElement("button");
           btn.className = "conclude";
           btn.textContent = "✓ Concluir Treino " + key + " de hoje";
@@ -667,7 +704,7 @@
     function registrarCardio(tipo) {
       const id = state.active;
       state.history[id] = state.history[id] || [];
-      state.history[id].push({ date: todayISO(), w: "C", t: tipo });
+      state.history[id].push({ date: todayISO(), w: "cardio", t: tipo });
       saveState();
       const emoji = tipo === "natacao" ? "🏊" : "🏃";
       const nome = tipo === "natacao" ? "Natação" : "Corrida";
@@ -724,7 +761,7 @@
       logEl.innerHTML = sorted.map(function (item) {
         const w = item.e.w;
         let titulo, badge;
-        if (w === "C") {
+        if (w === "cardio") {
           const nada = item.e.t === "natacao";
           titulo = "Cardio · " + (nada ? "Natação na praia" : "Corrida na praia");
           badge = nada ? "🏊" : "🏃";
@@ -774,11 +811,16 @@
         const marks = byDay[d];
         const dateStr = monthKey + "-" + String(d).padStart(2, "0");
         let mh = "";
-        if (marks) { if (marks.A) mh += '<i class="A"></i>'; if (marks.B) mh += '<i class="B"></i>'; }
+        if (marks) {
+          if (marks.A) mh += '<i class="A"></i>';
+          if (marks.B) mh += '<i class="B"></i>';
+          if (marks.C) mh += '<i class="C"></i>';
+          if (marks.cardio) mh += '<i class="cardio"></i>';
+        }
         html += '<div class="cal-day' + (marks ? " has" : "") + (dateStr === todayStr ? " today" : "") + '">' + d + '<div class="cal-marks">' + mh + '</div></div>';
       }
       html += '</div>';
-      html += '<div class="cal-legend"><span><i class="A"></i>Treino A</span><span><i class="B"></i>Treino B</span><span><i class="C"></i>Cardio</span></div>';
+      html += '<div class="cal-legend"><span><i class="A"></i>Treino A</span><span><i class="B"></i>Treino B</span><span><i class="C"></i>Treino C</span><span><i class="cardio"></i>Cardio</span></div>';
       document.getElementById("hist-cal").innerHTML = html;
     }
 
