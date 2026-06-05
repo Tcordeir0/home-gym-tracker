@@ -99,6 +99,23 @@
     }
     .cloud-note { font-size: 12px; color: var(--muted); margin-top: 12px; line-height: 1.5; }
 
+    /* Porta de login */
+    .gate { position: fixed; inset: 0; z-index: 100; background: var(--bg); display: flex; align-items: center; justify-content: center; padding: 24px; }
+    .gate[hidden] { display: none; }
+    .gate-inner { width: 100%; max-width: 380px; }
+    .gate-logo { font-family: 'Anton', sans-serif; font-size: clamp(40px, 14vw, 64px); text-transform: uppercase; letter-spacing: 0.5px; line-height: 0.95; margin-bottom: 6px; }
+    .gate-logo .hl { color: var(--accent); }
+    .gate-sub { color: var(--muted); font-size: 14px; margin-bottom: 22px; }
+    .gate-note { font-size: 12px; color: var(--muted); margin-top: 14px; text-align: center; line-height: 1.5; }
+
+    /* Confirmação / diálogos */
+    .confirm-msg { font-size: 15.5px; line-height: 1.5; padding: 6px 2px 4px; }
+    .confirm-actions { display: flex; gap: 10px; margin-top: 18px; }
+    .confirm-actions button { flex: 1; margin: 0; }
+    /* Empilhamento: telas abertas por cima do editor de perfil */
+    #gen-overlay, #cardio-add-overlay { z-index: 80; }
+    #confirm-overlay { z-index: 90; }
+
     /* Editor de perfil */
     .swatches { display: flex; flex-wrap: wrap; gap: 10px; }
     .swatch { width: 38px; height: 38px; border-radius: 50%; cursor: pointer; border: 2px solid var(--line); padding: 0; transition: transform 0.1s ease; }
@@ -306,6 +323,7 @@
 
     footer.credit { text-align: center; color: var(--muted); font-size: 12px; padding: 24px 16px 8px; }
     footer.credit a { color: var(--muted); }
+    footer.credit .ver { font-size: 11px; opacity: 0.7; margin-top: 4px; letter-spacing: 0.5px; }
 
     /* ---------- Toast ---------- */
     .toast {
@@ -413,6 +431,7 @@
 
   <footer class="credit">
     Feito por <a href="https://github.com/Tcordeir0" target="_blank" rel="noopener">Talys Cordeiro</a> · treine seguro 💪
+    <div class="ver" id="app-ver"></div>
   </footer>
 
   <!-- Rest Timer -->
@@ -500,6 +519,39 @@
     </div>
   </div>
 
+  <!-- Porta de login (obrigatória) -->
+  <div class="gate" id="gate" hidden>
+    <div class="gate-inner">
+      <h1 class="gate-logo">HOME <span class="hl">GYM</span></h1>
+      <p class="gate-sub">Entre para acessar os perfis e o histórico.</p>
+      <div class="field"><label for="gate-email">Email</label><input id="gate-email" type="email" autocomplete="username" inputmode="email" placeholder="voces@email.com" /></div>
+      <div class="field"><label for="gate-pass">Senha</label><input id="gate-pass" type="password" autocomplete="current-password" placeholder="••••••••" /></div>
+      <button class="cloud-primary" id="gate-signin">Entrar</button>
+      <p class="gate-note">Você só precisa entrar uma vez neste aparelho — depois fica salvo.</p>
+    </div>
+  </div>
+
+  <!-- Confirmação estilizada -->
+  <div class="overlay" id="confirm-overlay" hidden>
+    <div class="sheet">
+      <p class="confirm-msg" id="confirm-msg"></p>
+      <div class="confirm-actions">
+        <button class="cloud-secondary" id="confirm-no">Cancelar</button>
+        <button class="cloud-primary" id="confirm-yes">Confirmar</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Adicionar tipo de cardio -->
+  <div class="overlay" id="cardio-add-overlay" hidden>
+    <div class="sheet">
+      <div class="sheet-head"><h2>Novo cardio</h2><button id="cardio-add-close" aria-label="Fechar">✕</button></div>
+      <div class="field"><label for="cardio-add-name">Nome</label><input id="cardio-add-name" maxlength="18" placeholder="Ex.: Bicicleta, Caminhada" /></div>
+      <div class="field"><label for="cardio-add-emoji">Emoji</label><input id="cardio-add-emoji" maxlength="3" placeholder="🚴" /></div>
+      <button class="cloud-primary" id="cardio-add-ok">Adicionar</button>
+    </div>
+  </div>
+
   <!-- Visualizador de demonstração -->
   <div class="overlay" id="demo-overlay" hidden>
     <div class="sheet">
@@ -540,6 +592,9 @@
     ===================================================================== */
     const SUPABASE_URL = "https://mtbdbahmwbjmmuljvxfn.supabase.co";
     const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im10YmRiYWhtd2JqbW11bGp2eGZuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODA2ODg2MzksImV4cCI6MjA5NjI2NDYzOX0.SJ9Upx2cXeA84LGomHh8nJnIha-s2Rl1Jv0AFM1kiFI";
+
+    // Versão do app (atualizada automaticamente pelo release-please)
+    const APP_VERSION = "0.1.0"; // x-release-please-version
 
     /* =====================================================================
        FICHAS POR PERFIL
@@ -1232,20 +1287,14 @@
       profOverlay.hidden = true;
     }
 
-    document.getElementById("prof-add-cardio").addEventListener("click", function () {
-      const label = prompt("Nome do cardio (ex.: Bicicleta, Caminhada, Pular corda):");
-      if (!label || !label.trim()) return;
-      const emoji = (prompt("Um emoji (ex.: 🚴 🚶 🤸 🏃):", "🏃") || "🏃").trim().slice(0, 3);
-      editCardios.push({ label: label.trim().slice(0, 18), emoji: emoji });
-      renderProfCardios();
-    });
+    document.getElementById("prof-add-cardio").addEventListener("click", openCardioAdd);
     document.getElementById("prof-save").addEventListener("click", function () { commitProfileEditor(); showToast("Perfil salvo! ✅"); });
     document.getElementById("close-prof").addEventListener("click", commitProfileEditor);
     profOverlay.addEventListener("click", function (e) { if (e.target === profOverlay) commitProfileEditor(); });
-    document.getElementById("prof-delete").addEventListener("click", function () {
+    document.getElementById("prof-delete").addEventListener("click", async function () {
       if (state.users.length <= 1) return;
       const u = activeUser();
-      if (!confirm("Excluir o perfil \"" + u.name + "\"? As marcações e o histórico dele serão apagados.")) return;
+      if (!(await uiConfirm("Excluir o perfil “" + u.name + "”? As marcações e o histórico dele serão apagados."))) return;
       const id = state.active;
       state.users = state.users.filter(function (x) { return x.id !== id; });
       delete state.checks[id]; delete state.history[id];
@@ -1294,9 +1343,9 @@
     document.getElementById("prof-gen").addEventListener("click", openGenerator);
     document.getElementById("close-gen").addEventListener("click", function () { genOverlay.hidden = true; });
     genOverlay.addEventListener("click", function (e) { if (e.target === genOverlay) genOverlay.hidden = true; });
-    document.getElementById("gen-run").addEventListener("click", function () {
+    document.getElementById("gen-run").addEventListener("click", async function () {
       const u = activeUser();
-      if (!confirm("Gerar uma nova ficha A/B/C para " + u.name + "? A ficha atual será substituída.")) return;
+      if (!(await uiConfirm("Gerar uma nova ficha A/B/C para " + u.name + "? A ficha atual será substituída."))) return;
       const focusLabel = (FOCUS_OPTIONS.find(function (f) { return f.key === genFocus; }) || {}).label || "Geral";
       u.treinos = generateWorkout(u.equipment, genFocus, genPer);
       u.labels = { A: "Dia 1", B: "Dia 2", C: "Dia 3", warm: "Prepara o corpo" };
@@ -1340,6 +1389,57 @@
         });
       });
     }
+
+    /* ---------- Diálogos estilizados ---------- */
+    let confirmResolver = null;
+    const confirmOverlay = document.getElementById("confirm-overlay");
+    function uiConfirm(message) {
+      document.getElementById("confirm-msg").textContent = message;
+      confirmOverlay.hidden = false;
+      return new Promise(function (resolve) { confirmResolver = resolve; });
+    }
+    function resolveConfirm(v) { confirmOverlay.hidden = true; if (confirmResolver) { const r = confirmResolver; confirmResolver = null; r(v); } }
+    document.getElementById("confirm-yes").addEventListener("click", function () { resolveConfirm(true); });
+    document.getElementById("confirm-no").addEventListener("click", function () { resolveConfirm(false); });
+    confirmOverlay.addEventListener("click", function (e) { if (e.target === confirmOverlay) resolveConfirm(false); });
+
+    const cardioAddOverlay = document.getElementById("cardio-add-overlay");
+    function openCardioAdd() {
+      document.getElementById("cardio-add-name").value = "";
+      document.getElementById("cardio-add-emoji").value = "";
+      cardioAddOverlay.hidden = false;
+    }
+    document.getElementById("cardio-add-close").addEventListener("click", function () { cardioAddOverlay.hidden = true; });
+    cardioAddOverlay.addEventListener("click", function (e) { if (e.target === cardioAddOverlay) cardioAddOverlay.hidden = true; });
+    document.getElementById("cardio-add-ok").addEventListener("click", function () {
+      const name = document.getElementById("cardio-add-name").value.trim();
+      if (!name) { showToast("Dê um nome ao cardio"); return; }
+      const emoji = (document.getElementById("cardio-add-emoji").value.trim() || "🏃").slice(0, 3);
+      editCardios.push({ label: name.slice(0, 18), emoji: emoji });
+      renderProfCardios();
+      cardioAddOverlay.hidden = true;
+    });
+
+    /* ---------- Porta de login (obrigatória) ---------- */
+    function showGate() { document.getElementById("gate").hidden = false; }
+    function hideGate() { document.getElementById("gate").hidden = true; }
+    document.getElementById("gate-signin").addEventListener("click", async function () {
+      if (!sb) { showToast("Sincronização não configurada"); return; }
+      const email = document.getElementById("gate-email").value.trim();
+      const pass = document.getElementById("gate-pass").value;
+      if (!email || !pass) { showToast("Preencha email e senha"); return; }
+      const btn = this; btn.disabled = true; btn.textContent = "Entrando...";
+      try {
+        const res = await sb.auth.signInWithPassword({ email: email, password: pass });
+        if (res.error) throw res.error;
+        cloudUser = res.data.user;
+        document.getElementById("gate-pass").value = "";
+        hideGate();
+        updateCloudUI();
+        await pullFromCloud(true);
+      } catch (e) { showToast("Login falhou: " + (e.message || "verifique os dados")); }
+      btn.disabled = false; btn.textContent = "Entrar";
+    });
 
     function escapeHtml(s) { return String(s).replace(/[&<>"']/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]; }); }
 
@@ -1502,11 +1602,11 @@
       const file = importFile.files && importFile.files[0];
       if (!file) return;
       const reader = new FileReader();
-      reader.onload = function () {
+      reader.onload = async function () {
         try {
           const data = JSON.parse(reader.result);
           if (!data || !Array.isArray(data.users)) throw new Error("formato inválido");
-          if (!confirm("Importar este backup vai SUBSTITUIR os dados atuais deste aparelho. Continuar?")) { importFile.value = ""; return; }
+          if (!(await uiConfirm("Importar este backup vai SUBSTITUIR os dados atuais deste aparelho. Continuar?"))) { importFile.value = ""; return; }
           state = data;
           state.checks = state.checks || {};
           state.history = state.history || {};
@@ -1598,14 +1698,17 @@
     function initCloud() {
       if (!cloudConfigured()) { updateCloudUI(); return; }
       sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+      showGate(); // bloqueia até confirmar a sessão
       sb.auth.getSession().then(function (res) {
         cloudUser = (res.data && res.data.session) ? res.data.session.user : null;
         updateCloudUI();
-        if (cloudUser) pullFromCloud(true);
+        if (cloudUser) { hideGate(); pullFromCloud(true); }
+        else showGate();
       });
       sb.auth.onAuthStateChange(function (_evt, session) {
         cloudUser = session ? session.user : null;
         updateCloudUI();
+        if (cloudUser) hideGate(); else showGate();
       });
       document.addEventListener("visibilitychange", function () {
         if (!document.hidden && cloudUser) pullFromCloud(false);
@@ -1683,6 +1786,7 @@
     renderCardioButtons();
     renderInfoCap();
     prefetchDemos();
+    document.getElementById("app-ver").textContent = "v" + APP_VERSION + " · alpha";
     initCloud();
 
     /* Service worker — habilita instalação como app e uso offline */
