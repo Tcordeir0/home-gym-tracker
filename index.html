@@ -429,6 +429,8 @@
     .log-detail { background: var(--surface-2); border: 1px solid var(--line); border-top: none; border-radius: 0 0 12px 12px; padding: 10px 14px; font-size: 12.5px; color: var(--muted); line-height: 1.6; }
     .log-detail b { color: var(--text); }
 
+    .streak-num { display: inline-flex; align-items: center; justify-content: center; gap: 3px; }
+    .streak-num .ico { color: var(--warm-color); }
     .pts-banner { text-align: center; font-family: 'Anton', sans-serif; font-size: 46px; color: var(--accent); line-height: 1; margin-bottom: 16px; }
     .pts-banner small { display: block; font-family: 'Manrope', sans-serif; font-size: 11px; color: var(--muted); font-weight: 700; text-transform: uppercase; letter-spacing: 0.6px; margin-top: 6px; }
     .ach-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; margin-bottom: 8px; }
@@ -1029,7 +1031,8 @@
       scores: {},   // scores[userId] = { byDay: { "AAAA-MM-DD": pontos } }
       soundOn: true,
       pokes: {},    // pokes[targetId] = { fromName, msg, date }
-      session: {}   // session[userId] = { [treino]: {start,startHM,sets[]}, cardio:{...} }
+      session: {},  // session[userId] = { [treino]: {start,startHM,sets[]}, cardio:{...} }
+      celebrated: {} // celebrated[userId] = [labels de conquistas já comemoradas]
     };
 
     function loadState() {
@@ -1053,6 +1056,7 @@
           if (typeof raw.soundOn !== "boolean") raw.soundOn = true;
           raw.pokes = raw.pokes || {};
           raw.session = raw.session || {};
+          raw.celebrated = raw.celebrated || {};
           return raw;
         }
       } catch (e) {}
@@ -1140,6 +1144,22 @@
         else break;
       }
       return { treinos: treinos, cardios: cardios, activeDays: Object.keys(days).length, streak: streak, pts: totalPoints(id) };
+    }
+    function ensureCelebrated(id) {
+      state.celebrated = state.celebrated || {};
+      if (state.celebrated[id] === undefined) {
+        const st = statsFor(id);
+        state.celebrated[id] = ACHIEVEMENTS.filter(function (a) { return a.test(st); }).map(function (a) { return a.label; });
+      }
+      return state.celebrated[id];
+    }
+    function celebrateAchievements() {
+      const id = state.active;
+      const done = ensureCelebrated(id);
+      const st = statsFor(id);
+      let unlocked = null;
+      ACHIEVEMENTS.forEach(function (a) { if (a.test(st) && done.indexOf(a.label) < 0) { done.push(a.label); unlocked = a; } });
+      if (unlocked) { saveLocal(); playSound("win"); showToast("Conquista desbloqueada: " + unlocked.label + "!"); }
     }
 
     function weekPoints(id) {
@@ -1363,6 +1383,7 @@
           if (nowDone) playSound("ding");
           saveState();
           renderPoints();
+          celebrateAchievements();
           refreshCard(card);
           updateProgress();
         });
@@ -1456,6 +1477,7 @@
       if (!document.getElementById("overlay").hidden) renderHistory();
       if (typeof prefetchDemos === "function") prefetchDemos();
       if (typeof checkPoke === "function") checkPoke();
+      if (typeof ensureCelebrated === "function") ensureCelebrated(state.active);
     }
 
     function renderUsers() {
@@ -1753,7 +1775,7 @@
       const email = document.getElementById("gate-email").value.trim();
       const pass = document.getElementById("gate-pass").value;
       if (!email || !pass) { showToast("Preencha email e senha"); return; }
-      const btn = this; btn.disabled = true; btn.textContent = "Entrando...";
+      const btn = this; btn.disabled = true; btn.innerHTML = icon("rotate-ccw", 18, "spin") + " Entrando...";
       try {
         const res = await sb.auth.signInWithPassword({ email: email, password: pass });
         if (res.error) throw res.error;
@@ -1966,6 +1988,7 @@
       applyChecks();
       playSound("win");
       renderPoints();
+      celebrateAchievements();
       showToast("Treino " + key + " concluído · +" + PTS_TREINO + " pts! 🔥");
     }
 
@@ -1988,6 +2011,7 @@
       playSound("win");
       renderPoints();
       renderCardioButtons();
+      celebrateAchievements();
       showToast((c.emoji || "🏃") + " " + c.label + " · +" + PTS_CARDIO + " pts!");
     }
     let cardioDonePending = null;
@@ -2016,7 +2040,7 @@
       if (startV && endV) { entry.start = startV; entry.end = endV; entry.dur = Math.max(1, minsBetween(startV, endV)); }
       state.history[id].push(entry);
       addPoints(PTS_CARDIO);
-      saveState(); playSound("win"); renderPoints();
+      saveState(); playSound("win"); renderPoints(); celebrateAchievements();
       cardioDoneOverlay.hidden = true;
       showToast((c.emoji || "🏃") + " " + c.label + " · +" + PTS_CARDIO + " pts!");
     });
@@ -2065,10 +2089,10 @@
       const weekStart = new Date(sevenAgo.toDateString());
       const weekCount = list.filter(function (e) { return new Date(e.date + "T00:00:00") >= weekStart; }).length;
 
-      document.getElementById("hist-stats").innerHTML =
-        statBox(list.length, "Total") + statBox(monthCount, "Este mês") + statBox(weekCount, "7 dias");
-
       const st = statsFor(state.active);
+      document.getElementById("hist-stats").innerHTML =
+        statBox(list.length, "Total") + statBox(monthCount, "Mês") + statBox(weekCount, "7 dias") +
+        '<div class="stat"><div class="num streak-num">' + icon("flame", 20, "flicker") + st.streak + '</div><div class="lbl">sequência</div></div>';
       document.getElementById("hist-pts").innerHTML = totalPoints(state.active) + '<small>pontos de ' + escapeHtml(u.name) + '</small>';
       document.getElementById("hist-ach").innerHTML = ACHIEVEMENTS.map(function (a) {
         const on = a.test(st);
@@ -2235,6 +2259,7 @@
       if (typeof state.soundOn !== "boolean") state.soundOn = true;
       state.pokes = state.pokes || {};
       state.session = state.session || {};
+      state.celebrated = state.celebrated || {};
       state.users.forEach(function (u, i) {
         if (!u.color) u.color = COLOR_SWATCHES[i % COLOR_SWATCHES.length];
         if (!Array.isArray(u.equipment)) u.equipment = ["bodyweight", "dumbbell"];
@@ -2335,7 +2360,7 @@
       const email = document.getElementById("cloud-email").value.trim();
       const pass = document.getElementById("cloud-pass").value;
       if (!email || !pass) { showToast("Preencha email e senha"); return; }
-      const btn = this; btn.disabled = true; btn.textContent = "Entrando...";
+      const btn = this; btn.disabled = true; btn.innerHTML = icon("rotate-ccw", 18, "spin") + " Entrando...";
       try {
         const res = await sb.auth.signInWithPassword({ email: email, password: pass });
         if (res.error) throw res.error;
