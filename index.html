@@ -100,6 +100,14 @@
     }
     .focus-cap b { color: var(--accent); font-weight: 800; }
     .info-cap { margin-top: 6px; font-size: 12px; font-weight: 600; line-height: 1.5; color: var(--muted); }
+    .cardio-actions { display: flex; gap: 8px; justify-content: center; flex-wrap: wrap; max-width: 640px; margin: 12px auto 0; }
+    .cardio-btn {
+      display: inline-flex; align-items: center; justify-content: center; gap: 7px; cursor: pointer;
+      border: 1px solid var(--warm-color); background: transparent; color: var(--warm-color);
+      font-family: 'Manrope', sans-serif; font-weight: 800; font-size: 13px;
+      padding: 10px 16px; border-radius: 99px; transition: all 0.15s ease;
+    }
+    .cardio-btn:active { background: var(--warm-color); color: var(--bg); }
 
     /* ---------- Tabs ---------- */
     .tabs {
@@ -258,12 +266,20 @@
     .cal-marks i { width: 5px; height: 5px; border-radius: 50%; display: block; }
     .cal-marks i.A { background: var(--a-color); }
     .cal-marks i.B { background: var(--b-color); }
+    .cal-marks i.C { background: var(--warm-color); }
+    .cal-legend { display: flex; flex-wrap: wrap; gap: 12px; justify-content: center; margin-top: 12px; font-size: 11px; color: var(--muted); font-weight: 600; }
+    .cal-legend span { display: inline-flex; align-items: center; gap: 5px; }
+    .cal-legend i { width: 8px; height: 8px; border-radius: 50%; display: block; }
+    .cal-legend i.A { background: var(--a-color); }
+    .cal-legend i.B { background: var(--b-color); }
+    .cal-legend i.C { background: var(--warm-color); }
 
     .log h3, .sheet h3 { font-size: 13px; text-transform: uppercase; letter-spacing: 0.6px; color: var(--muted); margin: 4px 0 10px; }
     .log-item { display: flex; align-items: center; gap: 12px; padding: 12px 14px; background: var(--surface); border: 1px solid var(--line); border-radius: 12px; margin-bottom: 8px; }
     .log-badge { font-family: 'Anton', sans-serif; font-size: 16px; width: 34px; height: 34px; border-radius: 9px; display: flex; align-items: center; justify-content: center; color: var(--bg); flex-shrink: 0; }
     .log-badge.A { background: var(--a-color); }
     .log-badge.B { background: var(--b-color); }
+    .log-badge.C { background: var(--warm-color); }
     .log-info { flex: 1; }
     .log-info .d { font-weight: 700; font-size: 14px; }
     .log-info .w { font-size: 12px; color: var(--muted); }
@@ -281,6 +297,10 @@
     <div class="users" id="users"></div>
     <div class="focus-cap" id="focus-cap"></div>
     <div class="focus-cap info-cap">🏋️ Halteres ajustáveis 30 kg + peso do corpo &nbsp;·&nbsp; 🏖️ Cardio: corrida ou natação na praia, 2–3×/semana (20–30 min)</div>
+    <div class="cardio-actions">
+      <button class="cardio-btn" data-tipo="corrida">🏃 Corri na praia</button>
+      <button class="cardio-btn" data-tipo="natacao">🏊 Nadei na praia</button>
+    </div>
   </header>
 
   <nav class="tabs" id="tabs">
@@ -447,6 +467,24 @@
       return d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0") + "-" + String(d.getDate()).padStart(2, "0");
     }
 
+    // Paleta por perfil: Talys (verde) x Andressa (rosa/feminino)
+    const THEMES = {
+      u1: { accent: "#c6ff3a", a: "#c6ff3a", b: "#3ad1ff", warm: "#ff8a3a" },
+      u2: { accent: "#ff5fa8", a: "#ff5fa8", b: "#c98bff", warm: "#ff8ab0" }
+    };
+    function applyTheme() {
+      const t = THEMES[state.active] || THEMES.u1;
+      const s = document.documentElement.style;
+      s.setProperty("--accent", t.accent);
+      s.setProperty("--a-color", t.a);
+      s.setProperty("--b-color", t.b);
+      s.setProperty("--warm-color", t.warm);
+    }
+    function setFillColor() {
+      const v = activeTab === "A" ? "--a-color" : activeTab === "B" ? "--b-color" : "--warm-color";
+      fill.style.background = getComputedStyle(document.documentElement).getPropertyValue(v);
+    }
+
     /* =====================================================================
        RENDER DOS CARDS
     ===================================================================== */
@@ -557,8 +595,7 @@
       activeTab = btn.dataset.tab;
       document.querySelectorAll(".tab").forEach(function (t) { t.classList.toggle("active", t === btn); });
       document.querySelectorAll(".panel").forEach(function (p) { p.classList.toggle("active", p.dataset.panel === activeTab); });
-      const accentVar = activeTab === "A" ? "--a-color" : activeTab === "B" ? "--b-color" : "--warm-color";
-      fill.style.background = getComputedStyle(document.documentElement).getPropertyValue(accentVar);
+      setFillColor();
       updateProgress();
       window.scrollTo({ top: 0, behavior: "smooth" });
     });
@@ -578,9 +615,11 @@
           if (state.active === u.id) return;
           state.active = u.id;
           saveState();
+          applyTheme();
           renderUsers();
           buildPanels();
           applyChecks();
+          setFillColor();
         });
         usersEl.appendChild(b);
       });
@@ -611,6 +650,19 @@
       applyChecks();
       showToast("Treino " + key + " registrado, " + activeUser().name + "! 🔥");
     }
+
+    function registrarCardio(tipo) {
+      const id = state.active;
+      state.history[id] = state.history[id] || [];
+      state.history[id].push({ date: todayISO(), w: "C", t: tipo });
+      saveState();
+      const emoji = tipo === "natacao" ? "🏊" : "🏃";
+      const nome = tipo === "natacao" ? "Natação" : "Corrida";
+      showToast(nome + " na praia registrada, " + activeUser().name + "! " + emoji);
+    }
+    document.querySelectorAll(".cardio-btn").forEach(function (b) {
+      b.addEventListener("click", function () { registrarCardio(b.dataset.tipo); });
+    });
 
     const toastEl = document.getElementById("toast");
     let toastTimer = null;
@@ -657,9 +709,19 @@
         .sort(function (a, b) { return a.e.date < b.e.date ? 1 : a.e.date > b.e.date ? -1 : b.i - a.i; });
 
       logEl.innerHTML = sorted.map(function (item) {
+        const w = item.e.w;
+        let titulo, badge;
+        if (w === "C") {
+          const nada = item.e.t === "natacao";
+          titulo = "Cardio · " + (nada ? "Natação na praia" : "Corrida na praia");
+          badge = nada ? "🏊" : "🏃";
+        } else {
+          titulo = "Treino " + w;
+          badge = w;
+        }
         return '<div class="log-item">' +
-          '<div class="log-badge ' + item.e.w + '">' + item.e.w + '</div>' +
-          '<div class="log-info"><div class="d">' + fmtDate(item.e.date) + '</div><div class="w">Treino ' + item.e.w + '</div></div>' +
+          '<div class="log-badge ' + w + '">' + badge + '</div>' +
+          '<div class="log-info"><div class="d">' + fmtDate(item.e.date) + '</div><div class="w">' + titulo + '</div></div>' +
           '<button class="log-del" data-idx="' + item.i + '" aria-label="Remover">🗑</button>' +
         '</div>';
       }).join("");
@@ -703,6 +765,7 @@
         html += '<div class="cal-day' + (marks ? " has" : "") + (dateStr === todayStr ? " today" : "") + '">' + d + '<div class="cal-marks">' + mh + '</div></div>';
       }
       html += '</div>';
+      html += '<div class="cal-legend"><span><i class="A"></i>Treino A</span><span><i class="B"></i>Treino B</span><span><i class="C"></i>Cardio</span></div>';
       document.getElementById("hist-cal").innerHTML = html;
     }
 
@@ -739,9 +802,11 @@
     /* =====================================================================
        INIT
     ===================================================================== */
+    applyTheme();
     renderUsers();
     buildPanels();
     applyChecks();
+    setFillColor();
 
     /* Service worker — habilita instalação como app e uso offline */
     if ("serviceWorker" in navigator) {
