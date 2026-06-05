@@ -98,6 +98,9 @@
       font-family: 'Manrope', sans-serif; font-weight: 800; font-size: 14px; padding: 12px; border-radius: 12px;
     }
     .cloud-note { font-size: 12px; color: var(--muted); margin-top: 12px; line-height: 1.5; }
+    .snd-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-top: 16px; font-weight: 700; font-size: 14px; }
+    .snd-btn { appearance: none; cursor: pointer; border: 1px solid var(--line); background: var(--surface-2); color: var(--text); font-family: 'Manrope', sans-serif; font-weight: 800; font-size: 13px; padding: 8px 16px; border-radius: 99px; min-width: 92px; }
+    .snd-btn.on { background: var(--accent); border-color: var(--accent); color: var(--bg); }
 
     /* Porta de login */
     .gate { position: fixed; inset: 0; z-index: 100; background: var(--bg); display: flex; align-items: center; justify-content: center; padding: 24px; }
@@ -180,6 +183,7 @@
     }
     .focus-cap b { color: var(--accent); font-weight: 800; }
     .info-cap { margin-top: 6px; font-size: 12px; font-weight: 600; line-height: 1.5; color: var(--muted); }
+    .points-badge { display: inline-block; margin: 12px auto 0; background: var(--surface); border: 1px solid var(--line); color: var(--accent); font-family: 'Anton', sans-serif; font-size: 16px; letter-spacing: 0.5px; padding: 6px 14px; border-radius: 99px; }
     .cardio-actions { display: flex; gap: 8px; justify-content: center; flex-wrap: wrap; max-width: 640px; margin: 12px auto 0; }
     .cardio-btn {
       display: inline-flex; align-items: center; justify-content: center; gap: 7px; cursor: pointer;
@@ -389,6 +393,15 @@
     .log-del:active { color: #ff6b6b; }
     .log-empty { text-align: center; color: var(--muted); font-size: 13px; padding: 24px 0; }
 
+    .pts-banner { text-align: center; font-family: 'Anton', sans-serif; font-size: 46px; color: var(--accent); line-height: 1; margin-bottom: 16px; }
+    .pts-banner small { display: block; font-family: 'Manrope', sans-serif; font-size: 11px; color: var(--muted); font-weight: 700; text-transform: uppercase; letter-spacing: 0.6px; margin-top: 6px; }
+    .ach-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; margin-bottom: 8px; }
+    .ach { display: flex; align-items: center; gap: 10px; background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 10px 12px; opacity: 0.4; transition: opacity 0.2s ease; }
+    .ach.on { opacity: 1; border-color: var(--accent); }
+    .ach .ico { font-size: 22px; flex-shrink: 0; }
+    .ach .t { font-weight: 800; font-size: 12.5px; line-height: 1.2; }
+    .ach .d { font-size: 11px; color: var(--muted); }
+
     .backup-row { display: flex; gap: 8px; margin-top: 4px; }
     .backup-btn { flex: 1; appearance: none; cursor: pointer; border: 1px solid var(--line); background: var(--surface); color: var(--text); font-family: 'Manrope', sans-serif; font-weight: 800; font-size: 14px; padding: 12px; border-radius: 12px; transition: border-color 0.15s ease; }
     .backup-btn:active { border-color: var(--accent); }
@@ -407,6 +420,7 @@
     <div class="users" id="users"></div>
     <div class="focus-cap" id="focus-cap"></div>
     <div class="focus-cap info-cap"></div>
+    <div class="points-badge" id="points-badge"></div>
     <div class="cardio-actions"></div>
   </header>
 
@@ -457,8 +471,11 @@
         <h2 id="hist-title">Histórico</h2>
         <button id="close-hist" aria-label="Fechar">✕</button>
       </div>
+      <div class="pts-banner" id="hist-pts"></div>
       <div class="stats" id="hist-stats"></div>
       <div class="cal" id="hist-cal"></div>
+      <h3>🏆 Conquistas</h3>
+      <div class="ach-grid" id="hist-ach"></div>
       <h3>Sessões registradas</h3>
       <div class="log" id="hist-log"></div>
 
@@ -494,7 +511,8 @@
         <button class="cloud-secondary" id="cloud-signout">Sair desta conta</button>
       </div>
 
-      <p class="cloud-note">Use o <b>mesmo email e senha</b> nos dois celulares para que o histórico fique igual nos dois. Os dados são protegidos por regras de acesso (RLS) — só quem está logado vê.</p>
+      <div class="snd-row"><span>🔊 Som ao marcar / concluir</span><button class="snd-btn" id="snd-toggle"></button></div>
+      <p class="cloud-note">Use o <b>mesmo email e senha</b> em todos os aparelhos para o histórico ficar igual. Os dados são protegidos por regras de acesso (RLS) — só quem está logado vê.</p>
     </div>
   </div>
 
@@ -868,7 +886,9 @@
       ],
       active: "u1",
       checks: {},   // checks[userId][treino][exIdx][setIdx] = true
-      history: {}   // history[userId] = [{ date, w, t?, emoji? }]
+      history: {},  // history[userId] = [{ date, w, t?, emoji? }]
+      scores: {},   // scores[userId] = { byDay: { "AAAA-MM-DD": pontos } }
+      soundOn: true
     };
 
     function loadState() {
@@ -887,6 +907,9 @@
             if (!Array.isArray(u.equipment)) u.equipment = ["bodyweight", "dumbbell"];
             if (!Array.isArray(u.cardios) || !u.cardios.length) u.cardios = defaultCardios();
           });
+          // migração PR4: pontos e som
+          raw.scores = raw.scores || {};
+          if (typeof raw.soundOn !== "boolean") raw.soundOn = true;
           return raw;
         }
       } catch (e) {}
@@ -917,6 +940,61 @@
     function todayISO() {
       const d = new Date();
       return d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0") + "-" + String(d.getDate()).padStart(2, "0");
+    }
+
+    /* =====================================================================
+       PONTOS, SOM E CONQUISTAS (por perfil — vale para qualquer perfil)
+    ===================================================================== */
+    const PTS_SET = 5, PTS_TREINO = 50, PTS_CARDIO = 30;
+    function scoreOf(id) { state.scores[id] = state.scores[id] || { byDay: {} }; if (!state.scores[id].byDay) state.scores[id].byDay = {}; return state.scores[id]; }
+    function addPoints(n) { const s = scoreOf(state.active); const d = todayISO(); s.byDay[d] = Math.max(0, (s.byDay[d] || 0) + n); }
+    function totalPoints(id) { const s = state.scores[id]; if (!s || !s.byDay) return 0; return Object.keys(s.byDay).reduce(function (a, k) { return a + s.byDay[k]; }, 0); }
+    function renderPoints() { const el = document.getElementById("points-badge"); if (el) el.textContent = "⭐ " + totalPoints(state.active) + " pts"; }
+
+    let audioCtx = null;
+    function playSound(kind) {
+      if (!state.soundOn) return;
+      try {
+        if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        const notes = kind === "win" ? [523, 659, 784, 1047] : [880, 1319];
+        const step = kind === "win" ? 0.09 : 0.075;
+        const t0 = audioCtx.currentTime;
+        notes.forEach(function (f, i) {
+          const o = audioCtx.createOscillator(), g = audioCtx.createGain();
+          o.type = "sine"; o.frequency.value = f;
+          const s = t0 + i * step, dur = 0.13;
+          g.gain.setValueAtTime(0.0001, s);
+          g.gain.exponentialRampToValueAtTime(0.22, s + 0.01);
+          g.gain.exponentialRampToValueAtTime(0.0001, s + dur);
+          o.connect(g); g.connect(audioCtx.destination);
+          o.start(s); o.stop(s + dur);
+        });
+      } catch (e) {}
+    }
+
+    const ACHIEVEMENTS = [
+      { icon: "🥇", label: "Começou!", desc: "1º treino", test: function (s) { return s.treinos >= 1; } },
+      { icon: "🔥", label: "Pegando o ritmo", desc: "5 treinos", test: function (s) { return s.treinos >= 5; } },
+      { icon: "💪", label: "Dedicado", desc: "15 treinos", test: function (s) { return s.treinos >= 15; } },
+      { icon: "🏊", label: "Cardio na veia", desc: "5 cardios", test: function (s) { return s.cardios >= 5; } },
+      { icon: "📅", label: "Constante", desc: "7 dias ativos", test: function (s) { return s.activeDays >= 7; } },
+      { icon: "⚡", label: "Sequência 3", desc: "3 dias seguidos", test: function (s) { return s.streak >= 3; } },
+      { icon: "⭐", label: "500 pontos", desc: "500 pts", test: function (s) { return s.pts >= 500; } },
+      { icon: "🌟", label: "1000 pontos", desc: "1000 pts", test: function (s) { return s.pts >= 1000; } }
+    ];
+    function statsFor(id) {
+      const list = state.history[id] || [];
+      const treinos = list.filter(function (e) { return e.w === "A" || e.w === "B" || e.w === "C"; }).length;
+      const cardios = list.filter(function (e) { return e.w === "cardio"; }).length;
+      const days = {}; list.forEach(function (e) { days[e.date] = true; });
+      let streak = 0; const cur = new Date();
+      for (let i = 0; i < 400; i++) {
+        const ds = cur.getFullYear() + "-" + String(cur.getMonth() + 1).padStart(2, "0") + "-" + String(cur.getDate()).padStart(2, "0");
+        if (days[ds]) { streak++; cur.setDate(cur.getDate() - 1); }
+        else if (i === 0) { cur.setDate(cur.getDate() - 1); } // hoje ainda sem treino não quebra a sequência
+        else break;
+      }
+      return { treinos: treinos, cardios: cardios, activeDays: Object.keys(days).length, streak: streak, pts: totalPoints(id) };
     }
 
     // Paleta coordenada a partir de uma cor de destaque escolhida pelo perfil
@@ -1062,6 +1140,10 @@
           const nowDone = !box.classList.contains("done");
           box.classList.toggle("done", nowDone);
           setDone(key, exIdx, setIdx, nowDone);
+          addPoints(nowDone ? PTS_SET : -PTS_SET);
+          if (nowDone) playSound("ding");
+          saveState();
+          renderPoints();
           refreshCard(card);
           updateProgress();
         });
@@ -1151,7 +1233,7 @@
 
     function refreshActiveProfile() {
       applyTheme(); renderUsers(); buildPanels(); applyChecks(); setFillColor();
-      renderCardioButtons(); renderInfoCap();
+      renderCardioButtons(); renderInfoCap(); renderPoints();
       if (!document.getElementById("overlay").hidden) renderHistory();
       if (typeof prefetchDemos === "function") prefetchDemos();
     }
@@ -1452,17 +1534,23 @@
       state.history[id].push({ date: todayISO(), w: key });
       const c = checksFor();
       c[key] = {};
+      addPoints(PTS_TREINO);
       saveState();
       applyChecks();
-      showToast("Treino " + key + " registrado, " + activeUser().name + "! 🔥");
+      playSound("win");
+      renderPoints();
+      showToast("Treino " + key + " concluído · +" + PTS_TREINO + " pts! 🔥");
     }
 
     function registrarCardio(label, emoji) {
       const id = state.active;
       state.history[id] = state.history[id] || [];
       state.history[id].push({ date: todayISO(), w: "cardio", t: label, emoji: emoji });
+      addPoints(PTS_CARDIO);
       saveState();
-      showToast((emoji || "🏃") + " " + label + " registrado, " + activeUser().name + "!");
+      playSound("win");
+      renderPoints();
+      showToast((emoji || "🏃") + " " + label + " · +" + PTS_CARDIO + " pts!");
     }
 
     const toastEl = document.getElementById("toast");
@@ -1498,6 +1586,13 @@
 
       document.getElementById("hist-stats").innerHTML =
         statBox(list.length, "Total") + statBox(monthCount, "Este mês") + statBox(weekCount, "7 dias");
+
+      const st = statsFor(state.active);
+      document.getElementById("hist-pts").innerHTML = totalPoints(state.active) + '<small>pontos de ' + escapeHtml(u.name) + '</small>';
+      document.getElementById("hist-ach").innerHTML = ACHIEVEMENTS.map(function (a) {
+        const on = a.test(st);
+        return '<div class="ach' + (on ? " on" : "") + '"><span class="ico">' + a.icon + '</span><div><div class="t">' + a.label + '</div><div class="d">' + a.desc + '</div></div></div>';
+      }).join("");
 
       renderCalendar(today, list);
 
@@ -1636,6 +1731,8 @@
       state = remote;
       state.checks = state.checks || {};
       state.history = state.history || {};
+      state.scores = state.scores || {};
+      if (typeof state.soundOn !== "boolean") state.soundOn = true;
       state.users.forEach(function (u, i) {
         if (!u.color) u.color = COLOR_SWATCHES[i % COLOR_SWATCHES.length];
         if (!Array.isArray(u.equipment)) u.equipment = ["bodyweight", "dumbbell"];
@@ -1716,7 +1813,18 @@
     }
 
     const cloudOverlay = document.getElementById("cloud-overlay");
-    document.getElementById("open-cloud").addEventListener("click", function () { updateCloudUI(); cloudOverlay.hidden = false; });
+    document.getElementById("open-cloud").addEventListener("click", function () { updateCloudUI(); renderSoundToggle(); cloudOverlay.hidden = false; });
+    function renderSoundToggle() {
+      const b = document.getElementById("snd-toggle");
+      b.textContent = state.soundOn ? "Ligado" : "Desligado";
+      b.classList.toggle("on", !!state.soundOn);
+    }
+    document.getElementById("snd-toggle").addEventListener("click", function () {
+      state.soundOn = !state.soundOn;
+      saveState();
+      renderSoundToggle();
+      if (state.soundOn) playSound("ding");
+    });
     document.getElementById("close-cloud").addEventListener("click", function () { cloudOverlay.hidden = true; });
     cloudOverlay.addEventListener("click", function (e) { if (e.target === cloudOverlay) cloudOverlay.hidden = true; });
 
@@ -1785,6 +1893,7 @@
     setFillColor();
     renderCardioButtons();
     renderInfoCap();
+    renderPoints();
     prefetchDemos();
     document.getElementById("app-ver").textContent = "v" + APP_VERSION + " · alpha";
     initCloud();
