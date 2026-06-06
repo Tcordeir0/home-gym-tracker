@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.3.1](https://github.com/Tcordeir0/home-gym-tracker/compare/v0.3.0...v0.3.1) (2026-06-06)
+
+
+### Bug Fixes
+
+* corrige overflow horizontal no mobile (página não arrasta mais pro lado) ([64c01a6](https://github.com/Tcordeir0/home-gym-tracker/commit/64c01a6d9b4d95a0852533b35564c752466c309b))
+* **mobile:** respeitar safe-area do topo (notch) + blindar overlays contra overflow ([3cfcd24](https://github.com/Tcordeir0/home-gym-tracker/commit/3cfcd2412fefdad9098ad14d2b15c6b2fe6fde7d))
+
 ## [0.3.0](https://github.com/Tcordeir0/home-gym-tracker/compare/v0.2.0...v0.3.0) (2026-06-06)
 
 
