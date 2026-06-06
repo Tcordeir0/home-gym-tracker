@@ -35,6 +35,7 @@
       --c-color: #a78bfa;
       --warm-color: #ff8a3a;
       --done: #2f8f3a;
+      --on-accent: #0d0f12;
       --radius: 16px;
       --safe-bottom: env(safe-area-inset-bottom, 0px);
     }
@@ -97,7 +98,7 @@
     .cloud-primary {
       width: 100%; appearance: none; border: none; cursor: pointer; margin-top: 6px;
       font-family: 'Manrope', sans-serif; font-weight: 800; font-size: 15px;
-      padding: 14px; border-radius: 12px; color: var(--bg); background: var(--accent);
+      padding: 14px; border-radius: 12px; color: var(--on-accent); background: var(--accent);
     }
     .cloud-primary:active { filter: brightness(0.9); }
     .cloud-secondary {
@@ -108,7 +109,7 @@
     .cloud-note { font-size: 12px; color: var(--muted); margin-top: 12px; line-height: 1.5; }
     .snd-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-top: 16px; font-weight: 700; font-size: 14px; }
     .snd-btn { appearance: none; cursor: pointer; border: 1px solid var(--line); background: var(--surface-2); color: var(--text); font-family: 'Manrope', sans-serif; font-weight: 800; font-size: 13px; padding: 8px 16px; border-radius: 99px; min-width: 92px; }
-    .snd-btn.on { background: var(--accent); border-color: var(--accent); color: var(--bg); }
+    .snd-btn.on { background: var(--accent); border-color: var(--accent); color: var(--on-accent); }
 
     /* Porta de login */
     .gate { position: fixed; inset: 0; z-index: 100; background: var(--bg); display: flex; align-items: center; justify-content: center; padding: 24px; }
@@ -138,7 +139,7 @@
       color: var(--muted); font-family: 'Manrope', sans-serif; font-weight: 700; font-size: 13px;
       padding: 9px 13px; border-radius: 99px; transition: all 0.15s ease;
     }
-    .check-item.on { background: var(--accent); border-color: var(--accent); color: var(--bg); }
+    .check-item.on { background: var(--accent); border-color: var(--accent); color: var(--on-accent); }
     .chiplist { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 10px; }
     .chip {
       display: inline-flex; align-items: center; gap: 8px; background: var(--surface-2);
@@ -155,14 +156,16 @@
       color: var(--muted); font-family: 'Manrope', sans-serif; font-weight: 700; font-size: 13px;
       padding: 9px 14px; border-radius: 99px; transition: all 0.15s ease;
     }
-    .gen-chip.sel { background: var(--accent); border-color: var(--accent); color: var(--bg); }
+    .gen-chip.sel { background: var(--accent); border-color: var(--accent); color: var(--on-accent); }
     .seg { display: flex; gap: 8px; }
     .seg button {
       flex: 1; appearance: none; cursor: pointer; border: 1px solid var(--line); background: var(--surface-2);
       color: var(--muted); font-family: 'Manrope', sans-serif; font-weight: 800; font-size: 15px;
       padding: 12px; border-radius: 12px; transition: all 0.15s ease;
     }
-    .seg button.sel { background: var(--accent); border-color: var(--accent); color: var(--bg); }
+    .seg button.sel { background: var(--accent); border-color: var(--accent); color: var(--on-accent); }
+    .seg-wrap { flex-wrap: wrap; }
+    .seg-wrap button { flex: 1 1 calc(50% - 4px); }
 
     /* ---------- User switcher ---------- */
     .users {
@@ -177,7 +180,7 @@
       transition: all 0.15s ease;
     }
     .user-pill .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--muted); }
-    .user-pill.active { background: var(--accent); border-color: var(--accent); color: var(--bg); }
+    .user-pill.active { background: var(--accent); border-color: var(--accent); color: var(--on-accent); }
     .user-pill.active .dot { background: var(--bg); }
     .user-edit {
       appearance: none; border: 1px solid var(--line); background: var(--surface);
@@ -235,8 +238,8 @@
       font-family: 'Manrope', sans-serif; font-weight: 800; font-size: 13px;
       padding: 10px 16px; border-radius: 99px; transition: all 0.15s ease;
     }
-    .cardio-btn:active { background: var(--warm-color); color: var(--bg); }
-    .cardio-btn.active { background: var(--warm-color); color: var(--bg); border-color: var(--warm-color); animation: pulse 1.6s ease-in-out infinite; }
+    .cardio-btn:active { background: var(--warm-color); color: var(--on-accent); }
+    .cardio-btn.active { background: var(--warm-color); color: var(--on-accent); border-color: var(--warm-color); animation: pulse 1.6s ease-in-out infinite; }
     .cardio-btn.cancel { color: var(--muted); padding: 10px 13px; }
     @keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.72; } }
 
@@ -253,7 +256,7 @@
       padding: 11px 4px; border-radius: 12px; cursor: pointer; transition: all 0.18s ease;
     }
     .tab small { display: block; font-size: 9px; font-weight: 600; opacity: 0.7; letter-spacing: 0.2px; text-transform: none; line-height: 1.25; margin-top: 2px; }
-    .tab.active { color: var(--bg); }
+    .tab.active { color: var(--on-accent); }
     .tab[data-tab="A"].active { background: var(--a-color); border-color: var(--a-color); }
     .tab[data-tab="B"].active { background: var(--b-color); border-color: var(--b-color); }
     .tab[data-tab="C"].active { background: var(--c-color); border-color: var(--c-color); }
@@ -339,7 +342,7 @@
       width: 100%; appearance: none; border: none; cursor: pointer;
       font-family: 'Manrope', sans-serif; font-weight: 800; font-size: 15px;
       padding: 16px; border-radius: var(--radius); margin: 6px 0 4px;
-      color: var(--bg); letter-spacing: 0.3px;
+      color: var(--on-accent); letter-spacing: 0.3px;
     }
     .panel[data-panel="A"] .conclude { background: var(--a-color); }
     .panel[data-panel="B"] .conclude { background: var(--b-color); }
@@ -350,7 +353,7 @@
     /* ---------- Rest Timer (footer) ---------- */
     .timer {
       position: fixed; left: 0; right: 0; bottom: 0; z-index: 30;
-      background: rgba(21,24,29,0.92); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
+      background: var(--surface); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
       border-top: 1px solid var(--line); padding: 10px 16px calc(10px + var(--safe-bottom));
     }
     .timer-inner { max-width: 640px; margin: 0 auto; display: flex; align-items: center; gap: 12px; }
@@ -365,7 +368,7 @@
       font-family: 'Manrope', sans-serif; font-weight: 800; font-size: 14px; padding: 12px 4px;
       border-radius: 12px; cursor: pointer; transition: all 0.12s ease;
     }
-    .preset:active { background: var(--accent); color: var(--bg); border-color: var(--accent); }
+    .preset:active { background: var(--accent); color: var(--on-accent); border-color: var(--accent); }
     .timer .stop {
       appearance: none; border: none; background: var(--surface-2); color: var(--muted);
       width: 44px; height: 44px; border-radius: 12px; font-size: 18px; cursor: pointer; flex-shrink: 0;
@@ -428,7 +431,7 @@
 
     .log h3, .sheet h3 { font-size: 13px; text-transform: uppercase; letter-spacing: 0.6px; color: var(--muted); margin: 4px 0 10px; }
     .log-item { display: flex; align-items: center; gap: 12px; padding: 12px 14px; background: var(--surface); border: 1px solid var(--line); border-radius: 12px; margin-bottom: 8px; }
-    .log-badge { font-family: 'Anton', sans-serif; font-size: 16px; width: 34px; height: 34px; border-radius: 9px; display: flex; align-items: center; justify-content: center; color: var(--bg); flex-shrink: 0; }
+    .log-badge { font-family: 'Anton', sans-serif; font-size: 16px; width: 34px; height: 34px; border-radius: 9px; display: flex; align-items: center; justify-content: center; color: var(--on-accent); flex-shrink: 0; }
     .log-badge.A { background: var(--a-color); }
     .log-badge.B { background: var(--b-color); }
     .log-badge.C { background: var(--c-color); }
@@ -469,6 +472,7 @@
       <h1>HOME <span class="hl">GYM</span></h1>
       <div class="head-actions">
         <button class="hist-btn" id="open-cloud" hidden data-icon="cloud"></button>
+        <button class="hist-btn" id="open-settings" data-icon="settings"></button>
         <button class="hist-btn" id="open-hist"><span data-icon="calendar-days"></span>Histórico</button>
       </div>
     </div>
@@ -566,8 +570,20 @@
         <button class="cloud-secondary" id="cloud-signout"><span data-icon="log-out"></span> Sair desta conta</button>
       </div>
 
-      <div class="snd-row"><span><span data-icon="volume-2"></span> Som ao marcar / concluir</span><button class="snd-btn" id="snd-toggle"></button></div>
-      <p class="cloud-note">Use o <b>mesmo email e senha</b> em todos os aparelhos para o histórico ficar igual. Os dados são protegidos por regras de acesso (RLS) — só quem está logado vê.</p>
+      <p class="cloud-note">Use o <b>mesmo email e senha</b> em todos os aparelhos para o histórico ficar igual. Os dados são protegidos por regras de acesso (RLS) — só quem está logado vê. Som e vibração ficam em <b>Configurações</b> (engrenagem).</p>
+    </div>
+  </div>
+
+  <!-- Configurações -->
+  <div class="overlay" id="settings-overlay" hidden>
+    <div class="sheet">
+      <div class="sheet-head"><h2><span data-icon="settings"></span> Configurações</h2><button id="close-settings" aria-label="Fechar" data-icon="x"></button></div>
+      <h3>Feedback ao tocar</h3>
+      <div class="seg seg-wrap" id="set-feedback"></div>
+      <h3>Tema do app</h3>
+      <div class="seg" id="set-theme"></div>
+      <p class="cloud-note">O tema claro/escuro vale quando o perfil não tem um tema cosmético equipado (roleta). A vibração depende do aparelho.</p>
+      <p class="cloud-note" id="settings-version" style="text-align:center;"></p>
     </div>
   </div>
 
@@ -1104,6 +1120,8 @@
       history: {},  // history[userId] = [{ date, w, t?, emoji? }]
       scores: {},   // scores[userId] = { byDay: { "AAAA-MM-DD": pontos } }
       soundOn: true,
+      feedback: "both", // both | sound | vibrate | none
+      appTheme: "dark", // dark | light (tema base quando não há tema cosmético)
       pokes: {},    // pokes[targetId] = { fromName, msg, date }
       session: {},  // session[userId] = { [treino]: {start,startHM,sets[]}, cardio:{...} }
       celebrated: {} // celebrated[userId] = [labels de conquistas já comemoradas]
@@ -1131,6 +1149,8 @@
           // migração PR4/PR5: pontos, som, cutucadas
           raw.scores = raw.scores || {};
           if (typeof raw.soundOn !== "boolean") raw.soundOn = true;
+          if (!raw.feedback) raw.feedback = raw.soundOn === false ? "none" : "both";
+          if (!raw.appTheme) raw.appTheme = "dark";
           raw.pokes = raw.pokes || {};
           raw.session = raw.session || {};
           raw.celebrated = raw.celebrated || {};
@@ -1177,9 +1197,12 @@
     function totalPoints(id) { const s = state.scores[id]; if (!s || !s.byDay) return 0; return Object.keys(s.byDay).reduce(function (a, k) { return a + s.byDay[k]; }, 0); }
     function renderPoints() { const el = document.getElementById("points-badge"); if (el) el.innerHTML = icon("star", 15) + " " + totalPoints(state.active) + " pts"; }
 
+    function haptic(pattern) {
+      if ((state.feedback === "both" || state.feedback === "vibrate") && navigator.vibrate) navigator.vibrate(pattern || 15);
+    }
     let audioCtx = null;
     function playSound(kind) {
-      if (!state.soundOn) return;
+      if (state.feedback === "none" || state.feedback === "vibrate") return;
       try {
         if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
         const notes = kind === "win" ? [523, 659, 784, 1047] : [880, 1319];
@@ -1320,6 +1343,7 @@
       return { accent: base, a: base, b: hslToHex(hsl[0] + 150, S, L), c: hslToHex(hsl[0] + 255, S, L), warm: "#ff8a3a" };
     }
     const BASE_DARK = { "--bg": "#0d0f12", "--surface": "#15181d", "--surface-2": "#1c2027", "--line": "#272c34", "--text": "#eef1f5", "--muted": "#8a93a0" };
+    const BASE_LIGHT = { "--bg": "#f4f6f8", "--surface": "#ffffff", "--surface-2": "#eef1f5", "--line": "#d8dee6", "--text": "#15181d", "--muted": "#6b7480" };
     function applyTheme() {
       const u = activeUser();
       const s = document.documentElement.style;
@@ -1327,7 +1351,8 @@
       if (themed) {
         Object.keys(themed.vars).forEach(function (k) { s.setProperty(k, themed.vars[k]); });
       } else {
-        Object.keys(BASE_DARK).forEach(function (k) { s.setProperty(k, BASE_DARK[k]); });
+        const base = state.appTheme === "light" ? BASE_LIGHT : BASE_DARK;
+        Object.keys(base).forEach(function (k) { s.setProperty(k, base[k]); });
         const t = paletteFromAccent(u.color);
         s.setProperty("--accent", t.accent); s.setProperty("--a-color", t.a);
         s.setProperty("--b-color", t.b); s.setProperty("--c-color", t.c); s.setProperty("--warm-color", t.warm);
@@ -1468,7 +1493,7 @@
             s[key].sets.push(hmNow());
           }
           addPoints(nowDone ? PTS_SET : -PTS_SET);
-          if (nowDone) playSound("ding");
+          if (nowDone) { playSound("ding"); haptic(15); }
           saveState();
           renderPoints();
           celebrateAchievements();
@@ -2424,6 +2449,8 @@
       state.history = state.history || {};
       state.scores = state.scores || {};
       if (typeof state.soundOn !== "boolean") state.soundOn = true;
+      if (!state.feedback) state.feedback = state.soundOn === false ? "none" : "both";
+      if (!state.appTheme) state.appTheme = "dark";
       state.pokes = state.pokes || {};
       state.session = state.session || {};
       state.celebrated = state.celebrated || {};
@@ -2510,18 +2537,24 @@
     }
 
     const cloudOverlay = document.getElementById("cloud-overlay");
-    document.getElementById("open-cloud").addEventListener("click", function () { updateCloudUI(); renderSoundToggle(); cloudOverlay.hidden = false; });
-    function renderSoundToggle() {
-      const b = document.getElementById("snd-toggle");
-      b.textContent = state.soundOn ? "Ligado" : "Desligado";
-      b.classList.toggle("on", !!state.soundOn);
+    document.getElementById("open-cloud").addEventListener("click", function () { updateCloudUI(); cloudOverlay.hidden = false; });
+
+    /* ---------- Configurações ---------- */
+    const settingsOverlay = document.getElementById("settings-overlay");
+    function renderSettings() {
+      const fb = document.getElementById("set-feedback");
+      const fbOpts = [["both", "Ambos"], ["sound", "Som"], ["vibrate", "Vibração"], ["none", "Nenhum"]];
+      fb.innerHTML = fbOpts.map(function (o) { return '<button class="' + (state.feedback === o[0] ? "sel" : "") + '" data-fb="' + o[0] + '">' + o[1] + '</button>'; }).join("");
+      fb.querySelectorAll("[data-fb]").forEach(function (b) { b.addEventListener("click", function () { state.feedback = b.dataset.fb; saveState(); renderSettings(); playSound("ding"); haptic(20); }); });
+      const tm = document.getElementById("set-theme");
+      const tmOpts = [["dark", "Escuro"], ["light", "Claro"]];
+      tm.innerHTML = tmOpts.map(function (o) { return '<button class="' + (state.appTheme === o[0] ? "sel" : "") + '" data-tm="' + o[0] + '">' + o[1] + '</button>'; }).join("");
+      tm.querySelectorAll("[data-tm]").forEach(function (b) { b.addEventListener("click", function () { state.appTheme = b.dataset.tm; saveState(); applyTheme(); renderSettings(); }); });
+      document.getElementById("settings-version").textContent = "Home Gym · v" + APP_VERSION + " · alpha";
     }
-    document.getElementById("snd-toggle").addEventListener("click", function () {
-      state.soundOn = !state.soundOn;
-      saveState();
-      renderSoundToggle();
-      if (state.soundOn) playSound("ding");
-    });
+    document.getElementById("open-settings").addEventListener("click", function () { renderSettings(); settingsOverlay.hidden = false; });
+    document.getElementById("close-settings").addEventListener("click", function () { settingsOverlay.hidden = true; });
+    settingsOverlay.addEventListener("click", function (e) { if (e.target === settingsOverlay) settingsOverlay.hidden = true; });
     document.getElementById("close-cloud").addEventListener("click", function () { cloudOverlay.hidden = true; });
     cloudOverlay.addEventListener("click", function (e) { if (e.target === cloudOverlay) cloudOverlay.hidden = true; });
 
@@ -2570,7 +2603,7 @@
         if (remaining <= 0) {
           clearInterval(ticker); ticker = null;
           clock.textContent = "00:00"; clock.classList.remove("running");
-          if (navigator.vibrate) navigator.vibrate([200, 100, 200, 100, 300]);
+          haptic([200, 100, 200, 100, 300]);
           playSound("win");
           showToast("Descanso acabou! Bora a próxima série 💪");
           setTimeout(function () { clock.textContent = "--:--"; }, 2500);
