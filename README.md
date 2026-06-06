@@ -1,104 +1,104 @@
 # Home Gym Tracker
 
-Fichas de treino **full-body por perfil** para treinar em casa. Página única, sem dependências, sem build step — abre no navegador e funciona. Pensado para **halteres ajustáveis + peso do corpo**.
+App de treino em casa que virou um **joguinho de saúde**: fichas por perfil, demonstrações offline, pontos, conquistas, ranking entre a família e recompensas (temas e decorações de avatar). Página única em **HTML/CSS/JS vanilla**, sem build, instalável como **PWA** e com **sincronização na nuvem**.
 
-![stack](https://img.shields.io/badge/stack-HTML%20%C2%B7%20CSS%20%C2%B7%20JS%20vanilla-c6ff3a) ![sem build](https://img.shields.io/badge/build-nenhum-15181d) ![mobile first](https://img.shields.io/badge/mobile-first-3ad1ff)
+![stack](https://img.shields.io/badge/stack-HTML%20%C2%B7%20CSS%20%C2%B7%20JS%20vanilla-c6ff3a) ![sem build](https://img.shields.io/badge/build-nenhum-15181d) ![PWA](https://img.shields.io/badge/PWA-offline-3ad1ff) ![sync](https://img.shields.io/badge/sync-Supabase-ff5fa8)
 
-## Features
+**🔗 App:** https://tcordeir0.github.io/home-gym-tracker/
 
-- **2 perfis independentes**, cada um com a sua própria ficha e foco:
-  - **Talys** — foco em **peito**
-  - **Andressa** — foco em **glúteos**
-  - Trocar de perfil troca a ficha inteira. Nomes editáveis (toque no ✎).
-- **Split A/B + aquecimento** por perfil, com abas.
-- Cada exercício mostra **grupo muscular**, **séries × reps**, **dica de execução** e botão **Vídeo** (busca no YouTube).
-- **Marcação de séries** persistente: clique nos quadradinhos — fica salvo no aparelho.
-- **Barra de progresso** por treino.
-- **Concluir treino** registra a data no **histórico** (com calendário do mês, total, contagem do mês e dos últimos 7 dias) e zera as marcações pro próximo treino.
-- **Timer de descanso** fixo com presets **60s / 90s / 2min** e **vibração** ao terminar (mobile).
-- Visual **mobile-first**, tema escuro, tipografia [Anton](https://fonts.google.com/specimen/Anton) + [Manrope](https://fonts.google.com/specimen/Manrope).
-- Conteúdo em **português**.
+---
 
-## Equipamento previsto
+## Funcionalidades
 
-As fichas usam apenas **um par de halteres ajustáveis (30 kg)** e o **peso do corpo** — sem banco, barra fixa ou máquinas. Movimentos que normalmente pedem banco foram adaptados para o chão (floor press, crucifixo no chão) ou para apoio em sofá/cadeira (hip thrust, búlgaro, remada unilateral). Cardio sugerido: corrida ou natação.
+### Treino
+- **Perfis ilimitados**, cada um com a própria ficha, foco, cor, equipamento e tipos de cardio. Criar/editar/excluir no editor de perfil.
+- **Split A / B / C + aquecimento** por perfil, em abas.
+- Cada exercício: **grupo muscular**, **séries × reps**, **dica de execução**, **demonstração offline** (👁, animação de 2 quadros) e link de **vídeo** no YouTube.
+- **Gerador de treino**: escolhe **equipamento** (peso do corpo, halteres, barra, elástico, kettlebell, barra fixa…) e **foco** (peito, costas, pernas, glúteo, ombro, braços, core, corpo todo) e monta A/B/C a partir de um **pool curado em português** (~60 exercícios).
+- **Marcação de séries**, **barra de progresso** e **timer de descanso** (60/90/120s) com som/vibração no fim.
+- **Cronometragem**: início/fim e duração de treino e cardio, com horário de cada série.
 
-## Persistência (importante)
+### Gamificação
+- **Pontos** por série (+5), treino concluído (+50) e cardio (+30) — por perfil.
+- **Conquistas** com som e aviso ao desbloquear; **sequência (streak)** com chama animada.
+- **Ranking da casa**: todos os perfis por pontos, com medalhas e **cutucar** (recado playful entre os perfis).
+- **Recompensas** (duas roletas):
+  - **Cosmética** (1 giro por conquista): **8 temas** que reskinam o app (com textura) + **8 decorações de avatar** estilo Discord (molduras que abraçam a foto).
+  - **Da vida** (conquistas-marco): sorteia mimos (lanche livre, descanso) e desafios saudáveis (+água, +cardio).
+- **Card de compartilhar** estilo "Wrapped" (imagem com foto, pontos, posição e stats) para postar no story.
+- **Notificações** (sino): cutucadas, conquistas e recompensas.
 
-Os dados (marcações e histórico) ficam no **`localStorage` do navegador de cada aparelho**, separados por perfil. Ou seja: o histórico do celular de uma pessoa **não** sincroniza automaticamente com o de outro aparelho. Os 2 perfis servem para quando o **mesmo** aparelho é usado pelos dois. Para sincronizar entre celulares no futuro, dá para plugar um backend (ex.: Supabase).
+### Social / nuvem
+- **Login obrigatório** (conta compartilhada) — só quem entra vê os perfis. Loga uma vez por aparelho.
+- **Sincronização** entre celulares via **Supabase** (Postgres + RLS). Foto de perfil, cosméticos, pontos e histórico sincronizam.
 
-## Instalar como app (PWA)
+### Ajustes
+- **Configurações** (engrenagem): feedback ao tocar (**Som / Vibração / Ambos / Nenhum**) e **tema claro/escuro**.
+- **Backup** Exportar/Importar (`.json`) no histórico.
+- Visual **mobile-first**, ícones **SVG (Lucide)**, tipografia [Anton](https://fonts.google.com/specimen/Anton) + [Manrope](https://fonts.google.com/specimen/Manrope). Conteúdo em **português**.
 
-É um **PWA instalável** com ícone próprio (halter), funciona **offline** após a primeira abertura.
-
-- **iPhone (Safari):** abra o link → Compartilhar → **Adicionar à Tela de Início**.
-- **Android (Chrome):** abra o link → menu **⋮** → **Instalar app** / **Adicionar à tela inicial**.
-
-Arquivos do PWA: `manifest.webmanifest`, `sw.js` (service worker) e os ícones PNG (`icon-192`, `icon-512`, `apple-touch-icon`, `favicon`). Ao publicar mudanças, incremente a versão do cache (`hgt-vN`) em `sw.js` para forçar a atualização nos aparelhos.
+---
 
 ## Como rodar
 
-Não há instalação:
+Não há instalação nem build:
 
 ```bash
 open index.html        # macOS
 xdg-open index.html    # Linux
-
-# ou servidor local (útil para acessar de outro device na mesma rede)
+# ou servidor local (para acessar de outro device na mesma rede)
 python3 -m http.server 8000   # http://localhost:8000
 ```
 
-Hospedado de graça via **GitHub Pages**.
+Hospedado de graça no **GitHub Pages** (push na `main` → deploy automático).
 
-## Deploy no GitHub Pages
+## Instalar como app (PWA)
 
-1. `git push` para a branch `main`.
-2. GitHub → **Settings → Pages** → **Source: Deploy from a branch** → branch **`main`**, pasta **`/ (root)`** → **Save**.
-3. Em ~1 min: `https://<seu-usuario>.github.io/home-gym-tracker/`
+Instalável e funciona **offline** após a primeira abertura.
+- **iPhone (Safari):** Compartilhar → **Adicionar à Tela de Início**.
+- **Android (Chrome):** menu **⋮** → **Instalar app**.
+- **PC (Chrome/Edge):** ícone de instalar na barra de endereço.
 
-No celular, abra o link e use **"Adicionar à Tela de Início"** para virar um ícone de app.
+> Ao publicar mudanças, incremente a versão do cache (`hgt-vN`) em `sw.js` para forçar a atualização nos aparelhos instalados.
 
-## Como customizar / montar uma ficha nova
+---
 
-Tudo é gerado a partir do objeto `PLANS` no final do `index.html`. Cada perfil tem `focus`, `labels` (subtítulo das abas) e `treinos` com as listas `A`, `B`. O aquecimento (`AQUECIMENTO`) é compartilhado.
+## Sincronização (Supabase)
 
-```js
-const PLANS = {
-  u1: {
-    focus: "Peito",
-    labels: { A: "Peito + Empurrar", B: "Puxar + Pernas", warm: "Prepara o corpo" },
-    treinos: {
-      A: [
-        { nome: "Supino no chão (floor press) com halteres",
-          musculo: "Peito", series: 4, reps: "10",
-          dica: "Deitado no chão, empurre até esticar e desça até o cotovelo tocar o chão." },
-        // ...
-      ],
-      B: [ /* ... */ ]
-    }
-  },
-  u2: { /* Andressa — Glúteos */ }
-};
-```
+O site continua estático no GitHub Pages; ele conversa com um projeto **Supabase** (gratuito) pela API.
 
-Campos de cada exercício:
+1. Crie um projeto em [supabase.com](https://supabase.com) (região mais próxima).
+2. **SQL Editor** → rode o `supabase_setup.sql` deste repositório (cria a tabela `app_state` + RLS).
+3. **Authentication → Users → Add user** (email + senha, com *Auto Confirm*) — esse é o login compartilhado.
+4. **Settings → API** → copie o **Project URL** e a **anon key** e cole em `SUPABASE_URL` / `SUPABASE_ANON_KEY` no topo do `index.html`.
 
-| Campo     | Descrição                                            |
-|-----------|------------------------------------------------------|
-| `nome`    | Nome do exercício (também alimenta a busca do vídeo) |
-| `musculo` | Grupo muscular trabalhado                            |
-| `series`  | Número de séries (gera os quadradinhos clicáveis)    |
-| `reps`    | Repetições por série (texto livre: `"12"`, `"10/perna"`, `"40s"`, `"máx"`) |
-| `dica`    | Dica curta de execução                               |
+A `anon key` é pública por design — a segurança vem das regras **RLS** (cada conta só acessa os próprios dados). O plano gratuito pausa após ~1 semana sem uso (basta reativar no painel).
 
-### Receita para criar uma ficha com foco em outro músculo
+---
 
-1. **Escolha o músculo-alvo** (ex.: costas, ombro, pernas) e coloque **2–3 exercícios desse grupo no início do Treino A**, quando você está mais forte. É o "foco".
-2. **Complete o resto do corpo** com 1 exercício por grupo grande (puxar, empurrar, pernas, core), pra não desequilibrar.
-3. **Volume por grupo:** ~10–16 séries semanais no músculo-foco (somando A+B), ~6–10 nos demais. Reps: força 6–10, hipertrofia 10–15.
-4. **Compostos antes de isoladores** (ex.: agachamento antes de cadeira; supino antes de crucifixo).
-5. **Progrida** semana a semana: mais carga nos halteres, mais reps, ou descida mais lenta (tempo sob tensão).
-6. Edite o `PLANS`, salve, `git push` — o site atualiza sozinho.
+## Customização
+
+Toda a lógica está no `index.html`:
+
+| O quê | Onde |
+|-------|------|
+| Pool de exercícios do gerador | `POOL` |
+| Fichas iniciais (Talys/Andressa) | `PLANS` · template de novos perfis em `TEMPLATE_TREINOS` |
+| Demonstrações offline | `DEMOS` (imagens em `demos/`, do [free-exercise-db](https://github.com/yuhonas/free-exercise-db)) |
+| Conquistas | `ACHIEVEMENTS` |
+| Temas / decorações / recompensas da vida | `THEME_CATALOG`, `THEME_TEX`, `HATS_CATALOG`, `LIFE_REWARDS` |
+| Ícones (Lucide) | `ICONS` |
+
+---
+
+## Versionamento
+
+Versão semântica automatizada com [release-please](https://github.com/googleapis/release-please-action) (commits no padrão *Conventional Commits*). A versão aparece no rodapé do app e é atualizada sozinha ao mergear o PR de release.
+
+## Créditos de dados
+
+- Imagens de exercício: [free-exercise-db](https://github.com/yuhonas/free-exercise-db) (domínio público).
+- Ícones: [Lucide](https://lucide.dev) (ISC). Temas e decorações: arte/CSS **originais** (inspirados em vibes de jogos, sem assets de terceiros).
 
 ## Licença
 
