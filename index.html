@@ -55,6 +55,11 @@
 
     .wrap { max-width: 640px; margin: 0 auto; padding: 0 16px; }
 
+    /* Marca-d'água do tema (atrás do conteúdo) */
+    #theme-art { position: fixed; inset: 0; z-index: -1; pointer-events: none; display: flex; align-items: flex-end; justify-content: center; overflow: hidden; }
+    #theme-art:empty { display: none; }
+    #theme-art svg { width: min(94%, 540px); opacity: 0.14; margin-bottom: 116px; }
+
     /* Ícones */
     .ico { display: inline-block; vertical-align: -0.16em; }
     @keyframes spin { to { transform: rotate(360deg); } }
@@ -479,6 +484,7 @@
   </style>
 </head>
 <body>
+  <div id="theme-art" aria-hidden="true"></div>
   <header>
     <div class="brand">
       <h1>HOME <span class="hl">GYM</span></h1>
@@ -855,6 +861,17 @@
       oceano:    { img: "repeating-linear-gradient(0deg, rgba(47,208,224,.07) 0 1px, transparent 1px 15px)", size: "auto" },
       dourado:   { img: "repeating-linear-gradient(45deg, rgba(255,210,74,.06) 0 1px, transparent 1px 16px), repeating-linear-gradient(-45deg, rgba(255,210,74,.06) 0 1px, transparent 1px 16px)", size: "auto" },
       vaporwave: { img: "radial-gradient(circle at 50% -8%, rgba(255,119,225,.18), transparent 55%), linear-gradient(rgba(106,208,255,.06) 1px, transparent 1px), linear-gradient(90deg, rgba(106,208,255,.06) 1px, transparent 1px)", size: "100% 100%, 20px 20px, 20px 20px" }
+    };
+    // Marca-d'água por tema: ilustração original (silhueta) que lembra a vibe do jogo
+    const THEME_ART = {
+      blocos:    '<svg viewBox="0 0 400 200"><g fill="#7bc043"><rect x="0" y="160" width="40" height="40"/><rect x="40" y="140" width="40" height="60"/><rect x="80" y="120" width="40" height="80"/><rect x="120" y="100" width="40" height="100"/><rect x="160" y="120" width="40" height="80"/><rect x="200" y="150" width="40" height="50"/></g><rect x="118" y="78" width="16" height="16" fill="#5aa0d6"/><g transform="rotate(38 320 110)"><rect x="316" y="40" width="8" height="92" fill="#8a6a3b"/><path d="M300 44 q24-16 48 0 q-12 16 -24 16 q-12 0 -24 -16z" fill="#cfd6dd"/></g></svg>',
+      neon:      '<svg viewBox="0 0 400 200"><circle cx="205" cy="74" r="36" fill="#38e0ff"/><rect x="169" y="74" width="72" height="40" fill="#0d0a1a"/><g fill="#ff3df0"><rect x="18" y="120" width="26" height="80"/><rect x="50" y="92" width="30" height="108"/><rect x="86" y="134" width="22" height="66"/><rect x="114" y="78" width="34" height="122"/><rect x="252" y="98" width="30" height="102"/><rect x="288" y="130" width="22" height="70"/><rect x="316" y="84" width="32" height="116"/><rect x="354" y="120" width="26" height="80"/></g><path d="M210 200 q-9-46 6-68 q-18 8 -6 68z" fill="#38e0ff"/></svg>',
+      monstros:  '<svg viewBox="0 0 400 200"><g fill="#ee3b3b"><circle cx="200" cy="156" r="34"/><circle cx="166" cy="120" r="14"/><circle cx="200" cy="108" r="14"/><circle cx="234" cy="120" r="14"/><circle cx="250" cy="148" r="11"/><circle cx="150" cy="148" r="11"/></g></svg>',
+      cinza:     '<svg viewBox="0 0 400 200"><g stroke="#c0392b" stroke-width="11" stroke-linecap="square"><path d="M150 70 L255 178"/><path d="M250 70 L145 178"/></g><path d="M150 70 l-24 -10 l8 30 z" fill="#c0392b"/><path d="M250 70 l24 -10 l-8 30 z" fill="#c0392b"/></svg>',
+      lava:      '<svg viewBox="0 0 400 200"><path d="M118 200 L200 64 L282 200 Z" fill="#ff5a1f"/><path d="M182 88 q10-22 20 0 q12 14 0 26 q-16 6 -20 -26z" fill="#ffb000"/><path d="M44 200 l28-38 l-12 -6 l32 -40" stroke="#ff2d2d" stroke-width="5" fill="none"/></svg>',
+      oceano:    '<svg viewBox="0 0 400 200"><g fill="none" stroke="#2fd0e0" stroke-width="6"><path d="M0 172 q40-26 80 0 t80 0 t80 0 t80 0 t80 0"/><path d="M0 192 q40-26 80 0 t80 0 t80 0 t80 0 t80 0"/></g><g stroke="#6affc6" stroke-width="8" fill="none"><path d="M200 56 v94"/><path d="M176 60 v26 M224 60 v26"/><path d="M168 62 h64"/></g></svg>',
+      dourado:   '<svg viewBox="0 0 400 200"><path d="M150 152 L138 86 L176 120 L200 76 L224 120 L262 86 L250 152 Z" fill="#ffd24a"/><rect x="150" y="150" width="100" height="14" fill="#e0a92e"/><g fill="none" stroke="#8fd055" stroke-width="3"><path d="M120 120 q-16 30 0 60"/><path d="M280 120 q16 30 0 60"/></g></svg>',
+      vaporwave: '<svg viewBox="0 0 400 200"><g fill="#ff77e1"><rect x="152" y="42" width="96" height="34"/><rect x="152" y="82" width="96" height="9"/><rect x="157" y="96" width="86" height="7"/><rect x="162" y="108" width="76" height="5"/></g><g stroke="#6ad0ff" stroke-width="2" fill="none"><path d="M0 158 H400 M0 174 H400 M0 196 H400"/><path d="M200 150 L120 200 M200 150 L280 200 M200 150 L56 200 M200 150 L344 200"/></g></svg>'
     };
     // Decorações de avatar (estilo Discord): molduras/anéis que ABRAÇAM o avatar.
     const HATS_CATALOG = {
@@ -1392,6 +1409,8 @@
         document.body.style.backgroundImage = tex ? tex.img : "";
         document.body.style.backgroundSize = tex ? tex.size : "";
         document.body.style.backgroundAttachment = "fixed";
+        const art = document.getElementById("theme-art");
+        if (art) art.innerHTML = THEME_ART[u.cosmetics.theme] || "";
       } else {
         const base = state.appTheme === "light" ? BASE_LIGHT : BASE_DARK;
         Object.keys(base).forEach(function (k) { s.setProperty(k, base[k]); });
@@ -1400,6 +1419,8 @@
         s.setProperty("--b-color", t.b); s.setProperty("--c-color", t.c); s.setProperty("--warm-color", t.warm);
         document.body.style.backgroundImage = "";
         document.body.style.backgroundSize = "";
+        const art = document.getElementById("theme-art");
+        if (art) art.innerHTML = "";
       }
     }
     function setFillColor() {
