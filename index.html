@@ -195,6 +195,23 @@
     .points-badge:active { border-color: var(--accent); }
 
     .avatar { display: inline-flex; align-items: center; justify-content: center; border-radius: 50%; background-size: cover; background-position: center; font-family: 'Manrope', sans-serif; font-weight: 800; flex-shrink: 0; vertical-align: middle; overflow: hidden; }
+    .avatar-wrap { position: relative; display: inline-flex; vertical-align: middle; flex-shrink: 0; }
+    .avatar-wrap .avatar { position: absolute; inset: 0; }
+    .hat { position: absolute; left: 0; top: 0; pointer-events: none; }
+    .hat svg { width: 100%; height: 100%; overflow: visible; display: block; }
+    .reel { min-height: 96px; display: flex; align-items: center; justify-content: center; background: var(--surface-2); border: 1px solid var(--line); border-radius: 14px; margin-bottom: 12px; padding: 8px; }
+    .reel.win { animation: pop 0.5s ease; }
+    @keyframes pop { 0% { transform: scale(0.82); } 60% { transform: scale(1.08); } 100% { transform: scale(1); } }
+    .reel-card { display: inline-flex; flex-direction: column; align-items: center; gap: 5px; font-weight: 800; font-size: 14px; padding: 12px 18px; border-radius: 12px; border: 1px solid var(--line); text-align: center; }
+    .reel-empty { color: var(--muted); font-size: 13px; }
+    .spin-row { display: flex; gap: 8px; }
+    .spin-row button { flex: 1; margin: 0; }
+    .cosmo-grid { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 4px; }
+    .cosmo { appearance: none; cursor: pointer; border: 1px solid var(--line); background: var(--surface); color: var(--text); font-family: 'Manrope', sans-serif; font-weight: 700; font-size: 13px; padding: 9px 13px; border-radius: 99px; display: inline-flex; align-items: center; gap: 7px; }
+    .cosmo.eq { border-color: var(--accent); box-shadow: inset 0 0 0 1px var(--accent); }
+    .hat-mini { width: 26px; height: 26px; display: inline-block; }
+    .hat-mini svg { width: 100%; height: 100%; overflow: visible; }
+    .reel-card .hat-mini { width: 44px; height: 44px; }
 
     .rank-item { display: flex; align-items: center; gap: 11px; background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 11px; margin-bottom: 8px; }
     .rank-item.me { border-color: var(--accent); }
@@ -554,6 +571,23 @@
     </div>
   </div>
 
+  <!-- Recompensas (roletas) -->
+  <div class="overlay" id="rewards-overlay" hidden>
+    <div class="sheet">
+      <div class="sheet-head"><h2><span data-icon="sparkles"></span> Recompensas</h2><button id="close-rewards" aria-label="Fechar" data-icon="x"></button></div>
+      <div class="reel" id="reward-reel"></div>
+      <div class="spin-row">
+        <button class="cloud-primary" id="spin-btn"></button>
+        <button class="cloud-secondary" id="lifespin-btn"></button>
+      </div>
+      <p class="cloud-note">Cada conquista dá um giro na roleta cosmética (temas e chapéus). Conquistas-marco (7 dias, 1000 pts...) dão giro na roleta da vida (mimos e desafios saudáveis).</p>
+      <h3>Temas</h3>
+      <div class="cosmo-grid" id="rewards-themes"></div>
+      <h3>Chapéus</h3>
+      <div class="cosmo-grid" id="rewards-hats"></div>
+    </div>
+  </div>
+
   <!-- Editor de perfil -->
   <div class="overlay" id="profile-overlay" hidden>
     <div class="sheet">
@@ -576,6 +610,7 @@
       <h3>Equipamento disponível</h3>
       <div class="checklist" id="prof-equip"></div>
       <button class="cloud-secondary" id="prof-gen" style="margin-top:12px;"><span data-icon="wrench"></span> Montar treino com este equipamento</button>
+      <button class="cloud-secondary" id="prof-rewards" style="margin-top:10px;"><span data-icon="sparkles"></span> Recompensas e temas</button>
       <h3>Tipos de cardio</h3>
       <div class="chiplist" id="prof-cardios"></div>
       <button class="cloud-secondary" id="prof-add-cardio">+ Adicionar tipo de cardio</button>
@@ -754,6 +789,45 @@
         el.innerHTML = icon(el.getAttribute("data-icon"), sz ? parseInt(sz, 10) : 18);
       });
     }
+
+    /* =====================================================================
+       COSMÉTICOS — temas (paletas completas) e chapéus (SVG), arte original
+       inspirada em vibes de jogos, SEM usar assets/logos reais.
+    ===================================================================== */
+    function themeVars(bg, surface, s2, line, text, muted, accent, b, c, warm) {
+      return { "--bg": bg, "--surface": surface, "--surface-2": s2, "--line": line, "--text": text, "--muted": muted, "--accent": accent, "--a-color": accent, "--b-color": b, "--c-color": c, "--warm-color": warm };
+    }
+    const THEME_CATALOG = {
+      blocos:    { name: "Mundo de Blocos", vars: themeVars("#1a2417", "#233018", "#2d3b1f", "#3a4a28", "#eaf3d8", "#93a878", "#7bc043", "#8a6a3b", "#5aa0d6", "#c0792e") },
+      neon:      { name: "Cidade Neon", vars: themeVars("#0d0a1a", "#16112b", "#1f1838", "#2c2348", "#f3eeff", "#9a8fc0", "#ff3df0", "#38e0ff", "#ffd23d", "#ff6a3d") },
+      monstros:  { name: "Mestre dos Monstros", vars: themeVars("#1a0e0e", "#241414", "#2e1a1a", "#3d2424", "#fdeeee", "#c08a8a", "#ee3b3b", "#e8e8e8", "#3b6bee", "#ffb13b") },
+      cinza:     { name: "Deus da Cinza", vars: themeVars("#14110f", "#1d1815", "#261f1b", "#342a24", "#efe7e0", "#a8978c", "#c0392b", "#8a8d91", "#b08d57", "#d96a3a") },
+      lava:      { name: "Lava", vars: themeVars("#160c08", "#21110a", "#2c170d", "#3d2113", "#ffeede", "#c0937a", "#ff5a1f", "#ffb000", "#ff2d2d", "#ff8a3a") },
+      oceano:    { name: "Oceano", vars: themeVars("#07121a", "#0d1d2b", "#12283a", "#1c3a52", "#e2f3ff", "#84a8c0", "#2fd0e0", "#3a8fff", "#6affc6", "#ffcf5c") },
+      dourado:   { name: "Reino Dourado", vars: themeVars("#14120a", "#1e1b0f", "#282413", "#3a341d", "#fbf4dd", "#bcae82", "#ffd24a", "#e0a92e", "#fff0b0", "#ff9e3a") },
+      vaporwave: { name: "Vaporwave", vars: themeVars("#120a1e", "#1c1030", "#26173f", "#382458", "#ffe9ff", "#b48fd0", "#ff77e1", "#6ad0ff", "#c89bff", "#ffb86a") }
+    };
+    const HATS_CATALOG = {
+      coroa:   { name: "Coroa", svg: '<svg viewBox="0 0 100 100"><path d="M20 44 L16 16 L34 32 L50 10 L66 32 L84 16 L80 44 Z" fill="#ffd24a" stroke="#b8860b" stroke-width="2.5" stroke-linejoin="round"/><rect x="20" y="42" width="60" height="9" rx="2" fill="#e0a92e"/><circle cx="50" cy="10" r="4" fill="#ff5a5a"/></svg>' },
+      bone:    { name: "Boné", svg: '<svg viewBox="0 0 100 100"><path d="M22 40 a28 26 0 0 1 56 0 Z" fill="#3ad1ff"/><path d="M76 40 q18 2 20 12 q-22 4 -22 -6 Z" fill="#2aa7cc"/><circle cx="50" cy="16" r="3.5" fill="#176b86"/></svg>' },
+      gorro:   { name: "Gorro", svg: '<svg viewBox="0 0 100 100"><path d="M24 42 a26 24 0 0 1 52 0 Z" fill="#ee3b3b"/><rect x="22" y="40" width="56" height="10" rx="5" fill="#f5f5f5"/><circle cx="50" cy="14" r="7" fill="#f5f5f5"/></svg>' },
+      mago:    { name: "Chapéu de Mago", svg: '<svg viewBox="0 0 100 100"><path d="M50 4 L70 46 L30 46 Z" fill="#6a4cff"/><rect x="26" y="44" width="48" height="8" rx="3" fill="#4a2fd0"/><path d="M48 22 l2 5 5 2 -5 2 -2 5 -2 -5 -5 -2 5 -2 Z" fill="#ffd24a"/></svg>' },
+      aureola: { name: "Auréola", svg: '<svg viewBox="0 0 100 100"><ellipse cx="50" cy="16" rx="26" ry="8" fill="none" stroke="#ffe66a" stroke-width="6"/><ellipse cx="50" cy="16" rx="26" ry="8" fill="none" stroke="#fff6c0" stroke-width="2"/></svg>' },
+      festa:   { name: "Chapéu de Festa", svg: '<svg viewBox="0 0 100 100"><path d="M50 6 L68 46 L32 46 Z" fill="#ff77e1"/><path d="M50 6 L60 28 L40 28 Z" fill="#38e0ff" opacity="0.85"/><circle cx="50" cy="6" r="5" fill="#ffd23d"/><rect x="30" y="44" width="40" height="7" rx="3" fill="#c84ba8"/></svg>' }
+    };
+    // Recompensas da vida (liberadas por conquistas "marco") — mix de mimos e desafios saudáveis
+    const LIFE_REWARDS = [
+      { ic: "🥪", t: "Lanche livre hoje!", good: true },
+      { ic: "🍫", t: "Sobremesa liberada", good: true },
+      { ic: "🍕", t: "Refeição livre merecida", good: true },
+      { ic: "😴", t: "Descanso extra sem culpa", good: true },
+      { ic: "🎮", t: "1h de lazer sem culpa", good: true },
+      { ic: "🛍️", t: "Aquele agrado pra você", good: true },
+      { ic: "💧", t: "Desafio: +2L de água hoje", good: false },
+      { ic: "🏃", t: "Bônus suor: +20 min de cardio", good: false },
+      { ic: "🧘", t: "+10 min de alongamento hoje", good: false },
+      { ic: "🌅", t: "Acordar 30 min mais cedo amanhã", good: false }
+    ];
 
     /* =====================================================================
        FICHAS POR PERFIL
@@ -1050,6 +1124,9 @@
             if (!u.color) u.color = u.id === "u1" ? "#c6ff3a" : u.id === "u2" ? "#ff5fa8" : COLOR_SWATCHES[i % COLOR_SWATCHES.length];
             if (!Array.isArray(u.equipment)) u.equipment = ["bodyweight", "dumbbell"];
             if (!Array.isArray(u.cardios) || !u.cardios.length) u.cardios = defaultCardios();
+            if (!u.cosmetics) u.cosmetics = { themes: [], hats: [], theme: null, hat: null };
+            if (typeof u.spinsUsed !== "number") u.spinsUsed = 0;
+            if (typeof u.lifeSpinsUsed !== "number") u.lifeSpinsUsed = 0;
           });
           // migração PR4/PR5: pontos, som, cutucadas
           raw.scores = raw.scores || {};
@@ -1126,10 +1203,11 @@
       { icon: "flame", label: "Pegando o ritmo", desc: "5 treinos", test: function (s) { return s.treinos >= 5; } },
       { icon: "dumbbell", label: "Dedicado", desc: "15 treinos", test: function (s) { return s.treinos >= 15; } },
       { icon: "heart-pulse", label: "Cardio na veia", desc: "5 cardios", test: function (s) { return s.cardios >= 5; } },
-      { icon: "calendar-check", label: "Constante", desc: "7 dias ativos", test: function (s) { return s.activeDays >= 7; } },
+      { icon: "calendar-check", label: "Constante", desc: "7 dias ativos", test: function (s) { return s.activeDays >= 7; }, milestone: true },
       { icon: "zap", label: "Sequência 3", desc: "3 dias seguidos", test: function (s) { return s.streak >= 3; } },
+      { icon: "flame", label: "Em chamas", desc: "7 dias seguidos", test: function (s) { return s.streak >= 7; }, milestone: true },
       { icon: "star", label: "500 pontos", desc: "500 pts", test: function (s) { return s.pts >= 500; } },
-      { icon: "award", label: "1000 pontos", desc: "1000 pts", test: function (s) { return s.pts >= 1000; } }
+      { icon: "award", label: "1000 pontos", desc: "1000 pts", test: function (s) { return s.pts >= 1000; }, milestone: true }
     ];
     function statsFor(id) {
       const list = state.history[id] || [];
@@ -1173,9 +1251,14 @@
 
     function avatarHtml(u, size) {
       const s = size || 40;
-      if (u.photo) return '<span class="avatar" style="width:' + s + 'px;height:' + s + 'px;background-image:url(' + u.photo + ')"></span>';
-      const initial = (u.name || "?").trim().charAt(0).toUpperCase();
-      return '<span class="avatar" style="width:' + s + 'px;height:' + s + 'px;background:' + (u.color || "#888") + ';color:#0d0f12;font-size:' + Math.round(s * 0.46) + 'px">' + escapeHtml(initial) + '</span>';
+      let av;
+      if (u.photo) av = '<span class="avatar" style="width:' + s + 'px;height:' + s + 'px;background-image:url(' + u.photo + ')"></span>';
+      else av = '<span class="avatar" style="width:' + s + 'px;height:' + s + 'px;background:' + (u.color || "#888") + ';color:#0d0f12;font-size:' + Math.round(s * 0.46) + 'px">' + escapeHtml((u.name || "?").trim().charAt(0).toUpperCase()) + '</span>';
+      const hatId = u.cosmetics && u.cosmetics.hat;
+      if (hatId && HATS_CATALOG[hatId]) {
+        return '<span class="avatar-wrap" style="width:' + s + 'px;height:' + s + 'px">' + av + '<span class="hat" style="width:' + s + 'px;height:' + s + 'px">' + HATS_CATALOG[hatId].svg + '</span></span>';
+      }
+      return av;
     }
 
     function pokeProfile(targetId) {
@@ -1236,14 +1319,19 @@
       const base = hslToHex(hsl[0], S, L);
       return { accent: base, a: base, b: hslToHex(hsl[0] + 150, S, L), c: hslToHex(hsl[0] + 255, S, L), warm: "#ff8a3a" };
     }
+    const BASE_DARK = { "--bg": "#0d0f12", "--surface": "#15181d", "--surface-2": "#1c2027", "--line": "#272c34", "--text": "#eef1f5", "--muted": "#8a93a0" };
     function applyTheme() {
-      const t = paletteFromAccent(activeUser().color);
+      const u = activeUser();
       const s = document.documentElement.style;
-      s.setProperty("--accent", t.accent);
-      s.setProperty("--a-color", t.a);
-      s.setProperty("--b-color", t.b);
-      s.setProperty("--c-color", t.c);
-      s.setProperty("--warm-color", t.warm);
+      const themed = u.cosmetics && u.cosmetics.theme && THEME_CATALOG[u.cosmetics.theme];
+      if (themed) {
+        Object.keys(themed.vars).forEach(function (k) { s.setProperty(k, themed.vars[k]); });
+      } else {
+        Object.keys(BASE_DARK).forEach(function (k) { s.setProperty(k, BASE_DARK[k]); });
+        const t = paletteFromAccent(u.color);
+        s.setProperty("--accent", t.accent); s.setProperty("--a-color", t.a);
+        s.setProperty("--b-color", t.b); s.setProperty("--c-color", t.c); s.setProperty("--warm-color", t.warm);
+      }
     }
     function setFillColor() {
       const v = activeTab === "A" ? "--a-color" : activeTab === "B" ? "--b-color" : activeTab === "C" ? "--c-color" : "--warm-color";
@@ -1551,7 +1639,10 @@
         cardios: defaultCardios(),
         focus: "Geral",
         labels: JSON.parse(JSON.stringify(TEMPLATE_LABELS)),
-        treinos: JSON.parse(JSON.stringify(TEMPLATE_TREINOS))
+        treinos: JSON.parse(JSON.stringify(TEMPLATE_TREINOS)),
+        cosmetics: { themes: [], hats: [], theme: null, hat: null },
+        spinsUsed: 0,
+        lifeSpinsUsed: 0
       });
       state.active = id;
       saveState();
@@ -1924,6 +2015,82 @@
     document.getElementById("close-share").addEventListener("click", function () { shareOverlay.hidden = true; });
     shareOverlay.addEventListener("click", function (e) { if (e.target === shareOverlay) shareOverlay.hidden = true; });
 
+    /* ---------- Recompensas / roletas ---------- */
+    const rewardsOverlay = document.getElementById("rewards-overlay");
+    function earnedAchCount(id, milestoneOnly) {
+      const st = statsFor(id);
+      return ACHIEVEMENTS.filter(function (a) { return a.test(st) && (!milestoneOnly || a.milestone); }).length;
+    }
+    function availableSpins(id) { const u = state.users.find(function (x) { return x.id === id; }); return Math.max(0, earnedAchCount(id, false) - (u.spinsUsed || 0)); }
+    function availableLifeSpins(id) { const u = state.users.find(function (x) { return x.id === id; }); return Math.max(0, earnedAchCount(id, true) - (u.lifeSpinsUsed || 0)); }
+
+    function openRewards() {
+      renderRewards();
+      document.getElementById("reward-reel").innerHTML = '<span class="reel-empty">Gire para ganhar temas, chapéus e recompensas!</span>';
+      rewardsOverlay.hidden = false;
+    }
+    function renderRewards() {
+      const u = activeUser();
+      const sp = availableSpins(state.active), lsp = availableLifeSpins(state.active);
+      const sb = document.getElementById("spin-btn"); sb.innerHTML = icon("sparkles", 16) + " Roleta (" + sp + ")"; sb.disabled = sp <= 0;
+      const lb = document.getElementById("lifespin-btn"); lb.innerHTML = icon("trophy", 16) + " Roleta da vida (" + lsp + ")"; lb.disabled = lsp <= 0;
+      const tg = document.getElementById("rewards-themes");
+      let th = '<button class="cosmo' + (!u.cosmetics.theme ? " eq" : "") + '" data-t="">Padrão</button>';
+      u.cosmetics.themes.forEach(function (id) { const t = THEME_CATALOG[id]; if (!t) return; th += '<button class="cosmo' + (u.cosmetics.theme === id ? " eq" : "") + '" data-t="' + id + '" style="background:' + t.vars["--bg"] + ';color:' + t.vars["--accent"] + '">' + t.name + '</button>'; });
+      if (!u.cosmetics.themes.length) th += '<span class="reel-empty">Gire pra ganhar temas…</span>';
+      tg.innerHTML = th;
+      tg.querySelectorAll("[data-t]").forEach(function (b) { b.addEventListener("click", function () { u.cosmetics.theme = b.getAttribute("data-t") || null; saveState(); applyTheme(); renderUsers(); renderRewards(); }); });
+      const hg = document.getElementById("rewards-hats");
+      let hh = '<button class="cosmo' + (!u.cosmetics.hat ? " eq" : "") + '" data-h="">Nenhum</button>';
+      u.cosmetics.hats.forEach(function (id) { const h = HATS_CATALOG[id]; if (!h) return; hh += '<button class="cosmo' + (u.cosmetics.hat === id ? " eq" : "") + '" data-h="' + id + '"><span class="hat-mini">' + h.svg + '</span>' + h.name + '</button>'; });
+      if (!u.cosmetics.hats.length) hh += '<span class="reel-empty">Gire pra ganhar chapéus…</span>';
+      hg.innerHTML = hh;
+      hg.querySelectorAll("[data-h]").forEach(function (b) { b.addEventListener("click", function () { u.cosmetics.hat = b.getAttribute("data-h") || null; saveState(); renderUsers(); renderRewards(); }); });
+    }
+    function spinReel(items, winner, render1, done) {
+      const reel = document.getElementById("reward-reel");
+      document.getElementById("spin-btn").disabled = true; document.getElementById("lifespin-btn").disabled = true;
+      reel.classList.remove("win");
+      let n = 0; const total = 16;
+      const iv = setInterval(function () {
+        if (n < total) { reel.innerHTML = render1(items[Math.floor(Math.random() * items.length)]); n++; }
+        else { clearInterval(iv); reel.innerHTML = render1(winner); reel.classList.add("win"); playSound("win"); done(); }
+      }, 90);
+    }
+    function cosmoCard(item) {
+      if (item.type === "theme") { const t = THEME_CATALOG[item.id]; return '<div class="reel-card" style="background:' + t.vars["--bg"] + ';color:' + t.vars["--accent"] + ';border-color:' + t.vars["--accent"] + '">' + t.name + '</div>'; }
+      const h = HATS_CATALOG[item.id]; return '<div class="reel-card"><span class="hat-mini">' + h.svg + '</span>' + h.name + '</div>';
+    }
+    function lifeCard(item) { return '<div class="reel-card" style="font-size:15px"><span style="font-size:30px">' + item.ic + '</span>' + item.t + '</div>'; }
+    function doCosmeticSpin() {
+      const u = activeUser();
+      if (availableSpins(state.active) <= 0) return;
+      u.spinsUsed = (u.spinsUsed || 0) + 1;
+      const pool = [];
+      Object.keys(THEME_CATALOG).forEach(function (id) { if (u.cosmetics.themes.indexOf(id) < 0) pool.push({ type: "theme", id: id }); });
+      Object.keys(HATS_CATALOG).forEach(function (id) { if (u.cosmetics.hats.indexOf(id) < 0) pool.push({ type: "hat", id: id }); });
+      if (!pool.length) { saveState(); renderRewards(); showToast("Você já tem todos os cosméticos! 🎉"); return; }
+      const all = Object.keys(THEME_CATALOG).map(function (id) { return { type: "theme", id: id }; }).concat(Object.keys(HATS_CATALOG).map(function (id) { return { type: "hat", id: id }; }));
+      const win = pool[Math.floor(Math.random() * pool.length)];
+      spinReel(all, win, cosmoCard, function () {
+        if (win.type === "theme") u.cosmetics.themes.push(win.id); else u.cosmetics.hats.push(win.id);
+        saveState(); renderRewards();
+        showToast("Ganhou: " + (win.type === "theme" ? THEME_CATALOG[win.id].name : HATS_CATALOG[win.id].name) + "! 🎉");
+      });
+    }
+    function doLifeSpin() {
+      const u = activeUser();
+      if (availableLifeSpins(state.active) <= 0) return;
+      u.lifeSpinsUsed = (u.lifeSpinsUsed || 0) + 1;
+      const win = LIFE_REWARDS[Math.floor(Math.random() * LIFE_REWARDS.length)];
+      spinReel(LIFE_REWARDS, win, lifeCard, function () { saveState(); renderRewards(); showToast(win.ic + " " + win.t); });
+    }
+    document.getElementById("prof-rewards").addEventListener("click", function () { profOverlay.hidden = true; openRewards(); });
+    document.getElementById("close-rewards").addEventListener("click", function () { rewardsOverlay.hidden = true; });
+    rewardsOverlay.addEventListener("click", function (e) { if (e.target === rewardsOverlay) rewardsOverlay.hidden = true; });
+    document.getElementById("spin-btn").addEventListener("click", doCosmeticSpin);
+    document.getElementById("lifespin-btn").addEventListener("click", doLifeSpin);
+
     /* ---------- Foto de perfil ---------- */
     function resizeImage(file, max, cb) {
       const reader = new FileReader();
@@ -2264,6 +2431,9 @@
         if (!u.color) u.color = COLOR_SWATCHES[i % COLOR_SWATCHES.length];
         if (!Array.isArray(u.equipment)) u.equipment = ["bodyweight", "dumbbell"];
         if (!Array.isArray(u.cardios) || !u.cardios.length) u.cardios = defaultCardios();
+        if (!u.cosmetics) u.cosmetics = { themes: [], hats: [], theme: null, hat: null };
+        if (typeof u.spinsUsed !== "number") u.spinsUsed = 0;
+        if (typeof u.lifeSpinsUsed !== "number") u.lifeSpinsUsed = 0;
       });
       if (!state.users.some(function (u) { return u.id === state.active; })) state.active = state.users[0].id;
       saveLocal();
