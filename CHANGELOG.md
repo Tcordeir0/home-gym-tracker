@@ -1,5 +1,30 @@
 # Changelog
 
+## [0.3.0](https://github.com/Tcordeir0/home-gym-tracker/compare/v0.2.0...v0.3.0) (2026-06-06)
+
+
+### Features
+
+* animações e som de conquista (loading no login, chama da sequência, conquista desbloqueada) ([a0ff9b4](https://github.com/Tcordeir0/home-gym-tracker/commit/a0ff9b41e64432514a5a5e944348adf7ea68dc7e))
+* botão para zerar pontos do perfil (limpeza de testes) ([8d9fed6](https://github.com/Tcordeir0/home-gym-tracker/commit/8d9fed606fd3e4aaee529bd49e95ba4ca3f3029b))
+* card de compartilhar estilo Wrapped (PR7) ([aaa79b2](https://github.com/Tcordeir0/home-gym-tracker/commit/aaa79b2c13d17d17d3c33fc3f8e2d3707caa5421))
+* cronometragem de treino e cardio (PR6) ([68a0618](https://github.com/Tcordeir0/home-gym-tracker/commit/68a0618d3c4d044c72ac015b90dbd480493f91b3))
+* decorações de avatar estilo Discord (molduras que abraçam a foto) ([0cc0a47](https://github.com/Tcordeir0/home-gym-tracker/commit/0cc0a47ef8807ff551828f1807657e75d800f997))
+* demonstração offline para TODOS os exercícios (81/81) ([d02ca17](https://github.com/Tcordeir0/home-gym-tracker/commit/d02ca17ff11ffa7742ee82e7dabe6baa866a372a))
+* feed de notificações (sino) — cutucadas, conquistas e recompensas ([d5d0d52](https://github.com/Tcordeir0/home-gym-tracker/commit/d5d0d52f03dc28163816efd60fb72f807e2bdb86))
+* horário no cardio 'já fiz' e som no fim do descanso ([4c88603](https://github.com/Tcordeir0/home-gym-tracker/commit/4c88603df903ad42a045134ee252e0bd0a3764a2))
+* marca-d'água ilustrada por tema (cara de jogo de verdade) ([d589f0f](https://github.com/Tcordeir0/home-gym-tracker/commit/d589f0f3f11596a2befbe324238d7f3aa3f049b2))
+* ranking, foto de perfil e cutucar (PR5) ([8b8a953](https://github.com/Tcordeir0/home-gym-tracker/commit/8b8a95315878e48950ecf738a9d5369f8662ab4c))
+* sistema de ícones SVG (Lucide) substituindo emojis na UI ([5e8f0de](https://github.com/Tcordeir0/home-gym-tracker/commit/5e8f0de27a28ce1154ce4067515a837048667cb7))
+* sistema de recompensas com 2 roletas (cosméticos + vida), temas e chapéus ([334d5e4](https://github.com/Tcordeir0/home-gym-tracker/commit/334d5e447acb35588a6a069682b60ad9718594a2))
+* tela de Configurações com feedback (som/vibração) e modo claro/escuro ([7bd1011](https://github.com/Tcordeir0/home-gym-tracker/commit/7bd101116e84e2c033ca7210d58e2889bb14f59f))
+* texturas/padrões por tema (relevo que lembra cada jogo) ([31fdf29](https://github.com/Tcordeir0/home-gym-tracker/commit/31fdf29d3272214eaee4cfbc760d468f56d7bbb1))
+
+
+### Bug Fixes
+
+* descontar pontos ao apagar sessão e perguntar antes de cronometrar cardio ([6094218](https://github.com/Tcordeir0/home-gym-tracker/commit/6094218992722b3c6c581a2b35a2a857f1b0c087))
+
 ## [0.2.0](https://github.com/Tcordeir0/home-gym-tracker/compare/v0.1.0...v0.2.0) (2026-06-05)
 
 
