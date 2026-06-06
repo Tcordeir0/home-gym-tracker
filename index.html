@@ -845,6 +845,17 @@
       dourado:   { name: "Reino Dourado", vars: themeVars("#14120a", "#1e1b0f", "#282413", "#3a341d", "#fbf4dd", "#bcae82", "#ffd24a", "#e0a92e", "#fff0b0", "#ff9e3a") },
       vaporwave: { name: "Vaporwave", vars: themeVars("#120a1e", "#1c1030", "#26173f", "#382458", "#ffe9ff", "#b48fd0", "#ff77e1", "#6ad0ff", "#c89bff", "#ffb86a") }
     };
+    // Texturas/padrões por tema (relevo que lembra cada vibe) — CSS original, sobre a cor de fundo
+    const THEME_TEX = {
+      blocos:    { img: "linear-gradient(rgba(123,192,67,.07) 1px, transparent 1px), linear-gradient(90deg, rgba(123,192,67,.07) 1px, transparent 1px)", size: "22px 22px" },
+      neon:      { img: "radial-gradient(circle at 50% -8%, rgba(255,61,240,.16), transparent 55%), linear-gradient(rgba(56,224,255,.06) 1px, transparent 1px), linear-gradient(90deg, rgba(56,224,255,.06) 1px, transparent 1px)", size: "100% 100%, 24px 24px, 24px 24px" },
+      monstros:  { img: "radial-gradient(circle, rgba(238,59,59,.08) 2px, transparent 2.5px)", size: "26px 26px" },
+      cinza:     { img: "repeating-linear-gradient(45deg, rgba(192,57,43,.06) 0 2px, transparent 2px 11px)", size: "auto" },
+      lava:      { img: "radial-gradient(circle, rgba(255,90,31,.10) 1.5px, transparent 2px)", size: "18px 18px" },
+      oceano:    { img: "repeating-linear-gradient(0deg, rgba(47,208,224,.07) 0 1px, transparent 1px 15px)", size: "auto" },
+      dourado:   { img: "repeating-linear-gradient(45deg, rgba(255,210,74,.06) 0 1px, transparent 1px 16px), repeating-linear-gradient(-45deg, rgba(255,210,74,.06) 0 1px, transparent 1px 16px)", size: "auto" },
+      vaporwave: { img: "radial-gradient(circle at 50% -8%, rgba(255,119,225,.18), transparent 55%), linear-gradient(rgba(106,208,255,.06) 1px, transparent 1px), linear-gradient(90deg, rgba(106,208,255,.06) 1px, transparent 1px)", size: "100% 100%, 20px 20px, 20px 20px" }
+    };
     // Decorações de avatar (estilo Discord): molduras/anéis que ABRAÇAM o avatar.
     const HATS_CATALOG = {
       neon:    { name: "Anel Neon", svg: '<svg viewBox="0 0 100 100"><circle cx="50" cy="50" r="47" fill="none" stroke="#ff3df0" stroke-width="6" opacity="0.22"/><circle cx="50" cy="50" r="46" fill="none" stroke="#ff3df0" stroke-width="2.6"/><circle cx="50" cy="50" r="43.5" fill="none" stroke="#38e0ff" stroke-width="1.6"/></svg>' },
@@ -1377,12 +1388,18 @@
       const themed = u.cosmetics && u.cosmetics.theme && THEME_CATALOG[u.cosmetics.theme];
       if (themed) {
         Object.keys(themed.vars).forEach(function (k) { s.setProperty(k, themed.vars[k]); });
+        const tex = THEME_TEX[u.cosmetics.theme];
+        document.body.style.backgroundImage = tex ? tex.img : "";
+        document.body.style.backgroundSize = tex ? tex.size : "";
+        document.body.style.backgroundAttachment = "fixed";
       } else {
         const base = state.appTheme === "light" ? BASE_LIGHT : BASE_DARK;
         Object.keys(base).forEach(function (k) { s.setProperty(k, base[k]); });
         const t = paletteFromAccent(u.color);
         s.setProperty("--accent", t.accent); s.setProperty("--a-color", t.a);
         s.setProperty("--b-color", t.b); s.setProperty("--c-color", t.c); s.setProperty("--warm-color", t.warm);
+        document.body.style.backgroundImage = "";
+        document.body.style.backgroundSize = "";
       }
     }
     function setFillColor() {
