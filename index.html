@@ -354,6 +354,24 @@
     .set-x { color: var(--muted); font-weight: 800; flex-shrink: 0; }
     .last-perf { font-size: 12px; color: var(--muted); margin-top: 8px; display: flex; align-items: center; gap: 5px; }
     .last-perf b { color: var(--accent); }
+    /* Medidas (PR2) */
+    .m-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+    .m-photo-row { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin: 4px 0 12px; }
+    .m-photo-row img { width: 54px; height: 54px; border-radius: 10px; object-fit: cover; border: 1px solid var(--line); }
+    .meas-current { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-bottom: 8px; }
+    .meas-cur { background: var(--surface-2); border: 1px solid var(--line); border-radius: 12px; padding: 10px 6px; text-align: center; }
+    .meas-cur .v { font-family: 'Anton', sans-serif; font-size: 21px; color: var(--accent); line-height: 1; }
+    .meas-cur .l { font-size: 9.5px; text-transform: uppercase; color: var(--muted); margin-top: 4px; letter-spacing: .4px; }
+    .meas-cur .d { font-size: 10px; font-weight: 800; margin-top: 3px; }
+    .meas-cur .d.up { color: var(--done); } .meas-cur .d.down { color: #ff6b6b; }
+    .meas-item { display: flex; align-items: center; gap: 10px; background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 10px 12px; margin-bottom: 8px; }
+    .meas-item img { width: 44px; height: 44px; border-radius: 8px; object-fit: cover; flex-shrink: 0; cursor: pointer; }
+    .meas-item .mi-info { min-width: 0; flex: 1; }
+    .meas-item .mi-date { font-size: 11px; color: var(--muted); }
+    .meas-item .mi-vals { font-size: 13px; font-weight: 700; margin-top: 2px; }
+    .meas-empty { color: var(--muted); font-size: 13px; text-align: center; padding: 14px; }
+    #photo-view-overlay .sheet { text-align: center; max-width: 460px; }
+    #photo-view-overlay img { width: 100%; border-radius: 12px; }
 
     .video-link {
       display: inline-flex; align-items: center; gap: 6px; flex-shrink: 0;
@@ -600,7 +618,10 @@
       <div class="ach-grid" id="hist-ach"></div>
       <h3>Sessões registradas</h3>
       <div class="log" id="hist-log"></div>
-      <button class="backup-btn" id="open-manual" style="width:100%;margin-top:10px">＋ Registrar sessão (outra data)</button>
+      <div class="backup-row" style="margin-top:10px">
+        <button class="backup-btn" id="open-manual">＋ Registrar sessão</button>
+        <button class="backup-btn" id="open-measures"><span data-icon="target" data-size="14"></span> Medidas</button>
+      </div>
 
       <h3>Backup dos dados</h3>
       <div class="backup-row">
@@ -766,6 +787,39 @@
     </div>
   </div>
 
+  <!-- Medidas + foto de progresso (PR2) -->
+  <div class="overlay" id="measures-overlay" hidden>
+    <div class="sheet">
+      <div class="sheet-head"><h2 id="measures-title">Medidas</h2><button id="measures-close" aria-label="Fechar" data-icon="x"></button></div>
+      <div id="measures-current"></div>
+      <h3>Registrar medida</h3>
+      <div class="field"><label for="m-date">Data</label><input id="m-date" type="date" /></div>
+      <div class="m-grid">
+        <div class="field"><label for="m-weight">Peso (kg)</label><input id="m-weight" type="number" inputmode="decimal" min="0" step="0.1" placeholder="kg" /></div>
+        <div class="field"><label for="m-arm">Braço (cm)</label><input id="m-arm" type="number" inputmode="decimal" min="0" step="0.5" placeholder="cm" /></div>
+        <div class="field"><label for="m-chest">Peito (cm)</label><input id="m-chest" type="number" inputmode="decimal" min="0" step="0.5" placeholder="cm" /></div>
+        <div class="field"><label for="m-waist">Cintura (cm)</label><input id="m-waist" type="number" inputmode="decimal" min="0" step="0.5" placeholder="cm" /></div>
+      </div>
+      <div class="m-photo-row">
+        <span id="m-photo-preview"></span>
+        <button class="cloud-secondary" id="m-photo-btn"><span data-icon="image"></span> Foto de progresso</button>
+        <button class="cloud-secondary" id="m-photo-remove" hidden>Remover</button>
+        <input type="file" id="m-photo-input" accept="image/*" hidden />
+      </div>
+      <button class="cloud-primary" id="m-save">Salvar medida</button>
+      <h3>Histórico de medidas</h3>
+      <div id="measures-list"></div>
+    </div>
+  </div>
+
+  <!-- Visualizador de foto -->
+  <div class="overlay" id="photo-view-overlay" hidden>
+    <div class="sheet">
+      <div class="sheet-head"><h2>Progresso</h2><button id="photo-view-close" aria-label="Fechar" data-icon="x"></button></div>
+      <img id="photo-view-img" alt="Foto de progresso" />
+    </div>
+  </div>
+
   <!-- Adicionar tipo de cardio -->
   <div class="overlay" id="cardio-add-overlay" hidden>
     <div class="sheet">
@@ -871,6 +925,9 @@
       "sun": "<circle cx=\"12\" cy=\"12\" r=\"4\" /> <path d=\"M12 2v2\" /> <path d=\"M12 20v2\" /> <path d=\"m4.93 4.93 1.41 1.41\" /> <path d=\"m17.66 17.66 1.41 1.41\" /> <path d=\"M2 12h2\" /> <path d=\"M20 12h2\" /> <path d=\"m6.34 17.66-1.41 1.41\" /> <path d=\"m19.07 4.93-1.41 1.41\" />",
       "target": "<circle cx=\"12\" cy=\"12\" r=\"10\" /> <circle cx=\"12\" cy=\"12\" r=\"6\" /> <circle cx=\"12\" cy=\"12\" r=\"2\" />",
       "timer": "<line x1=\"10\" x2=\"14\" y1=\"2\" y2=\"2\" /> <line x1=\"12\" x2=\"15\" y1=\"14\" y2=\"11\" /> <circle cx=\"12\" cy=\"14\" r=\"8\" />",
+      "trash-2": "<path d=\"M3 6h18\" /> <path d=\"M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2\" /> <line x1=\"10\" x2=\"10\" y1=\"11\" y2=\"17\" /> <line x1=\"14\" x2=\"14\" y1=\"11\" y2=\"17\" />",
+      "trending-up": "<polyline points=\"22 7 13.5 15.5 8.5 10.5 2 17\" /> <polyline points=\"16 7 22 7 22 13\" />",
+      "ruler": "<path d=\"M21.3 8.7 8.7 21.3a1 1 0 0 1-1.4 0l-4.6-4.6a1 1 0 0 1 0-1.4L15.3 2.7a1 1 0 0 1 1.4 0l4.6 4.6a1 1 0 0 1 0 1.4Z\" /> <path d=\"m7.5 10.5 2 2\" /> <path d=\"m10.5 7.5 2 2\" /> <path d=\"m13.5 4.5 2 2\" /> <path d=\"m4.5 13.5 2 2\" />",
       "trash-2": "<path d=\"M10 11v6\" /> <path d=\"M14 11v6\" /> <path d=\"M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6\" /> <path d=\"M3 6h18\" /> <path d=\"M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2\" />",
       "trophy": "<path d=\"M10 14.66v1.626a2 2 0 0 1-.976 1.696A5 5 0 0 0 7 21.978\" /> <path d=\"M14 14.66v1.626a2 2 0 0 0 .976 1.696A5 5 0 0 1 17 21.978\" /> <path d=\"M18 9h1.5a1 1 0 0 0 0-5H18\" /> <path d=\"M4 22h16\" /> <path d=\"M6 9a6 6 0 0 0 12 0V3a1 1 0 0 0-1-1H7a1 1 0 0 0-1 1z\" /> <path d=\"M6 9H4.5a1 1 0 0 1 0-5H6\" />",
       "user-plus": "<path d=\"M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2\" /> <circle cx=\"9\" cy=\"7\" r=\"4\" /> <line x1=\"19\" x2=\"19\" y1=\"8\" y2=\"14\" /> <line x1=\"22\" x2=\"16\" y1=\"11\" y2=\"11\" />",
@@ -1237,7 +1294,8 @@
       session: {},  // session[userId] = { [treino]: {start,startHM,sets[]}, cardio:{...} }
       celebrated: {}, // celebrated[userId] = [labels de conquistas já comemoradas]
       notifs: {},   // notifs[userId] = [{ ts, type, msg, read }]
-      setlog: {}    // setlog[userId][treino][exIdx] = [{ kg, reps }] (carga em andamento)
+      setlog: {},   // setlog[userId][treino][exIdx] = [{ kg, reps }] (carga em andamento)
+      measures: {}  // measures[userId] = [{ date, weight, arm, chest, waist, photo }]
     };
 
     function loadState() {
@@ -1270,6 +1328,7 @@
           raw.celebrated = raw.celebrated || {};
           raw.notifs = raw.notifs || {};
           raw.setlog = raw.setlog || {};
+          raw.measures = raw.measures || {};
           return raw;
         }
       } catch (e) {}
@@ -2339,6 +2398,25 @@
       };
       reader.readAsDataURL(file);
     }
+    // foto de progresso: mantém proporção (não corta), cabe em "max" no maior lado
+    function resizePhoto(file, max, cb) {
+      const reader = new FileReader();
+      reader.onload = function () {
+        const img = new Image();
+        img.onload = function () {
+          let w = img.width, h = img.height;
+          if (w >= h && w > max) { h = Math.round(h * max / w); w = max; }
+          else if (h > w && h > max) { w = Math.round(w * max / h); h = max; }
+          const canvas = document.createElement("canvas");
+          canvas.width = w; canvas.height = h;
+          canvas.getContext("2d").drawImage(img, 0, 0, w, h);
+          cb(canvas.toDataURL("image/jpeg", 0.8));
+        };
+        img.onerror = function () { showToast("Imagem inválida ❌"); };
+        img.src = reader.result;
+      };
+      reader.readAsDataURL(file);
+    }
     const profPhotoInput = document.getElementById("prof-photo-input");
     document.getElementById("prof-photo-btn").addEventListener("click", function () { profPhotoInput.click(); });
     profPhotoInput.addEventListener("change", function () {
@@ -2525,6 +2603,110 @@
     document.getElementById("open-manual").addEventListener("click", openManual);
     document.getElementById("manual-close").addEventListener("click", function () { manualOverlay.hidden = true; });
     manualOverlay.addEventListener("click", function (e) { if (e.target === manualOverlay) manualOverlay.hidden = true; });
+
+    /* ---------- Medidas + foto de progresso (PR2) ---------- */
+    const measuresOverlay = document.getElementById("measures-overlay");
+    const FIELDS_M = [
+      { k: "weight", l: "Peso", u: "kg", better: null },
+      { k: "arm", l: "Braço", u: "cm", better: "up" },
+      { k: "chest", l: "Peito", u: "cm", better: "up" },
+      { k: "waist", l: "Cintura", u: "cm", better: "down" }
+    ];
+    let mPhotoData = null;
+    function measuresFor(id) { state.measures = state.measures || {}; state.measures[id] = state.measures[id] || []; return state.measures[id]; }
+    function measuresSorted(id) { return measuresFor(id).slice().sort(function (a, b) { return a.date < b.date ? -1 : a.date > b.date ? 1 : 0; }); }
+    function fmtNum(n) { return (Math.round(n * 10) / 10).toString(); }
+    function setMPhoto(data) {
+      mPhotoData = data || null;
+      document.getElementById("m-photo-preview").innerHTML = data ? '<img src="' + data + '" alt="prévia" />' : "";
+      document.getElementById("m-photo-remove").hidden = !data;
+    }
+    function openMeasures() {
+      document.getElementById("measures-title").textContent = "Medidas — " + activeUser().name;
+      const t = todayISO();
+      const dEl = document.getElementById("m-date"); dEl.value = t; dEl.max = t;
+      ["m-weight", "m-arm", "m-chest", "m-waist"].forEach(function (idd) { document.getElementById(idd).value = ""; });
+      setMPhoto(null);
+      renderMeasures();
+      measuresOverlay.hidden = false;
+      hydrateIcons(measuresOverlay);
+    }
+    function renderMeasures() {
+      const id = state.active;
+      const sorted = measuresSorted(id);
+      const cur = sorted[sorted.length - 1], prev = sorted[sorted.length - 2];
+      const curEl = document.getElementById("measures-current");
+      if (!cur) {
+        curEl.innerHTML = '<div class="meas-empty">Registre sua primeira medida pra acompanhar a evolução 💪</div>';
+      } else {
+        curEl.innerHTML = '<div class="meas-current">' + FIELDS_M.map(function (f) {
+          const v = cur[f.k];
+          if (v == null) return '<div class="meas-cur"><div class="v">–</div><div class="l">' + f.l + '</div></div>';
+          let d = "";
+          if (prev && prev[f.k] != null && v - prev[f.k] !== 0) {
+            const diff = v - prev[f.k];
+            const cls = f.better == null ? "" : ((diff > 0) === (f.better === "up") ? "up" : "down");
+            d = '<div class="d ' + cls + '">' + (diff > 0 ? "+" : "") + fmtNum(diff) + '</div>';
+          }
+          return '<div class="meas-cur"><div class="v">' + fmtNum(v) + '</div><div class="l">' + f.l + '</div>' + d + '</div>';
+        }).join("") + '</div>';
+      }
+      const listEl = document.getElementById("measures-list");
+      if (!sorted.length) { listEl.innerHTML = '<div class="meas-empty">Nenhuma medida ainda.</div>'; return; }
+      listEl.innerHTML = sorted.slice().reverse().map(function (m) {
+        const vals = FIELDS_M.filter(function (f) { return m[f.k] != null; }).map(function (f) { return f.l + " " + fmtNum(m[f.k]) + f.u; }).join(" · ");
+        const realIdx = measuresFor(id).indexOf(m);
+        return '<div class="meas-item">' +
+          (m.photo ? '<img src="' + m.photo + '" data-photo="' + realIdx + '" alt="foto" />' : '') +
+          '<div class="mi-info"><div class="mi-date">' + fmtDate(m.date) + '</div><div class="mi-vals">' + (vals || "—") + '</div></div>' +
+          '<button class="log-del" data-mi="' + realIdx + '" aria-label="Remover">' + icon("trash-2", 16) + '</button>' +
+        '</div>';
+      }).join("");
+      listEl.querySelectorAll("[data-photo]").forEach(function (im) { im.addEventListener("click", function () { openPhotoView(im.getAttribute("src")); }); });
+      listEl.querySelectorAll("[data-mi]").forEach(function (b) {
+        b.addEventListener("click", async function () {
+          if (!(await uiConfirm("Apagar essa medida?"))) return;
+          measuresFor(id).splice(parseInt(b.dataset.mi, 10), 1);
+          saveState(); renderMeasures();
+        });
+      });
+    }
+    document.getElementById("m-photo-btn").addEventListener("click", function () { document.getElementById("m-photo-input").click(); });
+    document.getElementById("m-photo-input").addEventListener("change", function () {
+      const file = this.files && this.files[0];
+      if (file) resizePhoto(file, 640, function (data) { setMPhoto(data); });
+      this.value = "";
+    });
+    document.getElementById("m-photo-remove").addEventListener("click", function () { setMPhoto(null); });
+    document.getElementById("m-save").addEventListener("click", function () {
+      const id = state.active;
+      const date = document.getElementById("m-date").value;
+      if (!date) { showToast("Escolha uma data"); return; }
+      if (date > todayISO()) { showToast("Não dá pra registrar no futuro"); return; }
+      const m = { date: date };
+      let any = false;
+      [["weight", "m-weight"], ["arm", "m-arm"], ["chest", "m-chest"], ["waist", "m-waist"]].forEach(function (p) {
+        const val = document.getElementById(p[1]).value;
+        if (val !== "" && !isNaN(parseFloat(val))) { m[p[0]] = parseFloat(val); any = true; }
+      });
+      if (mPhotoData) { m.photo = mPhotoData; any = true; }
+      if (!any) { showToast("Preencha pelo menos um campo"); return; }
+      measuresFor(id).push(m);
+      saveState();
+      showToast("Medida salva! 📏");
+      const t = todayISO();
+      document.getElementById("m-date").value = t;
+      ["m-weight", "m-arm", "m-chest", "m-waist"].forEach(function (idd) { document.getElementById(idd).value = ""; });
+      setMPhoto(null);
+      renderMeasures();
+    });
+    document.getElementById("open-measures").addEventListener("click", openMeasures);
+    document.getElementById("measures-close").addEventListener("click", function () { measuresOverlay.hidden = true; });
+    measuresOverlay.addEventListener("click", function (e) { if (e.target === measuresOverlay) measuresOverlay.hidden = true; });
+    const photoViewOverlay = document.getElementById("photo-view-overlay");
+    function openPhotoView(src) { document.getElementById("photo-view-img").src = src; photoViewOverlay.hidden = false; }
+    document.getElementById("photo-view-close").addEventListener("click", function () { photoViewOverlay.hidden = true; });
+    photoViewOverlay.addEventListener("click", function (e) { if (e.target === photoViewOverlay) photoViewOverlay.hidden = true; });
 
     const toastEl = document.getElementById("toast");
     let toastTimer = null;
