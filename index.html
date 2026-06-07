@@ -107,11 +107,11 @@
     .cloud-status .ok { color: var(--done); font-weight: 800; }
     .field { display: block; margin-bottom: 10px; }
     .field label { display: block; font-size: 12px; color: var(--muted); font-weight: 700; margin-bottom: 5px; }
-    .field input {
+    .field input, .field select {
       width: 100%; appearance: none; border: 1px solid var(--line); background: var(--surface-2);
       color: var(--text); font-family: 'Manrope', sans-serif; font-size: 15px; padding: 12px 14px; border-radius: 12px;
     }
-    .field input:focus { outline: none; border-color: var(--accent); }
+    .field input:focus, .field select:focus { outline: none; border-color: var(--accent); }
     .cloud-primary {
       width: 100%; appearance: none; border: none; cursor: pointer; margin-top: 6px;
       font-family: 'Manrope', sans-serif; font-weight: 800; font-size: 15px;
@@ -586,6 +586,7 @@
       <div class="ach-grid" id="hist-ach"></div>
       <h3>Sessões registradas</h3>
       <div class="log" id="hist-log"></div>
+      <button class="backup-btn" id="open-manual" style="width:100%;margin-top:10px">＋ Registrar sessão (outra data)</button>
 
       <h3>Backup dos dados</h3>
       <div class="backup-row">
@@ -735,6 +736,19 @@
       <div class="field"><label for="cardio-done-end">Terminou</label><input id="cardio-done-end" type="time" /></div>
       <button class="cloud-primary" id="cardio-done-ok">Registrar</button>
       <p class="cloud-note">Ajuste os horários se quiser. A duração é calculada automaticamente.</p>
+    </div>
+  </div>
+
+  <!-- Registrar sessão manualmente (retroativo) -->
+  <div class="overlay" id="manual-overlay" hidden>
+    <div class="sheet">
+      <div class="sheet-head"><h2>Registrar sessão</h2><button id="manual-close" aria-label="Fechar" data-icon="x"></button></div>
+      <div class="field"><label for="manual-type">O que você fez?</label><select id="manual-type"></select></div>
+      <div class="field"><label for="manual-date">Data</label><input id="manual-date" type="date" /></div>
+      <div class="field"><label for="manual-start">Começou (opcional)</label><input id="manual-start" type="time" /></div>
+      <div class="field"><label for="manual-end">Terminou (opcional)</label><input id="manual-end" type="time" /></div>
+      <button class="cloud-primary" id="manual-ok">Registrar</button>
+      <p class="cloud-note">Pra lançar um treino ou cardio que você fez antes. Treino só conta uma vez por dia; cardio pode repetir.</p>
     </div>
   </div>
 
@@ -1229,6 +1243,7 @@
             if (!u.cosmetics) u.cosmetics = { themes: [], hats: [], theme: null, hat: null };
             if (typeof u.spinsUsed !== "number") u.spinsUsed = 0;
             if (typeof u.lifeSpinsUsed !== "number") u.lifeSpinsUsed = 0;
+            ensureTesterUnlocks(u);
           });
           // migração PR4/PR5: pontos, som, cutucadas
           raw.scores = raw.scores || {};
@@ -1278,7 +1293,23 @@
     ===================================================================== */
     const PTS_SET = 5, PTS_TREINO = 50, PTS_CARDIO = 30;
     function scoreOf(id) { state.scores[id] = state.scores[id] || { byDay: {} }; if (!state.scores[id].byDay) state.scores[id].byDay = {}; return state.scores[id]; }
-    function addPoints(n) { const s = scoreOf(state.active); const d = todayISO(); s.byDay[d] = Math.max(0, (s.byDay[d] || 0) + n); }
+    // Credita pontos no DIA da atividade (não em "hoje"), pra registro retroativo bater com a remoção
+    function addPointsOn(date, n) { const s = scoreOf(state.active); s.byDay[date] = Math.max(0, (s.byDay[date] || 0) + n); }
+    function addPoints(n) { addPointsOn(todayISO(), n); }
+
+    /* ---------- Perfil TESTER (TCORDEIRO): tudo liberado pra testar temas/itens ---------- */
+    const TESTER_NAME = "TCORDEIRO";
+    function isTester(u) { return !!u && String(u.name || "").trim().toUpperCase() === TESTER_NAME; }
+    function ensureTesterUnlocks(u) {
+      if (!isTester(u)) return;
+      u.cosmetics = u.cosmetics || { themes: [], hats: [], theme: null, hat: null };
+      u.cosmetics.themes = Object.keys(THEME_CATALOG);
+      u.cosmetics.hats = Object.keys(HATS_CATALOG);
+    }
+    // já existe um treino A/B/C registrado nessa data? (evita concluir o mesmo dia 2x)
+    function treinoLoggedOn(id, key, date) {
+      return (state.history[id] || []).some(function (e) { return e.date === date && e.w === key; });
+    }
     function totalPoints(id) { const s = state.scores[id]; if (!s || !s.byDay) return 0; return Object.keys(s.byDay).reduce(function (a, k) { return a + s.byDay[k]; }, 0); }
     function renderPoints() { const el = document.getElementById("points-badge"); if (el) el.innerHTML = icon("star", 15) + " " + totalPoints(state.active) + " pts"; }
 
@@ -1584,10 +1615,12 @@
           const nowDone = !box.classList.contains("done");
           box.classList.toggle("done", nowDone);
           setDone(key, exIdx, setIdx, nowDone);
+          const s = sess();
           if (nowDone) {
-            const s = sess();
             if (!s[key]) s[key] = { start: Date.now(), startHM: hmNow(), sets: [] };
             s[key].sets.push(hmNow());
+          } else if (s[key] && s[key].sets.length) {
+            s[key].sets.pop(); // desmarcar remove a contagem, senão entry.pts fica inflado
           }
           addPoints(nowDone ? PTS_SET : -PTS_SET);
           if (nowDone) { playSound("ding"); haptic(15); }
@@ -1682,6 +1715,7 @@
     const usersEl = document.getElementById("users");
 
     function refreshActiveProfile() {
+      ensureTesterUnlocks(activeUser());
       applyTheme(); renderUsers(); buildPanels(); applyChecks(); setFillColor();
       renderCardioButtons(); renderInfoCap(); renderPoints();
       if (!document.getElementById("overlay").hidden) renderHistory();
@@ -1834,6 +1868,7 @@
       const u = activeUser();
       const nm = document.getElementById("prof-name").value.trim();
       if (nm) u.name = nm.slice(0, 16);
+      ensureTesterUnlocks(u);
       u.cardios = editCardios.length ? editCardios : defaultCardios();
       saveState();
       refreshActiveProfile();
@@ -2144,8 +2179,8 @@
       const st = statsFor(id);
       return ACHIEVEMENTS.filter(function (a) { return a.test(st) && (!milestoneOnly || a.milestone); }).length;
     }
-    function availableSpins(id) { const u = state.users.find(function (x) { return x.id === id; }); return Math.max(0, earnedAchCount(id, false) - (u.spinsUsed || 0)); }
-    function availableLifeSpins(id) { const u = state.users.find(function (x) { return x.id === id; }); return Math.max(0, earnedAchCount(id, true) - (u.lifeSpinsUsed || 0)); }
+    function availableSpins(id) { const u = state.users.find(function (x) { return x.id === id; }); if (isTester(u)) return 0; return Math.max(0, earnedAchCount(id, false) - (u.spinsUsed || 0)); }
+    function availableLifeSpins(id) { const u = state.users.find(function (x) { return x.id === id; }); if (isTester(u)) return 0; return Math.max(0, earnedAchCount(id, true) - (u.lifeSpinsUsed || 0)); }
 
     function openRewards() {
       renderRewards();
@@ -2262,8 +2297,14 @@
     function concluirTreino(key) {
       const id = state.active;
       state.history[id] = state.history[id] || [];
+      const today = todayISO();
+      // anti-duplicação: não deixa concluir o mesmo treino 2x no mesmo dia (tester é imune)
+      if (!isTester(activeUser()) && treinoLoggedOn(id, key, today)) {
+        showToast("Treino " + key + " já concluído hoje ✅");
+        return;
+      }
       const s = sess()[key];
-      const entry = { date: todayISO(), w: key };
+      const entry = { date: today, w: key };
       const setPts = (s ? s.sets.length : 0) * PTS_SET;
       if (s) {
         entry.start = s.startHM; entry.end = hmNow();
@@ -2275,7 +2316,7 @@
       state.history[id].push(entry);
       const c = checksFor();
       c[key] = {};
-      addPoints(PTS_TREINO);
+      addPointsOn(entry.date, PTS_TREINO);
       saveState();
       applyChecks();
       playSound("win");
@@ -2350,6 +2391,60 @@
     document.getElementById("cardio-choice-cancel").addEventListener("click", function () { cardioChoiceOverlay.hidden = true; });
     cardioChoiceOverlay.addEventListener("click", function (e) { if (e.target === cardioChoiceOverlay) cardioChoiceOverlay.hidden = true; });
 
+    /* ---------- Registrar sessão manualmente (retroativo) ---------- */
+    const manualOverlay = document.getElementById("manual-overlay");
+    function openManual() {
+      const u = activeUser();
+      const plan = activePlan();
+      const sel = document.getElementById("manual-type");
+      let opts = ["A", "B", "C"].map(function (k) {
+        return '<option value="treino:' + k + '">Treino ' + k + ' · ' + escapeHtml(plan.labels[k]) + '</option>';
+      });
+      (u.cardios || []).forEach(function (c, i) {
+        opts.push('<option value="cardio:' + i + '">Cardio · ' + escapeHtml(c.label) + '</option>');
+      });
+      sel.innerHTML = opts.join("");
+      const t = todayISO();
+      const d = document.getElementById("manual-date"); d.value = t; d.max = t;
+      document.getElementById("manual-start").value = "";
+      document.getElementById("manual-end").value = "";
+      manualOverlay.hidden = false;
+    }
+    document.getElementById("manual-ok").addEventListener("click", function () {
+      const u = activeUser();
+      const id = state.active;
+      const val = document.getElementById("manual-type").value || "";
+      const date = document.getElementById("manual-date").value;
+      if (!date) { showToast("Escolha uma data"); return; }
+      if (date > todayISO()) { showToast("Não dá pra registrar no futuro"); return; }
+      const startV = document.getElementById("manual-start").value;
+      const endV = document.getElementById("manual-end").value;
+      const parts = val.split(":");
+      state.history[id] = state.history[id] || [];
+      let entry;
+      if (parts[0] === "treino") {
+        const key = parts[1];
+        if (!isTester(u) && treinoLoggedOn(id, key, date)) { showToast("Treino " + key + " já registrado nesse dia ✅"); return; }
+        entry = { date: date, w: key, pts: PTS_TREINO };
+      } else {
+        const c = (u.cardios || [])[parseInt(parts[1], 10)];
+        if (!c) { showToast("Cardio inválido"); return; }
+        entry = { date: date, w: "cardio", t: c.label, emoji: c.emoji, pts: PTS_CARDIO };
+      }
+      if (startV && endV) { entry.start = startV; entry.end = endV; entry.dur = Math.max(1, minsBetween(startV, endV)); }
+      state.history[id].push(entry);
+      addPointsOn(entry.date, entry.pts);
+      saveState();
+      manualOverlay.hidden = true;
+      renderPoints();
+      celebrateAchievements();
+      if (!document.getElementById("overlay").hidden) renderHistory();
+      showToast("Registrado em " + fmtDate(date) + " · +" + entry.pts + " pts");
+    });
+    document.getElementById("open-manual").addEventListener("click", openManual);
+    document.getElementById("manual-close").addEventListener("click", function () { manualOverlay.hidden = true; });
+    manualOverlay.addEventListener("click", function (e) { if (e.target === manualOverlay) manualOverlay.hidden = true; });
+
     const toastEl = document.getElementById("toast");
     let toastTimer = null;
     function showToast(msg) {
@@ -2386,8 +2481,9 @@
         statBox(list.length, "Total") + statBox(monthCount, "Mês") + statBox(weekCount, "7 dias") +
         '<div class="stat"><div class="num streak-num">' + icon("flame", 20, "flicker") + st.streak + '</div><div class="lbl">sequência</div></div>';
       document.getElementById("hist-pts").innerHTML = totalPoints(state.active) + '<small>pontos de ' + escapeHtml(u.name) + '</small>';
+      const tester = isTester(u);
       document.getElementById("hist-ach").innerHTML = ACHIEVEMENTS.map(function (a) {
-        const on = a.test(st);
+        const on = tester || a.test(st);
         return '<div class="ach' + (on ? " on" : "") + '"><span class="ach-ico">' + icon(a.icon, 22) + '</span><div><div class="t">' + a.label + '</div><div class="d">' + a.desc + '</div></div></div>';
       }).join("");
 
