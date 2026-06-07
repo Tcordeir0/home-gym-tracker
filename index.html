@@ -1524,8 +1524,8 @@
     function addPoints(n) { addPointsOn(todayISO(), n); }
 
     /* ---------- Perfil TESTER (TCORDEIRO): tudo liberado pra testar temas/itens ---------- */
-    const TESTER_NAME = "TCORDEIRO";
-    function isTester(u) { return !!u && String(u.name || "").trim().toUpperCase() === TESTER_NAME; }
+    // literal inline (não usar const aqui: isTester roda durante loadState, antes de uma const ser inicializada → TDZ)
+    function isTester(u) { return !!u && String(u.name || "").trim().toUpperCase() === "TCORDEIRO"; }
     function ensureTesterUnlocks(u) {
       if (!isTester(u)) return;
       u.cosmetics = u.cosmetics || { themes: [], hats: [], theme: null, hat: null };
