@@ -328,10 +328,11 @@
     .tip { margin-top: 10px; font-size: 13.5px; color: var(--muted); background: var(--surface-2); border-radius: 10px; padding: 9px 11px; }
     .tip b { color: var(--text); font-weight: 700; }
 
-    .card-foot { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-top: 14px; }
-    .sets { display: flex; gap: 8px; flex-wrap: wrap; }
+    .card-foot { display: flex; flex-direction: column; gap: 12px; margin-top: 14px; }
+    .sets { display: flex; flex-direction: column; gap: 8px; }
+    .set-row { display: flex; align-items: center; gap: 8px; }
     .set-box {
-      width: 38px; height: 38px; border-radius: 10px; border: 1.5px solid var(--line);
+      width: 38px; height: 38px; flex-shrink: 0; border-radius: 10px; border: 1.5px solid var(--line);
       background: var(--surface-2); color: var(--muted); font-weight: 800; font-size: 13px;
       display: flex; align-items: center; justify-content: center; cursor: pointer; user-select: none;
       transition: transform 0.1s ease, background 0.15s ease, color 0.15s ease, border-color 0.15s ease;
@@ -340,6 +341,19 @@
     .set-box.done { background: var(--done); border-color: var(--done); color: #fff; }
     .set-box.done::after { content: "✓"; }
     .set-box.done span { display: none; }
+    .set-in {
+      width: 100%; min-width: 0; height: 38px; text-align: center; appearance: none;
+      border: 1.5px solid var(--line); background: var(--surface-2); color: var(--text);
+      border-radius: 10px; font-family: 'Manrope', sans-serif; font-weight: 700; font-size: 14px;
+    }
+    .set-in::-webkit-outer-spin-button, .set-in::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+    .set-in:focus { outline: none; border-color: var(--accent); }
+    .set-in::placeholder { color: var(--muted); font-weight: 600; }
+    .set-row.done .set-in { border-color: var(--done); }
+    .set-unit { font-size: 11px; color: var(--muted); font-weight: 700; flex-shrink: 0; }
+    .set-x { color: var(--muted); font-weight: 800; flex-shrink: 0; }
+    .last-perf { font-size: 12px; color: var(--muted); margin-top: 8px; display: flex; align-items: center; gap: 5px; }
+    .last-perf b { color: var(--accent); }
 
     .video-link {
       display: inline-flex; align-items: center; gap: 6px; flex-shrink: 0;
@@ -1222,7 +1236,8 @@
       pokes: {},    // pokes[targetId] = { fromName, msg, date }
       session: {},  // session[userId] = { [treino]: {start,startHM,sets[]}, cardio:{...} }
       celebrated: {}, // celebrated[userId] = [labels de conquistas já comemoradas]
-      notifs: {}    // notifs[userId] = [{ ts, type, msg, read }]
+      notifs: {},   // notifs[userId] = [{ ts, type, msg, read }]
+      setlog: {}    // setlog[userId][treino][exIdx] = [{ kg, reps }] (carga em andamento)
     };
 
     function loadState() {
@@ -1254,6 +1269,7 @@
           raw.session = raw.session || {};
           raw.celebrated = raw.celebrated || {};
           raw.notifs = raw.notifs || {};
+          raw.setlog = raw.setlog || {};
           return raw;
         }
       } catch (e) {}
@@ -1280,6 +1296,28 @@
       const c = checksFor();
       c[key] = c[key] || {}; c[key][ex] = c[key][ex] || {}; c[key][ex][set] = val;
       saveState();
+    }
+    /* ---------- Carga (kg) + reps por série ---------- */
+    function setlogFor() { state.setlog = state.setlog || {}; const id = state.active; state.setlog[id] = state.setlog[id] || {}; return state.setlog[id]; }
+    function getSetVal(key, ex, set) { const m = setlogFor(); return (m[key] && m[key][ex] && m[key][ex][set]) || {}; }
+    function setSetVal(key, ex, set, field, val) {
+      const m = setlogFor();
+      m[key] = m[key] || {}; m[key][ex] = m[key][ex] || []; m[key][ex][set] = m[key][ex][set] || {};
+      if (val === "" || val == null || isNaN(val)) delete m[key][ex][set][field]; else m[key][ex][set][field] = val;
+      saveState();
+    }
+    // melhor desempenho anterior desse exercício (por carga), pra sugerir progressão
+    function lastPerf(nome) {
+      const list = state.history[state.active] || [];
+      for (let i = list.length - 1; i >= 0; i--) {
+        const ex = (list[i].exercises || []).filter(function (x) { return x.nome === nome && x.sets && x.sets.length; })[0];
+        if (ex) {
+          let best = null;
+          ex.sets.forEach(function (s) { if (s.kg != null || s.reps != null) { if (!best || (s.kg || 0) > (best.kg || 0)) best = s; } });
+          if (best) return { date: list[i].date, kg: best.kg, reps: best.reps };
+        }
+      }
+      return null;
     }
     function todayISO() {
       const d = new Date();
@@ -1590,9 +1628,30 @@
       card.dataset.key = key;
       card.dataset.ex = exIdx;
 
+      const withLoad = (key === "A" || key === "B" || key === "C");
       let setsHtml = "";
       for (let i = 0; i < ex.series; i++) {
-        setsHtml += '<button class="set-box" data-set="' + i + '" aria-label="Série ' + (i + 1) + '"><span>' + (i + 1) + '</span></button>';
+        if (withLoad) {
+          const v = getSetVal(key, exIdx, i);
+          setsHtml += '<div class="set-row" data-set="' + i + '">' +
+            '<button class="set-box" data-set="' + i + '" aria-label="Série ' + (i + 1) + '"><span>' + (i + 1) + '</span></button>' +
+            '<input class="set-in set-kg" data-set="' + i + '" type="number" inputmode="decimal" min="0" step="0.5" placeholder="kg" value="' + (v.kg != null ? v.kg : "") + '" />' +
+            '<span class="set-unit">kg</span><span class="set-x">×</span>' +
+            '<input class="set-in set-reps" data-set="' + i + '" type="number" inputmode="numeric" min="0" step="1" placeholder="reps" value="' + (v.reps != null ? v.reps : "") + '" />' +
+            '<span class="set-unit">reps</span>' +
+          '</div>';
+        } else {
+          setsHtml += '<div class="set-row" data-set="' + i + '"><button class="set-box" data-set="' + i + '" aria-label="Série ' + (i + 1) + '"><span>' + (i + 1) + '</span></button></div>';
+        }
+      }
+
+      let lpHtml = "";
+      if (withLoad) {
+        const lp = lastPerf(ex.nome);
+        if (lp) {
+          const txt = (lp.kg != null ? lp.kg + "kg" : "") + (lp.kg != null && lp.reps != null ? " × " : "") + (lp.reps != null ? lp.reps + " reps" : "");
+          lpHtml = '<div class="last-perf">' + icon("medal", 14) + ' Última vez: <b>' + txt + '</b> — supera! 💪</div>';
+        }
       }
 
       card.innerHTML =
@@ -1600,7 +1659,7 @@
           '<div><div class="name">' + ex.nome + '</div><div class="muscle">' + ex.musculo + '</div></div>' +
           '<div class="scheme">' + ex.series + '×' + ex.reps + '</div>' +
         '</div>' +
-        '<div class="tip"><b>Dica:</b> ' + ex.dica + '</div>' +
+        '<div class="tip"><b>Dica:</b> ' + ex.dica + '</div>' + lpHtml +
         '<div class="card-foot">' +
           '<div class="sets">' + setsHtml + '</div>' +
           '<div class="foot-actions">' +
@@ -1609,11 +1668,20 @@
           '</div>' +
         '</div>';
 
+      card.querySelectorAll(".set-in").forEach(function (inp) {
+        inp.addEventListener("change", function () {
+          const setIdx = parseInt(inp.dataset.set, 10);
+          const field = inp.classList.contains("set-kg") ? "kg" : "reps";
+          setSetVal(key, exIdx, setIdx, field, inp.value === "" ? "" : parseFloat(inp.value));
+        });
+      });
+
       card.querySelectorAll(".set-box").forEach(function (box) {
         box.addEventListener("click", function () {
           const setIdx = parseInt(box.dataset.set, 10);
           const nowDone = !box.classList.contains("done");
           box.classList.toggle("done", nowDone);
+          const row = box.closest(".set-row"); if (row) row.classList.toggle("done", nowDone);
           setDone(key, exIdx, setIdx, nowDone);
           const s = sess();
           if (nowDone) {
@@ -1672,7 +1740,9 @@
         const ex = parseInt(card.dataset.ex, 10);
         card.querySelectorAll(".set-box").forEach(function (box) {
           const setIdx = parseInt(box.dataset.set, 10);
-          box.classList.toggle("done", isDone(key, ex, setIdx));
+          const d = isDone(key, ex, setIdx);
+          box.classList.toggle("done", d);
+          const row = box.closest(".set-row"); if (row) row.classList.toggle("done", d);
         });
         refreshCard(card);
       });
@@ -2313,11 +2383,22 @@
         delete sess()[key];
       }
       entry.pts = PTS_TREINO + setPts; // pontos do treino + das séries (pra descontar se apagar)
+      // snapshot da carga (kg×reps) por exercício, pra histórico e gráficos
+      const plan = activePlan();
+      const ml = setlogFor()[key] || {};
+      const exs = (plan.treinos[key] || []).map(function (ex, exIdx) {
+        const sets = (ml[exIdx] || []).map(function (v) { return { kg: (v && v.kg != null) ? v.kg : null, reps: (v && v.reps != null) ? v.reps : null }; })
+          .filter(function (v) { return v.kg != null || v.reps != null; });
+        return { nome: ex.nome, musculo: ex.musculo, sets: sets };
+      }).filter(function (e) { return e.sets.length; });
+      if (exs.length) entry.exercises = exs;
       state.history[id].push(entry);
       const c = checksFor();
       c[key] = {};
+      delete setlogFor()[key]; // limpa a carga em andamento desse treino
       addPointsOn(entry.date, PTS_TREINO);
       saveState();
+      buildPanels(); // recarrega cards (limpa inputs + atualiza "última vez")
       applyChecks();
       playSound("win");
       renderPoints();
@@ -2511,14 +2592,25 @@
           badge = w;
         }
         const timeStr = (item.e.start && item.e.end) ? (item.e.start + "–" + item.e.end + (item.e.dur ? " · " + item.e.dur + "min" : "")) : "";
-        const hasDetail = item.e.setsT && item.e.setsT.length;
+        let detail = "";
+        if (item.e.exercises && item.e.exercises.length) {
+          detail = item.e.exercises.map(function (x) {
+            const sets = x.sets.map(function (s) {
+              return (s.kg != null ? s.kg + "kg" : "") + (s.kg != null && s.reps != null ? "×" : "") + (s.reps != null ? s.reps : "");
+            }).filter(Boolean).join(" · ");
+            return '<b>' + escapeHtml(x.nome) + '</b> ' + sets;
+          }).join("<br>");
+        } else if (item.e.setsT && item.e.setsT.length) {
+          detail = '<b>Séries:</b> ' + item.e.setsT.join(" · ");
+        }
+        const hasDetail = !!detail;
         return '<div class="log-wrap">' +
           '<div class="log-item' + (hasDetail ? " has-detail" : "") + '">' +
             '<div class="log-badge ' + w + '">' + badge + '</div>' +
             '<div class="log-info"><div class="d">' + fmtDate(item.e.date) + (timeStr ? ' · ' + timeStr : '') + '</div><div class="w">' + titulo + (hasDetail ? ' <span class="caret">⌄</span>' : '') + '</div></div>' +
             '<button class="log-del" data-idx="' + item.i + '" aria-label="Remover">' + icon("trash-2", 16) + '</button>' +
           '</div>' +
-          (hasDetail ? '<div class="log-detail" hidden><b>Séries:</b> ' + item.e.setsT.join(" · ") + '</div>' : '') +
+          (hasDetail ? '<div class="log-detail" hidden>' + detail + '</div>' : '') +
         '</div>';
       }).join("");
 
