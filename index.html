@@ -520,7 +520,23 @@
     .ach .t { font-weight: 800; font-size: 12.5px; line-height: 1.2; }
     .ach .d { font-size: 11px; color: var(--muted); }
 
-    .backup-row { display: flex; gap: 8px; margin-top: 4px; }
+    .backup-row { display: flex; gap: 8px; margin-top: 4px; flex-wrap: wrap; }
+    .backup-row .backup-btn { min-width: 92px; }
+    /* Gráficos (PR3) */
+    .chart-box { margin-bottom: 6px; }
+    .chart-svg { width: 100%; height: auto; display: block; background: var(--surface-2); border: 1px solid var(--line); border-radius: 12px; }
+    .ch-line { fill: none; stroke: var(--accent); stroke-width: 2.5; stroke-linecap: round; stroke-linejoin: round; }
+    .ch-area { fill: var(--accent); opacity: 0.10; }
+    .ch-dot { fill: var(--accent); stroke: var(--surface-2); stroke-width: 1.5; opacity: 0; transform-box: fill-box; transform-origin: center; animation: dotin 0.4s ease forwards; }
+    .ch-lbl { font-size: 9px; fill: var(--muted); font-family: 'Manrope', sans-serif; }
+    .ch-val { font-size: 11px; font-weight: 800; fill: var(--accent); font-family: 'Manrope', sans-serif; }
+    @keyframes dotin { from { opacity: 0; transform: scale(0); } to { opacity: 1; transform: scale(1); } }
+    .chart-empty, .chart-single { color: var(--muted); text-align: center; padding: 22px 10px; font-size: 13px; background: var(--surface-2); border: 1px solid var(--line); border-radius: 12px; line-height: 1.5; }
+    .chart-single b { color: var(--accent); font-size: 18px; }
+    .chart-tabs { display: flex; gap: 6px; margin-bottom: 8px; flex-wrap: wrap; }
+    .chart-tab { padding: 6px 12px; border-radius: 99px; border: 1px solid var(--line); background: var(--surface-2); color: var(--muted); font-size: 12px; font-weight: 700; cursor: pointer; }
+    .chart-tab.active { background: var(--accent); color: var(--on-accent, #0d0f12); border-color: var(--accent); }
+    @media (prefers-reduced-motion: reduce) { .ch-dot { animation: none; opacity: 1; } .ch-line { transition: none !important; stroke-dashoffset: 0 !important; } }
     .backup-btn { flex: 1; appearance: none; cursor: pointer; border: 1px solid var(--line); background: var(--surface); color: var(--text); font-family: 'Manrope', sans-serif; font-weight: 800; font-size: 14px; padding: 12px; border-radius: 12px; transition: border-color 0.15s ease; }
     .backup-btn:active { border-color: var(--accent); }
     .backup-note { font-size: 12px; color: var(--muted); margin-top: 8px; line-height: 1.5; }
@@ -619,8 +635,9 @@
       <h3>Sessões registradas</h3>
       <div class="log" id="hist-log"></div>
       <div class="backup-row" style="margin-top:10px">
-        <button class="backup-btn" id="open-manual">＋ Registrar sessão</button>
-        <button class="backup-btn" id="open-measures"><span data-icon="target" data-size="14"></span> Medidas</button>
+        <button class="backup-btn" id="open-manual">＋ Registrar</button>
+        <button class="backup-btn" id="open-measures"><span data-icon="ruler" data-size="14"></span> Medidas</button>
+        <button class="backup-btn" id="open-charts"><span data-icon="trending-up" data-size="14"></span> Gráficos</button>
       </div>
 
       <h3>Backup dos dados</h3>
@@ -809,6 +826,19 @@
       <button class="cloud-primary" id="m-save">Salvar medida</button>
       <h3>Histórico de medidas</h3>
       <div id="measures-list"></div>
+    </div>
+  </div>
+
+  <!-- Gráficos de evolução (PR3) -->
+  <div class="overlay" id="charts-overlay" hidden>
+    <div class="sheet">
+      <div class="sheet-head"><h2 id="charts-title">Evolução</h2><button id="charts-close" aria-label="Fechar" data-icon="x"></button></div>
+      <h3>Carga por exercício</h3>
+      <div class="field"><select id="chart-ex"></select></div>
+      <div id="chart-load" class="chart-box"></div>
+      <h3>Medidas</h3>
+      <div class="chart-tabs" id="chart-meas-tabs"></div>
+      <div id="chart-meas" class="chart-box"></div>
     </div>
   </div>
 
@@ -2707,6 +2737,101 @@
     function openPhotoView(src) { document.getElementById("photo-view-img").src = src; photoViewOverlay.hidden = false; }
     document.getElementById("photo-view-close").addEventListener("click", function () { photoViewOverlay.hidden = true; });
     photoViewOverlay.addEventListener("click", function (e) { if (e.target === photoViewOverlay) photoViewOverlay.hidden = true; });
+
+    /* ---------- Gráficos de evolução (PR3) ---------- */
+    const chartsOverlay = document.getElementById("charts-overlay");
+    const REDUCED_MOTION = !!(window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches);
+    let chartMeasField = "arm";
+    function exerciseLoadSeries(nome) {
+      const list = state.history[state.active] || [];
+      const out = [];
+      list.forEach(function (e) {
+        const ex = (e.exercises || []).filter(function (x) { return x.nome === nome; })[0];
+        if (!ex) return;
+        let best = null;
+        ex.sets.forEach(function (s) { if (s.kg != null && (best == null || s.kg > best)) best = s.kg; });
+        if (best != null) out.push({ x: e.date, y: best });
+      });
+      return out.sort(function (a, b) { return a.x < b.x ? -1 : a.x > b.x ? 1 : 0; });
+    }
+    function exercisesWithLoad() {
+      const list = state.history[state.active] || [];
+      const seen = {};
+      list.forEach(function (e) { (e.exercises || []).forEach(function (x) { if (x.sets.some(function (s) { return s.kg != null; })) seen[x.nome] = true; }); });
+      return Object.keys(seen);
+    }
+    function measureSeries(field) {
+      return measuresSorted(state.active).filter(function (m) { return m[field] != null; }).map(function (m) { return { x: m.date, y: m[field] }; });
+    }
+    function renderLineChart(container, series, unit) {
+      if (!series || !series.length) { container.innerHTML = '<div class="chart-empty">Sem dados ainda.<br>Registre pra ver a evolução 📈</div>'; return; }
+      if (series.length === 1) {
+        container.innerHTML = '<div class="chart-single"><b>' + fmtNum(series[0].y) + unit + '</b><br>em ' + fmtDate(series[0].x) + '<br><small>Registre mais de uma vez pra ver a linha</small></div>';
+        return;
+      }
+      const W = 320, H = 170, pl = 30, pr = 12, ptop = 16, pb = 22;
+      const ys = series.map(function (s) { return s.y; });
+      let min = Math.min.apply(null, ys), max = Math.max.apply(null, ys);
+      if (min === max) { min -= 1; max += 1; }
+      const n = series.length;
+      const X = function (i) { return pl + (W - pl - pr) * (i / (n - 1)); };
+      const Y = function (v) { return ptop + (H - ptop - pb) * (1 - (v - min) / (max - min)); };
+      let line = "", area = "";
+      series.forEach(function (s, i) { const seg = (i ? " L" : "M") + X(i).toFixed(1) + " " + Y(s.y).toFixed(1); line += seg; area += seg; });
+      area += " L" + X(n - 1).toFixed(1) + " " + (H - pb).toFixed(1) + " L" + X(0).toFixed(1) + " " + (H - pb).toFixed(1) + " Z";
+      let dots = "";
+      series.forEach(function (s, i) { dots += '<circle class="ch-dot" cx="' + X(i).toFixed(1) + '" cy="' + Y(s.y).toFixed(1) + '" r="3.2" style="animation-delay:' + (0.3 + i * 0.05).toFixed(2) + 's" />'; });
+      const last = series[n - 1];
+      const svg = '<svg class="chart-svg" viewBox="0 0 ' + W + ' ' + H + '" preserveAspectRatio="xMidYMid meet">' +
+        '<text class="ch-lbl" x="4" y="' + (Y(max) + 3).toFixed(1) + '">' + fmtNum(max) + '</text>' +
+        '<text class="ch-lbl" x="4" y="' + (Y(min) + 3).toFixed(1) + '">' + fmtNum(min) + '</text>' +
+        '<path class="ch-area" d="' + area + '" />' +
+        '<path class="ch-line" d="' + line + '" />' + dots +
+        '<text class="ch-lbl" x="' + pl + '" y="' + (H - 6) + '">' + fmtDate(series[0].x).slice(0, 5) + '</text>' +
+        '<text class="ch-lbl" x="' + (W - pr) + '" y="' + (H - 6) + '" text-anchor="end">' + fmtDate(last.x).slice(0, 5) + '</text>' +
+        '<text class="ch-val" x="' + (W - pr) + '" y="' + (Y(last.y) - 6).toFixed(1) + '" text-anchor="end">' + fmtNum(last.y) + unit + '</text>' +
+        '</svg>';
+      container.innerHTML = svg;
+      const path = container.querySelector(".ch-line");
+      if (path && !REDUCED_MOTION) {
+        const len = path.getTotalLength();
+        path.style.strokeDasharray = len; path.style.strokeDashoffset = len;
+        path.getBoundingClientRect();
+        path.style.transition = "stroke-dashoffset 0.9s ease";
+        path.style.strokeDashoffset = "0";
+      }
+    }
+    function renderCharts() {
+      const exSel = document.getElementById("chart-ex");
+      const exs = exercisesWithLoad();
+      if (!exs.length) {
+        exSel.innerHTML = '<option>Nenhum exercício com carga ainda</option>'; exSel.disabled = true;
+        document.getElementById("chart-load").innerHTML = '<div class="chart-empty">Registre a carga nos treinos pra ver a evolução 🏋️</div>';
+      } else {
+        exSel.disabled = false;
+        const cur = (exSel.value && exs.indexOf(exSel.value) >= 0) ? exSel.value : exs[0];
+        exSel.innerHTML = exs.map(function (nm) { return '<option value="' + escapeHtml(nm) + '"' + (nm === cur ? ' selected' : '') + '>' + escapeHtml(nm) + '</option>'; }).join("");
+        renderLineChart(document.getElementById("chart-load"), exerciseLoadSeries(cur), "kg");
+      }
+      const tabsEl = document.getElementById("chart-meas-tabs");
+      const avail = FIELDS_M.filter(function (f) { return measureSeries(f.k).length; });
+      if (!avail.length) { tabsEl.innerHTML = ""; document.getElementById("chart-meas").innerHTML = '<div class="chart-empty">Registre medidas pra ver os gráficos 📏</div>'; return; }
+      if (!avail.some(function (f) { return f.k === chartMeasField; })) chartMeasField = avail[0].k;
+      tabsEl.innerHTML = avail.map(function (f) { return '<button class="chart-tab' + (f.k === chartMeasField ? ' active' : '') + '" data-mf="' + f.k + '">' + f.l + '</button>'; }).join("");
+      tabsEl.querySelectorAll("[data-mf]").forEach(function (b) { b.addEventListener("click", function () { chartMeasField = b.dataset.mf; renderCharts(); }); });
+      const ff = FIELDS_M.filter(function (x) { return x.k === chartMeasField; })[0];
+      renderLineChart(document.getElementById("chart-meas"), measureSeries(chartMeasField), ff ? ff.u : "");
+    }
+    function openCharts() {
+      document.getElementById("charts-title").textContent = "Evolução — " + activeUser().name;
+      renderCharts();
+      chartsOverlay.hidden = false;
+      hydrateIcons(chartsOverlay);
+    }
+    document.getElementById("chart-ex").addEventListener("change", function () { renderLineChart(document.getElementById("chart-load"), exerciseLoadSeries(this.value), "kg"); });
+    document.getElementById("open-charts").addEventListener("click", openCharts);
+    document.getElementById("charts-close").addEventListener("click", function () { chartsOverlay.hidden = true; });
+    chartsOverlay.addEventListener("click", function (e) { if (e.target === chartsOverlay) chartsOverlay.hidden = true; });
 
     const toastEl = document.getElementById("toast");
     let toastTimer = null;
