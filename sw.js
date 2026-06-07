@@ -1,6 +1,6 @@
 /* Service worker — app shell offline-first.
    Troque a versão do cache (hgt-vN) ao publicar mudanças para forçar atualização. */
-const CACHE = "hgt-v41";
+const CACHE = "hgt-v42";
 const ASSETS = [
   "./",
   "./index.html",
@@ -39,6 +39,32 @@ self.addEventListener("fetch", function (e) {
         return res;
       }).catch(function () { return cached; });
       return cached || network;
+    })
+  );
+});
+
+/* Web Push — recebe a notificação (mesmo com o app fechado) */
+self.addEventListener("push", function (e) {
+  var payload = {};
+  try { payload = e.data ? e.data.json() : {}; } catch (err) { payload = { title: "Home Gym", body: e.data ? e.data.text() : "" }; }
+  var options = {
+    body: payload.body || "",
+    tag: payload.tag || "hg",
+    icon: "./icon-192.png",
+    badge: "./icon-192.png",
+    vibrate: [40, 30, 40],
+    data: { url: payload.url || "./" }
+  };
+  e.waitUntil(self.registration.showNotification(payload.title || "Home Gym", options));
+});
+
+self.addEventListener("notificationclick", function (e) {
+  e.notification.close();
+  var url = (e.notification.data && e.notification.data.url) || "./";
+  e.waitUntil(
+    self.clients.matchAll({ type: "window", includeUncontrolled: true }).then(function (list) {
+      for (var i = 0; i < list.length; i++) { if ("focus" in list[i]) return list[i].focus(); }
+      if (self.clients.openWindow) return self.clients.openWindow(url);
     })
   );
 });
