@@ -1,5 +1,24 @@
 # Changelog
 
+## [0.4.0](https://github.com/Tcordeir0/home-gym-tracker/compare/v0.3.1...v0.4.0) (2026-06-07)
+
+
+### Features
+
+* **agenda:** agenda de treino + lembretes (banner + Notification + NTFY) [PR6 v0.4.0] ([54b7e92](https://github.com/Tcordeir0/home-gym-tracker/commit/54b7e922d539ab31aa513859342229ebae6b5de7))
+* **game:** níveis/XP com level-up, quests semanais e streak freeze [PR4 v0.4.0] ([1c6b870](https://github.com/Tcordeir0/home-gym-tracker/commit/1c6b87084c03001eb831b40621623c46aca24921))
+* **graficos:** evolução animada de carga e medidas [PR3 v0.4.0] ([099ae52](https://github.com/Tcordeir0/home-gym-tracker/commit/099ae526bf533ba3719e800600387ff02b047cfe))
+* **medidas:** registro de medidas corporais + foto de progresso [PR2 v0.4.0] ([14e3d46](https://github.com/Tcordeir0/home-gym-tracker/commit/14e3d4640f265de5cefdf5455ad7a4570375a805))
+* **temas:** 5 temas com arte distinta + animações fluidas globais [PR5 v0.4.0] ([88cdabe](https://github.com/Tcordeir0/home-gym-tracker/commit/88cdabebeef37a99634edc35eb79efd800232b6c))
+* **temas:** textura pixel art em todos os 8 temas, em todas as telas ([8eb833c](https://github.com/Tcordeir0/home-gym-tracker/commit/8eb833c6e54b417004a8fce948b792a4e3a4c9bc))
+* **tema:** textura de bloco de grama (Minecraft) no tema Mundo de Blocos ([7adae35](https://github.com/Tcordeir0/home-gym-tracker/commit/7adae35d326180ea078fc5d834f8220ae89cace0))
+* **treino:** carga (kg) + reps por série, histórico de carga e sugestão de progressão [PR1 v0.4.0] ([b61b604](https://github.com/Tcordeir0/home-gym-tracker/commit/b61b604884e01987fb0e6ce9b08f388605d13eb0))
+
+
+### Bug Fixes
+
+* **registro:** impede treino duplicado no dia, registro retroativo (treino/cardio) + perfil tester TCORDEIRO ([eb0ecd4](https://github.com/Tcordeir0/home-gym-tracker/commit/eb0ecd40de6a2da35f712c124c18c164b47b328d))
+
 ## [0.3.1](https://github.com/Tcordeir0/home-gym-tracker/compare/v0.3.0...v0.3.1) (2026-06-06)
 
 
