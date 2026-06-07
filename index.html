@@ -565,6 +565,15 @@
     @keyframes lvpop { from { transform: scale(.4); opacity: 0; } to { transform: scale(1); opacity: 1; } }
     @keyframes spark { from { transform: translate(0,0) scale(1); opacity: 1; } to { transform: translate(var(--dx), var(--dy)) scale(0); opacity: 0; } }
     @media (prefers-reduced-motion: reduce) { .lvup-card { animation: none; } .lvup-spark { display: none; } }
+    /* Agenda + banner de hoje (PR6) */
+    .today-banner { display: block; width: 100%; text-align: left; margin-top: 12px; cursor: pointer; appearance: none; background: color-mix(in srgb, var(--accent) 14%, var(--surface)); border: 1px solid color-mix(in srgb, var(--accent) 45%, var(--line)); color: var(--text); font-family: 'Manrope', sans-serif; font-weight: 700; font-size: 13.5px; padding: 11px 14px; border-radius: 12px; }
+    .today-banner.done { background: color-mix(in srgb, var(--done) 14%, var(--surface)); border-color: color-mix(in srgb, var(--done) 45%, var(--line)); }
+    .today-banner b { color: var(--accent); }
+    .today-banner.done b { color: var(--done); }
+    .day-chips { display: flex; gap: 6px; flex-wrap: wrap; }
+    .day-chip { flex: 1; min-width: 38px; text-align: center; padding: 10px 4px; border-radius: 10px; border: 1px solid var(--line); background: var(--surface-2); color: var(--muted); font-weight: 800; font-size: 13px; cursor: pointer; transition: transform .12s ease; }
+    .day-chip.on { background: var(--accent); color: var(--on-accent, #0d0f12); border-color: var(--accent); }
+    .day-chip:active { transform: scale(.92); }
     .backup-btn { flex: 1; appearance: none; cursor: pointer; border: 1px solid var(--line); background: var(--surface); color: var(--text); font-family: 'Manrope', sans-serif; font-weight: 800; font-size: 14px; padding: 12px; border-radius: 12px; transition: border-color 0.15s ease; }
     .backup-btn:active { border-color: var(--accent); }
     .backup-note { font-size: 12px; color: var(--muted); margin-top: 8px; line-height: 1.5; }
@@ -631,6 +640,7 @@
     </div>
     <div class="users" id="users"></div>
     <div class="focus-cap" id="focus-cap"></div>
+    <button class="today-banner" id="today-banner" hidden></button>
     <div class="focus-cap info-cap"></div>
     <div class="points-badge" id="points-badge"></div>
     <div class="cardio-actions"></div>
@@ -798,6 +808,7 @@
       <div class="checklist" id="prof-equip"></div>
       <button class="cloud-secondary" id="prof-gen" style="margin-top:12px;"><span data-icon="wrench"></span> Montar treino com este equipamento</button>
       <button class="cloud-secondary" id="prof-rewards" style="margin-top:10px;"><span data-icon="sparkles"></span> Recompensas e temas</button>
+      <button class="cloud-secondary" id="prof-agenda" style="margin-top:10px;"><span data-icon="calendar-check"></span> Agenda e lembretes</button>
       <h3>Tipos de cardio</h3>
       <div class="chiplist" id="prof-cardios"></div>
       <button class="cloud-secondary" id="prof-add-cardio">+ Adicionar tipo de cardio</button>
@@ -899,6 +910,23 @@
       <h3>Medidas</h3>
       <div class="chart-tabs" id="chart-meas-tabs"></div>
       <div id="chart-meas" class="chart-box"></div>
+    </div>
+  </div>
+
+  <!-- Agenda de treino + lembretes (PR6) -->
+  <div class="overlay" id="agenda-overlay" hidden>
+    <div class="sheet">
+      <div class="sheet-head"><h2 id="agenda-title">Agenda</h2><button id="agenda-close" aria-label="Fechar" data-icon="x"></button></div>
+      <h3>Dias de treino</h3>
+      <div class="day-chips" id="agenda-days"></div>
+      <div class="field" style="margin-top:12px"><label for="agenda-time">Horário do lembrete</label><input id="agenda-time" type="time" value="18:00" /></div>
+      <button class="cloud-secondary" id="agenda-notify"><span data-icon="bell"></span> Ativar lembrete no navegador</button>
+      <p class="cloud-note">Com o app instalado, te lembramos quando abrir num dia de treino. Notificação de fundo de verdade (celular fechado) precisa do NTFY abaixo.</p>
+      <h3>Lembrete no celular (NTFY)</h3>
+      <div class="field"><label for="agenda-ntfy">Tópico ntfy.sh</label><input id="agenda-ntfy" maxlength="40" placeholder="ex.: treino-talys" /></div>
+      <button class="cloud-secondary" id="agenda-schedule"><span data-icon="bell"></span> Programar lembretes (próx. 3 dias)</button>
+      <p class="cloud-note">Envia lembretes pro app <b>ntfy</b> no teu celular (instale o ntfy e inscreva-se no tópico). Como o site é estático, esse é o caminho real de notificação com o app fechado.</p>
+      <button class="cloud-primary" id="agenda-save" style="margin-top:14px">Salvar agenda</button>
     </div>
   </div>
 
@@ -1416,6 +1444,7 @@
             if (typeof u.lifeSpinsUsed !== "number") u.lifeSpinsUsed = 0;
             if (typeof u.freezes !== "number") u.freezes = 0;
             if (!u.quests) u.quests = { week: "", claimed: {} };
+            if (!u.schedule) u.schedule = { days: [], time: "18:00", ntfy: "" };
             ensureTesterUnlocks(u);
           });
           // migração PR4/PR5: pontos, som, cutucadas
@@ -1966,6 +1995,7 @@
       if (typeof checkPoke === "function") checkPoke();
       if (typeof ensureCelebrated === "function") ensureCelebrated(state.active);
       if (typeof renderBell === "function") renderBell();
+      if (typeof renderTodayBanner === "function") renderTodayBanner();
     }
 
     function renderUsers() {
@@ -2044,7 +2074,8 @@
         spinsUsed: 0,
         lifeSpinsUsed: 0,
         freezes: 0,
-        quests: { week: "", claimed: {} }
+        quests: { week: "", claimed: {} },
+        schedule: { days: [], time: "18:00", ntfy: "" }
       });
       state.active = id;
       saveState();
@@ -2599,6 +2630,7 @@
       playSound("win");
       renderPoints();
       celebrateAchievements();
+      if (typeof renderTodayBanner === "function") renderTodayBanner();
       showToast("Treino " + key + " concluído · +" + PTS_TREINO + " pts! 🔥");
     }
 
@@ -2987,6 +3019,86 @@
       document.getElementById("quests-list").innerHTML = html;
       if (granted) { saveState(); renderPoints(); playSound("win"); }
     }
+    /* ---------- Agenda de treino + lembretes (PR6) ---------- */
+    const DOW_FULL = ["Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sáb"];
+    const agendaOverlay = document.getElementById("agenda-overlay");
+    let agendaDays = [];
+    function scheduleOf(u) { if (!u.schedule) u.schedule = { days: [], time: "18:00", ntfy: "" }; return u.schedule; }
+    function renderAgendaDays() {
+      const el = document.getElementById("agenda-days");
+      el.innerHTML = DOW_FULL.map(function (d, i) { return '<button class="day-chip' + (agendaDays.indexOf(i) >= 0 ? ' on' : '') + '" data-d="' + i + '">' + d + '</button>'; }).join("");
+      el.querySelectorAll("[data-d]").forEach(function (b) {
+        b.addEventListener("click", function () { const i = parseInt(b.dataset.d, 10); const p = agendaDays.indexOf(i); if (p >= 0) agendaDays.splice(p, 1); else agendaDays.push(i); renderAgendaDays(); });
+      });
+    }
+    function openAgenda() {
+      const u = activeUser(); const sc = scheduleOf(u);
+      document.getElementById("agenda-title").textContent = "Agenda — " + u.name;
+      agendaDays = (sc.days || []).slice();
+      document.getElementById("agenda-time").value = sc.time || "18:00";
+      document.getElementById("agenda-ntfy").value = sc.ntfy || "";
+      renderAgendaDays();
+      agendaOverlay.hidden = false; hydrateIcons(agendaOverlay);
+    }
+    function commitAgenda() {
+      const sc = scheduleOf(activeUser());
+      sc.days = agendaDays.slice().sort();
+      sc.time = document.getElementById("agenda-time").value || "18:00";
+      sc.ntfy = (document.getElementById("agenda-ntfy").value || "").trim().slice(0, 40);
+      saveState(); renderTodayBanner();
+    }
+    document.getElementById("prof-agenda").addEventListener("click", function () { profOverlay.hidden = true; openAgenda(); });
+    document.getElementById("agenda-close").addEventListener("click", function () { commitAgenda(); agendaOverlay.hidden = true; });
+    agendaOverlay.addEventListener("click", function (e) { if (e.target === agendaOverlay) { commitAgenda(); agendaOverlay.hidden = true; } });
+    document.getElementById("agenda-save").addEventListener("click", function () { commitAgenda(); agendaOverlay.hidden = true; showToast("Agenda salva! 📅"); });
+    document.getElementById("agenda-notify").addEventListener("click", async function () {
+      if (!("Notification" in window)) { showToast("Navegador sem suporte a notificação"); return; }
+      let perm = Notification.permission;
+      if (perm !== "granted") perm = await Notification.requestPermission();
+      if (perm === "granted") { showToast("Lembrete ativado ✅"); try { new Notification("Home Gym", { body: "Pronto! Vou te lembrar nos dias de treino 💪" }); } catch (e) {} }
+      else showToast("Permissão negada");
+    });
+    document.getElementById("agenda-schedule").addEventListener("click", async function () {
+      commitAgenda();
+      const sc = scheduleOf(activeUser());
+      const topic = (sc.ntfy || "").trim();
+      if (!topic) { showToast("Informe o tópico ntfy"); return; }
+      if (!sc.days || !sc.days.length) { showToast("Escolha os dias de treino"); return; }
+      const sent = await scheduleNtfy(topic, sc.days, sc.time, activeUser().name);
+      showToast(sent > 0 ? ("📲 " + sent + " lembrete(s) programado(s)") : "Nada pra agendar nos próx. 3 dias");
+    });
+    async function scheduleNtfy(topic, days, time, name) {
+      const parts = (time || "18:00").split(":");
+      const hh = parseInt(parts[0], 10), mm = parseInt(parts[1], 10);
+      let count = 0;
+      for (let off = 0; off < 3; off++) {
+        const d = new Date(); d.setDate(d.getDate() + off); d.setHours(hh, mm, 0, 0);
+        if (d.getTime() < Date.now() + 60000) continue;
+        if (days.indexOf(d.getDay()) < 0) continue;
+        try {
+          await fetch("https://ntfy.sh/" + encodeURIComponent(topic), {
+            method: "POST",
+            headers: { "Title": "Treino de hoje", "Tags": "muscle", "At": String(Math.floor(d.getTime() / 1000)) },
+            body: (name || "") + ", bora treinar! Abra o Home Gym e registre seu treino. 💪"
+          });
+          count++;
+        } catch (e) {}
+      }
+      return count;
+    }
+    function renderTodayBanner() {
+      const u = activeUser(); const sc = u.schedule;
+      const el = document.getElementById("today-banner");
+      if (!el) return;
+      if (!sc || !sc.days || !sc.days.length || sc.days.indexOf(new Date().getDay()) < 0) { el.hidden = true; return; }
+      const today = todayISO();
+      const did = (state.history[u.id] || []).some(function (e) { return e.date === today && (e.w === "A" || e.w === "B" || e.w === "C"); });
+      el.hidden = false;
+      el.className = "today-banner" + (did ? " done" : "");
+      el.innerHTML = did ? (icon("check", 15) + " <b>Treino de hoje feito!</b> Mandou bem 🔥") : (icon("calendar-check", 15) + " <b>Hoje é dia de treino!</b> Bora? 💪");
+    }
+    document.getElementById("today-banner").addEventListener("click", function () { window.scrollTo({ top: 0, behavior: "smooth" }); });
+
     function renderLevelCard() {
       const u = activeUser();
       const info = levelInfo(totalPoints(u.id));
