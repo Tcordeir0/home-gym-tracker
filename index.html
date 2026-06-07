@@ -558,6 +558,7 @@
     .quest-rew { font-size: 11px; color: var(--muted); flex-shrink: 0; font-weight: 800; }
     .quest.done .quest-rew { color: var(--done); }
     #levelup-overlay { position: fixed; inset: 0; z-index: 90; display: flex; align-items: center; justify-content: center; background: rgba(0,0,0,.72); overflow: hidden; }
+    #levelup-overlay[hidden] { display: none; }
     .lvup-card { text-align: center; position: relative; z-index: 2; animation: lvpop .5s cubic-bezier(.2,1.4,.4,1); }
     .lvup-card .big { font-family: 'Anton', sans-serif; font-size: 64px; color: var(--accent); text-shadow: 0 0 34px color-mix(in srgb, var(--accent) 65%, transparent); line-height: 1; }
     .lvup-card .sub { font-weight: 800; letter-spacing: 3px; text-transform: uppercase; color: var(--text); margin-top: 8px; font-size: 14px; }
