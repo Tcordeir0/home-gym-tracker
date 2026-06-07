@@ -1425,44 +1425,46 @@
       measures: {}  // measures[userId] = [{ date, weight, arm, chest, waist, photo }]
     };
 
+    // Migração ÚNICA de estado — usada por loadState, applyRemoteState (nuvem) e importData (backup).
+    // Garante que todo campo novo tenha default, venha de onde vier o estado.
+    function migrateState(raw) {
+      raw.checks = raw.checks || {};
+      raw.history = raw.history || {};
+      // cardio antigo era w:"C" (tinha campo t); Treino C agora também usa "C"
+      Object.keys(raw.history).forEach(function (uid) {
+        (raw.history[uid] || []).forEach(function (e) { if (e.w === "C" && e.t) e.w = "cardio"; });
+      });
+      raw.scores = raw.scores || {};
+      if (typeof raw.soundOn !== "boolean") raw.soundOn = true;
+      if (!raw.feedback) raw.feedback = raw.soundOn === false ? "none" : "both";
+      if (!raw.appTheme) raw.appTheme = "dark";
+      raw.pokes = raw.pokes || {};
+      raw.session = raw.session || {};
+      raw.celebrated = raw.celebrated || {};
+      raw.notifs = raw.notifs || {};
+      raw.setlog = raw.setlog || {};
+      raw.measures = raw.measures || {};
+      (raw.users || []).forEach(function (u, i) {
+        if (!u.color) u.color = u.id === "u1" ? "#c6ff3a" : u.id === "u2" ? "#ff5fa8" : COLOR_SWATCHES[i % COLOR_SWATCHES.length];
+        if (!Array.isArray(u.equipment)) u.equipment = ["bodyweight", "dumbbell"];
+        if (!Array.isArray(u.cardios) || !u.cardios.length) u.cardios = defaultCardios();
+        if (!u.cosmetics) u.cosmetics = { themes: [], hats: [], theme: null, hat: null };
+        if (typeof u.spinsUsed !== "number") u.spinsUsed = 0;
+        if (typeof u.lifeSpinsUsed !== "number") u.lifeSpinsUsed = 0;
+        if (typeof u.freezes !== "number") u.freezes = 0;
+        if (!u.quests) u.quests = { week: "", claimed: {} };
+        if (!u.schedule) u.schedule = { days: [], time: "18:00", ntfy: "" };
+        ensureTesterUnlocks(u);
+      });
+      if (raw.users && raw.users.length && !raw.users.some(function (u) { return u.id === raw.active; })) raw.active = raw.users[0].id;
+      return raw;
+    }
     function loadState() {
       try {
         const raw = JSON.parse(localStorage.getItem(STORAGE_KEY));
-        if (raw && Array.isArray(raw.users)) {
-          // migração: cardio antigo era w:"C" (tinha campo t); Treino C agora também usa "C"
-          if (raw.history) {
-            Object.keys(raw.history).forEach(function (uid) {
-              (raw.history[uid] || []).forEach(function (e) { if (e.w === "C" && e.t) e.w = "cardio"; });
-            });
-          }
-          // migração PR1: campos novos por perfil (cor, equipamento, tipos de cardio)
-          raw.users.forEach(function (u, i) {
-            if (!u.color) u.color = u.id === "u1" ? "#c6ff3a" : u.id === "u2" ? "#ff5fa8" : COLOR_SWATCHES[i % COLOR_SWATCHES.length];
-            if (!Array.isArray(u.equipment)) u.equipment = ["bodyweight", "dumbbell"];
-            if (!Array.isArray(u.cardios) || !u.cardios.length) u.cardios = defaultCardios();
-            if (!u.cosmetics) u.cosmetics = { themes: [], hats: [], theme: null, hat: null };
-            if (typeof u.spinsUsed !== "number") u.spinsUsed = 0;
-            if (typeof u.lifeSpinsUsed !== "number") u.lifeSpinsUsed = 0;
-            if (typeof u.freezes !== "number") u.freezes = 0;
-            if (!u.quests) u.quests = { week: "", claimed: {} };
-            if (!u.schedule) u.schedule = { days: [], time: "18:00", ntfy: "" };
-            ensureTesterUnlocks(u);
-          });
-          // migração PR4/PR5: pontos, som, cutucadas
-          raw.scores = raw.scores || {};
-          if (typeof raw.soundOn !== "boolean") raw.soundOn = true;
-          if (!raw.feedback) raw.feedback = raw.soundOn === false ? "none" : "both";
-          if (!raw.appTheme) raw.appTheme = "dark";
-          raw.pokes = raw.pokes || {};
-          raw.session = raw.session || {};
-          raw.celebrated = raw.celebrated || {};
-          raw.notifs = raw.notifs || {};
-          raw.setlog = raw.setlog || {};
-          raw.measures = raw.measures || {};
-          return raw;
-        }
+        if (raw && Array.isArray(raw.users)) return migrateState(raw);
       } catch (e) {}
-      return JSON.parse(JSON.stringify(DEFAULT_STATE));
+      return migrateState(JSON.parse(JSON.stringify(DEFAULT_STATE))); // instalação nova também ganha todos os campos
     }
     function saveLocal() { try { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); } catch (e) {} }
     function saveState() { saveLocal(); if (typeof pushToCloud === "function") pushToCloud(false); }
@@ -3295,12 +3297,9 @@
           const data = JSON.parse(reader.result);
           if (!data || !Array.isArray(data.users)) throw new Error("formato inválido");
           if (!(await uiConfirm("Importar este backup vai SUBSTITUIR os dados atuais deste aparelho. Continuar?"))) { importFile.value = ""; return; }
-          state = data;
-          state.checks = state.checks || {};
-          state.history = state.history || {};
-          if (!state.users.some(function (u) { return u.id === state.active; })) state.active = state.users[0].id;
+          state = migrateState(data);
           saveState();
-          applyTheme(); renderUsers(); buildPanels(); applyChecks(); setFillColor(); renderHistory();
+          refreshActiveProfile(); // já re-renderiza tudo, inclusive o histórico se aberto
           showToast("Backup importado! ✅");
         } catch (e) {
           showToast("Arquivo inválido ❌");
@@ -3321,26 +3320,7 @@
 
     function applyRemoteState(remote) {
       if (!remote || !Array.isArray(remote.users)) return false;
-      state = remote;
-      state.checks = state.checks || {};
-      state.history = state.history || {};
-      state.scores = state.scores || {};
-      if (typeof state.soundOn !== "boolean") state.soundOn = true;
-      if (!state.feedback) state.feedback = state.soundOn === false ? "none" : "both";
-      if (!state.appTheme) state.appTheme = "dark";
-      state.pokes = state.pokes || {};
-      state.session = state.session || {};
-      state.celebrated = state.celebrated || {};
-      state.notifs = state.notifs || {};
-      state.users.forEach(function (u, i) {
-        if (!u.color) u.color = COLOR_SWATCHES[i % COLOR_SWATCHES.length];
-        if (!Array.isArray(u.equipment)) u.equipment = ["bodyweight", "dumbbell"];
-        if (!Array.isArray(u.cardios) || !u.cardios.length) u.cardios = defaultCardios();
-        if (!u.cosmetics) u.cosmetics = { themes: [], hats: [], theme: null, hat: null };
-        if (typeof u.spinsUsed !== "number") u.spinsUsed = 0;
-        if (typeof u.lifeSpinsUsed !== "number") u.lifeSpinsUsed = 0;
-      });
-      if (!state.users.some(function (u) { return u.id === state.active; })) state.active = state.users[0].id;
+      state = migrateState(remote);
       saveLocal();
       refreshActiveProfile();
       return true;
