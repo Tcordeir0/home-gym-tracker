@@ -610,7 +610,7 @@
     [data-theme="cyber"] .scheme,[data-theme="cyber"] .lv-num,[data-theme="cyber"] .points-badge,[data-theme="cyber"] .ch-val{text-shadow:0 0 8px var(--accent)}
     [data-theme="cyber"] .card.complete,[data-theme="cyber"] .conclude{box-shadow:0 0 14px color-mix(in srgb,var(--accent) 45%,transparent)}
     /* Noir: dessaturado e contrastado */
-    body[data-theme="noir"]{filter:saturate(.85) contrast(1.04)}
+    /* Noir: NÃO usar filter no body — quebra position:fixed dos overlays. Os vars já são P&B. */
     /* Cósmico: aura radial no fundo + brilho */
     body[data-theme="cosmico"]{background-image:radial-gradient(circle at 50% -10%,color-mix(in srgb,var(--accent) 30%,transparent),transparent 55%)}
     [data-theme="cosmico"] .lv-num,[data-theme="cosmico"] .scheme{text-shadow:0 0 10px color-mix(in srgb,var(--accent) 60%,transparent)}
