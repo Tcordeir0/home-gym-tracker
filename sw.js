@@ -1,6 +1,6 @@
 /* Service worker — app shell offline-first.
    Troque a versão do cache (hgt-vN) ao publicar mudanças para forçar atualização. */
-const CACHE = "hgt-v46";
+const CACHE = "hgt-v47";
 const ASSETS = [
   "./",
   "./index.html",
