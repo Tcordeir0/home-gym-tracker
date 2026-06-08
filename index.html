@@ -688,6 +688,7 @@
 
   <!-- Toast -->
   <div class="toast" id="toast"></div>
+  <label id="ios-haptic" aria-hidden="true" style="position:absolute;left:-9999px;width:0;height:0;opacity:0;pointer-events:none"><input type="checkbox" switch tabindex="-1" /></label>
 
   <!-- History overlay -->
   <div class="overlay" id="overlay" hidden>
@@ -1403,6 +1404,12 @@
        ESTADO PERSISTENTE (localStorage)
     ===================================================================== */
     const STORAGE_KEY = "hgt_v2";
+    // Perfil ativo é escolha LOCAL de cada aparelho (NÃO sincroniza) — assim o que o Victor
+    // seleciona no aparelho dele não muda o perfil que o Talys vê no aparelho dele.
+    const DEVICE_ACTIVE_KEY = "hgt_active_device";
+    function getDeviceActive() { try { return localStorage.getItem(DEVICE_ACTIVE_KEY); } catch (e) { return null; } }
+    function setDeviceActive(id) { try { localStorage.setItem(DEVICE_ACTIVE_KEY, id); } catch (e) {} }
+    function validActive(id) { return (state.users.some(function (u) { return u.id === id; }) ? id : state.users[0].id); }
     function defaultCardios() { return JSON.parse(JSON.stringify(DEFAULT_CARDIOS)); }
     const DEFAULT_STATE = {
       users: [
@@ -1469,6 +1476,9 @@
     function saveState() { saveLocal(); if (typeof pushToCloud === "function") pushToCloud(false); }
 
     let state = loadState();
+    // o perfil ativo deste aparelho manda (independente do que veio do localStorage/nuvem)
+    state.active = validActive(getDeviceActive() || state.active);
+    setDeviceActive(state.active);
 
     function activeUser() { return state.users.find(function (u) { return u.id === state.active; }) || state.users[0]; }
     function activePlan() {
@@ -1554,7 +1564,11 @@
     }
 
     function haptic(pattern) {
-      if ((state.feedback === "both" || state.feedback === "vibrate") && navigator.vibrate) navigator.vibrate(pattern || 15);
+      if (state.feedback !== "both" && state.feedback !== "vibrate") return;
+      // Android/desktop: Vibration API
+      if (navigator.vibrate) { navigator.vibrate(pattern || 15); return; }
+      // iOS (17.4+): não tem vibrate — usa o truque do <input switch> pra disparar o háptico do sistema
+      try { var h = document.getElementById("ios-haptic"); if (h) h.click(); } catch (e) {}
     }
     let audioCtx = null;
     function playSound(kind) {
@@ -2009,6 +2023,7 @@
         b.addEventListener("click", function () {
           if (state.active === u.id) { openProfileEditor(); return; }
           state.active = u.id;
+          setDeviceActive(u.id);
           saveLocal();
           refreshActiveProfile();
         });
@@ -2080,6 +2095,7 @@
         schedule: { days: [], time: "18:00", ntfy: "" }
       });
       state.active = id;
+      setDeviceActive(id);
       saveState();
       refreshActiveProfile();
       openProfileEditor();
@@ -2173,6 +2189,7 @@
       state.users = state.users.filter(function (x) { return x.id !== id; });
       delete state.checks[id]; delete state.history[id];
       state.active = state.users[0].id;
+      setDeviceActive(state.active);
       saveState();
       refreshActiveProfile();
       profOverlay.hidden = true;
@@ -3344,6 +3361,8 @@
     function applyRemoteState(remote) {
       if (!remote || !Array.isArray(remote.users)) return false;
       state = migrateState(remote);
+      // mantém o perfil ativo DESTE aparelho (não adota o que veio da nuvem)
+      state.active = validActive(getDeviceActive() || state.active);
       saveLocal();
       refreshActiveProfile();
       return true;
