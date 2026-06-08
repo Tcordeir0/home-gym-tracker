@@ -1753,10 +1753,10 @@
       { icon: "flame", label: "Em chamas", desc: "7 dias seguidos", test: function (s) { return s.streak >= 7; }, milestone: true },
       { icon: "star", label: "500 pontos", desc: "500 pts", test: function (s) { return s.pts >= 500; } },
       { icon: "award", label: "1000 pontos", desc: "1000 pts", test: function (s) { return s.pts >= 1000; }, milestone: true },
-      { icon: "scale", label: "Na balança", desc: "1ª pesagem", test: function (s) { return s.weighIns >= 1; } },
-      { icon: "trending-up", label: "Acompanhando", desc: "5 pesagens", test: function (s) { return s.weighIns >= 5; } },
-      { icon: "droplet", label: "Hidratado", desc: "meta de água num dia", test: function (s) { return s.waterDays >= 1; } },
-      { icon: "droplet", label: "Bem hidratado", desc: "meta de água em 7 dias", test: function (s) { return s.waterDays >= 7; }, milestone: true }
+      { icon: "scale", label: "Na balança", desc: "1ª pesagem", fresh: true, test: function (s) { return s.weighIns >= 1; } },
+      { icon: "trending-up", label: "Acompanhando", desc: "5 pesagens", fresh: true, test: function (s) { return s.weighIns >= 5; } },
+      { icon: "droplet", label: "Hidratado", desc: "meta de água num dia", fresh: true, test: function (s) { return s.waterDays >= 1; } },
+      { icon: "droplet", label: "Bem hidratado", desc: "meta de água em 7 dias", fresh: true, test: function (s) { return s.waterDays >= 7; }, milestone: true }
     ];
     function statsFor(id) {
       const list = state.history[id] || [];
@@ -1782,7 +1782,9 @@
       state.celebrated = state.celebrated || {};
       if (state.celebrated[id] === undefined) {
         const st = statsFor(id);
-        state.celebrated[id] = ACHIEVEMENTS.filter(function (a) { return a.test(st); }).map(function (a) { return a.label; });
+        // não pré-marca conquistas marcadas como "novas" (ex.: dieta) — assim elas
+        // disparam o toast quando o perfil já satisfaz a condição numa atualização
+        state.celebrated[id] = ACHIEVEMENTS.filter(function (a) { return a.test(st) && !a.fresh; }).map(function (a) { return a.label; });
       }
       return state.celebrated[id];
     }
@@ -3690,7 +3692,7 @@
       if (!out) return;
       out.innerHTML = '<div class="tip" style="margin:8px 0 0">' + icon("cloud", 14) + ' Buscando online…</div>';
       fetch(SUPABASE_URL + "/functions/v1/off-search?q=" + encodeURIComponent(query))
-        .then(function (r) { return r.json(); })
+        .then(function (r) { if (!r.ok) throw new Error("http " + r.status); return r.json(); })
         .then(function (j) {
           const hits = (j.hits || []).map(function (p) { return { n: offName(p), nutr: offNutr(p.nutriments) }; }).filter(function (x) { return x.nutr; }).slice(0, 10);
           if (!hits.length) { out.innerHTML = '<div class="tip" style="margin:8px 0 0">Nada encontrado online pra isso.</div>'; return; }
@@ -3704,7 +3706,7 @@
       if (!out) return;
       out.innerHTML = '<div class="tip" style="margin:8px 0 0">Buscando código…</div>';
       fetch("https://world.openfoodfacts.org/api/v2/product/" + encodeURIComponent(code) + ".json?fields=product_name,brands,nutriments")
-        .then(function (r) { return r.json(); })
+        .then(function (r) { if (!r.ok) throw new Error("http " + r.status); return r.json(); })
         .then(function (j) {
           if (j.status !== 1 || !j.product) { out.innerHTML = '<div class="tip" style="margin:8px 0 0">Produto não encontrado nesse código.</div>'; return; }
           const nutr = offNutr(j.product.nutriments);
