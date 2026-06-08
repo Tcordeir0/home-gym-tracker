@@ -710,6 +710,18 @@
       ::view-transition-old(pagebody),
       ::view-transition-new(pagebody) { animation: none !important; }
     }
+
+    /* Dieta — caixas de resultado */
+    .dstats { display: flex; gap: 10px; margin-top: 10px; }
+    .dstat {
+      flex: 1; min-width: 0; overflow: hidden; text-align: center;
+      background: var(--surface-2); border: 1px solid var(--line); border-radius: 14px; padding: 12px 8px;
+    }
+    .dstat-v { font-family: 'Anton', sans-serif; font-size: 26px; line-height: 1; color: var(--accent); }
+    .dstat-l { margin-top: 5px; font-size: 10.5px; font-weight: 700; letter-spacing: .2px; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    #page-dieta .field select { appearance: none; -webkit-appearance: none; background-image: linear-gradient(45deg, transparent 50%, var(--muted) 50%), linear-gradient(135deg, var(--muted) 50%, transparent 50%); background-position: calc(100% - 18px) 19px, calc(100% - 13px) 19px; background-size: 5px 5px; background-repeat: no-repeat; }
+    #page-dieta details summary { list-style: none; }
+    #page-dieta details summary::-webkit-details-marker { display: none; }
   </style>
 </head>
 <body>
@@ -1561,6 +1573,7 @@
         if (typeof u.freezes !== "number") u.freezes = 0;
         if (!u.quests) u.quests = { week: "", claimed: {} };
         if (!u.schedule) u.schedule = { days: [], time: "18:00", ntfy: "" };
+        if (!u.body) u.body = { height: null, age: null, sex: "m", neck: null, hip: null, activity: 1.55, goal: "lose" };
         ensureTesterUnlocks(u);
       });
       if (raw.users && raw.users.length && !raw.users.some(function (u) { return u.id === raw.active; })) raw.active = raw.users[0].id;
@@ -2229,7 +2242,8 @@
         lifeSpinsUsed: 0,
         freezes: 0,
         quests: { week: "", claimed: {} },
-        schedule: { days: [], time: "18:00", ntfy: "" }
+        schedule: { days: [], time: "18:00", ntfy: "" },
+        body: { height: null, age: null, sex: "m", neck: null, hip: null, activity: 1.55, goal: "lose" }
       });
       state.active = id;
       setDeviceActive(id);
@@ -3344,17 +3358,148 @@
     document.querySelectorAll(".tabbar-btn").forEach(function (b) {
       b.addEventListener("click", function () { haptic(8); showNav(b.dataset.nav); });
     });
+    /* ===== Dieta — calculadora (Mifflin-St Jeor) + IMC + % gordura (Navy) ===== */
+    const ACTIVITY = [
+      { v: 1.2, l: "Sedentário — pouco ou nenhum exercício" },
+      { v: 1.375, l: "Leve — 1 a 3x por semana" },
+      { v: 1.55, l: "Moderado — 3 a 5x por semana" },
+      { v: 1.725, l: "Intenso — 6 a 7x por semana" },
+      { v: 1.9, l: "Atleta — treino pesado / trabalho físico" }
+    ];
+    const GOALS = [
+      { v: "lose", l: "Emagrecer — déficit (~0,5 kg/sem)", adj: -500 },
+      { v: "losefast", l: "Emagrecer rápido (~0,75 kg/sem)", adj: -750 },
+      { v: "maintain", l: "Manter o peso", adj: 0 },
+      { v: "gain", l: "Ganhar massa (~0,25 kg/sem)", adj: 300 }
+    ];
+    function latestMeasure(id, field) {
+      const arr = measuresFor(id) || [];
+      let best = null, bestDate = "";
+      arr.forEach(function (m) { if (typeof m[field] === "number" && m.date >= bestDate) { best = m[field]; bestDate = m.date; } });
+      return best;
+    }
+    function setWeightToday(id, kg) {
+      const arr = measuresFor(id);
+      const t = todayISO();
+      let e = null;
+      arr.forEach(function (m) { if (m.date === t) e = m; });
+      if (e) e.weight = kg; else arr.push({ date: t, weight: kg });
+    }
+    function bmiClass(b) {
+      if (b < 18.5) return { l: "abaixo do peso", c: "#5fa8ff" };
+      if (b < 25) return { l: "saudável", c: "var(--accent)" };
+      if (b < 30) return { l: "sobrepeso", c: "#ffb454" };
+      return { l: "obesidade", c: "#ff6b6b" };
+    }
+    function field(id, label, val, attrs) {
+      return '<div class="field"><label for="' + id + '">' + label + '</label>' +
+        '<input id="' + id + '" value="' + (val != null ? val : "") + '" ' + (attrs || "") + ' /></div>';
+    }
     function renderDieta() {
       const el = document.getElementById("dieta-content");
-      if (!el || el.dataset.ready) return;
+      if (!el) return;
+      const u = activeUser();
+      const b = u.body || (u.body = { height: null, age: null, sex: "m", neck: null, hip: null, activity: 1.55, goal: "lose" });
+      const w = latestMeasure(u.id, "weight");
+      const sexOpts = '<option value="m"' + (b.sex !== "f" ? " selected" : "") + '>Masculino</option>' +
+        '<option value="f"' + (b.sex === "f" ? " selected" : "") + '>Feminino</option>';
+      const actOpts = ACTIVITY.map(function (a) { return '<option value="' + a.v + '"' + (Number(b.activity) === a.v ? " selected" : "") + '>' + a.l + '</option>'; }).join("");
+      const goalOpts = GOALS.map(function (g) { return '<option value="' + g.v + '"' + (b.goal === g.v ? " selected" : "") + '>' + g.l + '</option>'; }).join("");
       el.innerHTML =
-        '<div class="card" style="text-align:center;padding:26px 18px">' +
-        '<div style="font-size:34px;line-height:1">🥗</div>' +
-        '<h2 style="margin:10px 0 6px;font-family:\'Anton\',sans-serif;letter-spacing:.5px">Dieta</h2>' +
-        '<p style="color:var(--muted);font-size:14px;line-height:1.5;margin:0 auto;max-width:300px">' +
-        'Calculadora de calorias pra emagrecer, registro de peso (balança) virando conquista, e foto do prato com reconhecimento. Chegando na próxima atualização.</p>' +
+        '<div class="card">' +
+          '<h2 style="margin:0 0 4px;font-family:\'Anton\',sans-serif;letter-spacing:.5px">Calculadora — ' + escapeHtml(u.name) + '</h2>' +
+          '<p style="margin:0 0 14px;color:var(--muted);font-size:13px">Quanto comer pra bater seu objetivo. Dados ficam neste perfil.</p>' +
+          '<div class="field"><label for="d-sex">Sexo</label><select id="d-sex">' + sexOpts + '</select></div>' +
+          '<div class="m-grid">' +
+            field("d-age", "Idade (anos)", b.age, 'type="number" inputmode="numeric" min="10" max="100" step="1" placeholder="anos"') +
+            field("d-height", "Altura (cm)", b.height, 'type="number" inputmode="decimal" min="100" max="230" step="0.5" placeholder="cm"') +
+            field("d-weight", "Peso atual (kg)", w, 'type="number" inputmode="decimal" min="30" max="300" step="0.1" placeholder="kg"') +
+          '</div>' +
+          '<div class="field"><label for="d-activity">Nível de atividade</label><select id="d-activity">' + actOpts + '</select></div>' +
+          '<div class="field"><label for="d-goal">Objetivo</label><select id="d-goal">' + goalOpts + '</select></div>' +
+          '<details style="margin-top:6px"><summary style="cursor:pointer;color:var(--muted);font-size:13px;font-weight:700">Medidas pra % de gordura (opcional)</summary>' +
+            '<div class="m-grid" style="margin-top:10px">' +
+              field("d-neck", "Pescoço (cm)", b.neck, 'type="number" inputmode="decimal" min="20" max="80" step="0.5" placeholder="cm"') +
+              field("d-hip", "Quadril (cm)", b.hip, 'type="number" inputmode="decimal" min="50" max="200" step="0.5" placeholder="cm — só mulheres"') +
+            '</div>' +
+            '<p style="margin:2px 0 0;color:var(--muted);font-size:12px">Cintura vem das suas medidas. Quadril só é usado no cálculo feminino.</p>' +
+          '</details>' +
+        '</div>' +
+        '<div class="card" id="dieta-results"></div>';
+      ["d-sex", "d-age", "d-height", "d-weight", "d-activity", "d-goal", "d-neck", "d-hip"].forEach(function (fid) {
+        const inp = document.getElementById(fid);
+        if (!inp) return;
+        inp.addEventListener("input", computeDiet);
+        inp.addEventListener("change", function () { persistDiet(); });
+      });
+      computeDiet();
+    }
+    function persistDiet() {
+      const u = activeUser(), b = u.body;
+      const num = function (id) { const v = (document.getElementById(id) || {}).value; return v !== "" && !isNaN(parseFloat(v)) ? parseFloat(v) : null; };
+      b.sex = (document.getElementById("d-sex") || {}).value || "m";
+      b.age = num("d-age"); b.height = num("d-height");
+      b.activity = parseFloat((document.getElementById("d-activity") || {}).value) || 1.55;
+      b.goal = (document.getElementById("d-goal") || {}).value || "lose";
+      b.neck = num("d-neck"); b.hip = num("d-hip");
+      const wv = num("d-weight");
+      if (wv != null && wv !== latestMeasure(u.id, "weight")) setWeightToday(u.id, wv);
+      saveState();
+    }
+    function computeDiet() {
+      const out = document.getElementById("dieta-results");
+      if (!out) return;
+      const num = function (id) { const v = (document.getElementById(id) || {}).value; return v !== "" && !isNaN(parseFloat(v)) ? parseFloat(v) : null; };
+      const sex = (document.getElementById("d-sex") || {}).value || "m";
+      const age = num("d-age"), h = num("d-height"), w = num("d-weight");
+      const act = parseFloat((document.getElementById("d-activity") || {}).value) || 1.55;
+      const goalV = (document.getElementById("d-goal") || {}).value || "lose";
+      const goal = GOALS.filter(function (g) { return g.v === goalV; })[0] || GOALS[0];
+      if (!age || !h || !w) {
+        out.innerHTML = '<div class="tip" style="margin:0">Preencha <b>idade</b>, <b>altura</b> e <b>peso</b> pra ver suas metas.</div>';
+        return;
+      }
+      const bmr = 10 * w + 6.25 * h - 5 * age + (sex === "f" ? -161 : 5);
+      const tdee = bmr * act;
+      let target = tdee + goal.adj;
+      const floor = sex === "f" ? 1200 : 1500;
+      const floored = target < floor;
+      if (floored) target = floor;
+      const protein = Math.round((sex === "f" ? 1.8 : 2) * w);
+      const bmi = w / Math.pow(h / 100, 2);
+      const bc = bmiClass(bmi);
+      // % gordura — fórmula Navy (cm)
+      const waist = latestMeasure(activeUser().id, "waist");
+      const neck = num("d-neck"), hip = num("d-hip");
+      let bfHtml = "";
+      if (waist && neck && (sex === "m" || hip)) {
+        let bf;
+        if (sex === "m") bf = 495 / (1.0324 - 0.19077 * Math.log10(waist - neck) + 0.15456 * Math.log10(h)) - 450;
+        else bf = 495 / (1.29579 - 0.35004 * Math.log10(waist + hip - neck) + 0.22100 * Math.log10(h)) - 450;
+        if (isFinite(bf) && bf > 2 && bf < 60) {
+          bfHtml = stat(bf.toFixed(1) + "%", "gordura corporal", "var(--accent)");
+        }
+      } else {
+        bfHtml = '<div class="dstat" style="flex:2"><div class="dstat-v" style="font-size:13px;color:var(--muted);font-family:\'Manrope\',sans-serif;font-weight:700;line-height:1.3">Preencha pescoço' + (sex === "f" ? " e quadril" : "") + ' + cintura nas medidas pra ver % de gordura</div></div>';
+      }
+      function stat(v, l, c) { return '<div class="dstat"><div class="dstat-v" style="color:' + (c || "var(--accent)") + '">' + v + '</div><div class="dstat-l">' + l + '</div></div>'; }
+      out.innerHTML =
+        '<div style="text-align:center;margin-bottom:4px">' +
+          '<div style="font-size:11px;font-weight:800;letter-spacing:1px;color:var(--muted);text-transform:uppercase">Meta diária</div>' +
+          '<div style="font-family:\'Anton\',sans-serif;font-size:46px;line-height:1.05;color:var(--accent)">' + Math.round(target / 10) * 10 + '<span style="font-size:18px"> kcal</span></div>' +
+          (floored ? '<div style="font-size:12px;color:#ffb454">déficit limitado a um mínimo seguro</div>' : '') +
+        '</div>' +
+        '<div class="dstats">' +
+          stat(Math.round(tdee / 10) * 10, "manutenção (kcal)") +
+          stat(protein + "g", "proteína/dia") +
+        '</div>' +
+        '<div class="dstats">' +
+          stat(bmi.toFixed(1), "IMC · " + bc.l, bc.c) +
+          bfHtml +
+        '</div>' +
+        '<div class="tip" style="margin-top:12px">Base: <b>Mifflin-St Jeor</b> × atividade. ' +
+          (goalV === "maintain" ? "Comendo isso você mantém o peso." : goal.adj < 0 ? "O déficit faz emagrecer; proteína alta segura o músculo." : "O superávit leve favorece ganho de massa.") +
         '</div>';
-      el.dataset.ready = "1";
     }
 
     const MONTHS = ["janeiro", "fevereiro", "março", "abril", "maio", "junho", "julho", "agosto", "setembro", "outubro", "novembro", "dezembro"];
