@@ -627,6 +627,42 @@
     .cloud-primary:active,.conclude:active,.backup-btn:active,.cosmo:active,.spin-row button:active,.hist-btn:active{transform:scale(.97)}
     .cloud-primary,.conclude,.backup-btn,.cosmo{transition:transform .12s ease,border-color .15s ease,filter .15s ease}
     @media (prefers-reduced-motion: reduce){.panel.active,.overlay:not([hidden]){animation:none}}
+
+    /* === Temas ANIMADOS (overlays sutis com vida) === */
+    #matrix-canvas { position: fixed; inset: 0; z-index: -2; width: 100%; height: 100%; pointer-events: none; opacity: 0.55; }
+    /* camada animada por tema (atrás do conteúdo) */
+    body[data-theme]::after { content: ""; position: fixed; inset: 0; z-index: -1; pointer-events: none; opacity: 0; transition: opacity .4s; }
+    /* Cyber: scanlines descendo */
+    body[data-theme="cyber"]::after {
+      opacity: 1;
+      background: repeating-linear-gradient(0deg, transparent 0 2px, rgba(0,234,255,.05) 2px 3px);
+      animation: fx-scan 6s linear infinite;
+    }
+    @keyframes fx-scan { to { background-position-y: 60px; } }
+    /* Cósmico: brilho estelar pulsando */
+    body[data-theme="cosmico"]::after {
+      opacity: 1;
+      background: radial-gradient(circle at 30% 20%, rgba(155,107,255,.10), transparent 40%), radial-gradient(circle at 75% 70%, rgba(54,224,255,.08), transparent 45%);
+      animation: fx-pulse 5s ease-in-out infinite;
+    }
+    @keyframes fx-pulse { 0%,100% { opacity: .5; } 50% { opacity: 1; } }
+    /* Lava: brasas subindo/tremeluzindo */
+    body[data-theme="lava"]::after {
+      opacity: 1;
+      background: radial-gradient(circle at 50% 110%, rgba(255,90,31,.18), transparent 55%);
+      animation: fx-ember 3.5s ease-in-out infinite;
+    }
+    @keyframes fx-ember { 0%,100% { opacity: .45; transform: translateY(0); } 50% { opacity: .9; transform: translateY(-6px); } }
+    /* Neon/Vaporwave: glow pulsando */
+    body[data-theme="neon"]::after, body[data-theme="vaporwave"]::after {
+      opacity: 1;
+      background: radial-gradient(circle at 50% 0%, rgba(255,61,240,.10), transparent 50%);
+      animation: fx-pulse 6s ease-in-out infinite;
+    }
+    @media (prefers-reduced-motion: reduce) {
+      #matrix-canvas { display: none; }
+      body[data-theme]::after { animation: none !important; }
+    }
   </style>
 </head>
 <body>
@@ -689,6 +725,7 @@
   <!-- Toast -->
   <div class="toast" id="toast"></div>
   <label id="ios-haptic" aria-hidden="true" style="position:absolute;left:-9999px;width:0;height:0;opacity:0;pointer-events:none"><input type="checkbox" switch tabindex="-1" /></label>
+  <canvas id="matrix-canvas" hidden></canvas>
 
   <!-- History overlay -->
   <div class="overlay" id="overlay" hidden>
@@ -1091,7 +1128,8 @@
       cyber:     { name: "Cyberpunk", vars: themeVars("#070a12", "#0e1320", "#141b2e", "#203049", "#dffaff", "#6f97b5", "#00efff", "#ff2bd6", "#b98bff", "#ffd23d") },
       noir:      { name: "Noir", vars: themeVars("#101012", "#191a1d", "#222327", "#34363c", "#f2f2f2", "#9a9ba0", "#e6e6e6", "#b0b0b0", "#8a8a8a", "#cfcfcf") },
       cosmico:   { name: "Herói Cósmico", vars: themeVars("#0a0820", "#130f2e", "#1b163d", "#2a2356", "#ece8ff", "#9a8fc8", "#9b6bff", "#36e0ff", "#ff7ad6", "#ffd86a") },
-      anime:     { name: "Anime", vars: themeVars("#1b1422", "#261b30", "#31243d", "#43324f", "#fdeef7", "#bd9cc0", "#ff9ec7", "#9ad0ff", "#c8a8ff", "#ffd6a0") }
+      anime:     { name: "Anime", vars: themeVars("#1b1422", "#261b30", "#31243d", "#43324f", "#fdeef7", "#bd9cc0", "#ff9ec7", "#9ad0ff", "#c8a8ff", "#ffd6a0") },
+      matrix:    { name: "Matrix", vars: themeVars("#03100a", "#08180f", "#0c2014", "#15351f", "#c9ffe0", "#5f9e78", "#00ff66", "#39ff14", "#7CFC00", "#00d455") }
     };
     // Texturas/padrões por tema (relevo que lembra cada vibe) — CSS original, sobre a cor de fundo
     const THEME_TEX = {
@@ -1716,6 +1754,40 @@
     }
     const BASE_DARK = { "--bg": "#0d0f12", "--surface": "#15181d", "--surface-2": "#1c2027", "--line": "#272c34", "--text": "#eef1f5", "--muted": "#8a93a0" };
     const BASE_LIGHT = { "--bg": "#f4f6f8", "--surface": "#ffffff", "--surface-2": "#eef1f5", "--line": "#d8dee6", "--text": "#15181d", "--muted": "#6b7480" };
+    /* Animação do tema Matrix (chuva de código em canvas) */
+    var matrixRAF = null;
+    function stopMatrix() {
+      if (matrixRAF) { cancelAnimationFrame(matrixRAF); matrixRAF = null; }
+      var c = document.getElementById("matrix-canvas");
+      if (c) { c.hidden = true; var x = c.getContext("2d"); if (x) x.clearRect(0, 0, c.width, c.height); }
+    }
+    function startMatrix() {
+      var c = document.getElementById("matrix-canvas");
+      if (!c) return;
+      if (matrixRAF) cancelAnimationFrame(matrixRAF);
+      if (window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+      c.hidden = false;
+      var ctx = c.getContext("2d");
+      var fs = 14;
+      c.width = window.innerWidth; c.height = window.innerHeight;
+      var cols = Math.floor(c.width / fs);
+      var drops = []; for (var i = 0; i < cols; i++) drops[i] = Math.floor(Math.random() * (c.height / fs));
+      var chars = "01ｱｲｳｴｵｶｷｸｹｺ日月火水木金土ＡＢＣＤＥＦ".split("");
+      function draw() {
+        ctx.fillStyle = "rgba(3,16,10,0.09)"; ctx.fillRect(0, 0, c.width, c.height);
+        ctx.fillStyle = "#00ff66"; ctx.font = fs + "px monospace";
+        for (var i = 0; i < drops.length; i++) {
+          ctx.fillText(chars[Math.floor(Math.random() * chars.length)], i * fs, drops[i] * fs);
+          if (drops[i] * fs > c.height && Math.random() > 0.975) drops[i] = 0;
+          drops[i]++;
+        }
+        matrixRAF = requestAnimationFrame(draw);
+      }
+      draw();
+    }
+    function setThemeFX(id) { if (id === "matrix") startMatrix(); else stopMatrix(); }
+    window.addEventListener("resize", function () { if (matrixRAF != null) startMatrix(); });
+
     function applyTheme() {
       const u = activeUser();
       const s = document.documentElement.style;
@@ -1723,6 +1795,7 @@
       if (themed) {
         Object.keys(themed.vars).forEach(function (k) { s.setProperty(k, themed.vars[k]); });
         document.body.setAttribute("data-theme", u.cosmetics.theme);
+        setThemeFX(u.cosmetics.theme);
         const tex = THEME_TEX[u.cosmetics.theme];
         document.body.style.backgroundImage = tex ? tex.img : "";
         document.body.style.backgroundSize = tex ? tex.size : "";
@@ -1738,6 +1811,7 @@
         document.body.style.backgroundImage = "";
         document.body.style.backgroundSize = "";
         document.body.removeAttribute("data-theme");
+        setThemeFX(null);
         const art = document.getElementById("theme-art");
         if (art) art.innerHTML = "";
       }
