@@ -3524,7 +3524,12 @@
           : '<div class="tip" style="margin:0 0 10px">Preencha a calculadora (idade, altura, peso) pra ver sua meta aqui.</div>') +
         '<div style="margin-top:12px">' + list + '</div>' +
         '<div style="margin-top:12px"><input id="food-q" class="set-in" style="height:44px;text-align:left;padding:0 14px" placeholder="Buscar alimento (ex: frango, arroz, fiambre)" /></div>' +
-        '<div id="food-results"></div>';
+        '<div id="food-results"></div>' +
+        '<div style="display:flex;gap:8px;margin-top:8px">' +
+          '<input id="food-bc" class="set-in" style="height:40px;text-align:left;padding:0 12px;flex:1" inputmode="numeric" placeholder="Código de barras (nº do embalado)" />' +
+          '<button id="food-bc-go" class="cloud-secondary" style="width:auto;flex:0 0 auto;padding:0 16px;margin:0">Buscar</button>' +
+        '</div>' +
+        '<div id="food-online"></div>';
       box.querySelectorAll(".food-g").forEach(function (inp) {
         inp.addEventListener("change", function () {
           const i = parseInt(inp.dataset.fi, 10); const g = parseFloat(inp.value);
@@ -3536,22 +3541,19 @@
       });
       const q = document.getElementById("food-q");
       if (q) q.addEventListener("input", function () { renderFoodResults(q.value); });
+      const bc = document.getElementById("food-bc"), bcGo = document.getElementById("food-bc-go");
+      function doBc() { const code = (bc.value || "").replace(/\D/g, ""); if (code.length < 6) { showToast("Digite o código de barras"); return; } offBarcode(code); }
+      if (bcGo) bcGo.addEventListener("click", doBc);
+      if (bc) bc.addEventListener("keydown", function (e) { if (e.key === "Enter") doBc(); });
     }
-    function renderFoodResults(query) {
-      const out = document.getElementById("food-results");
-      if (!out) return;
-      const qn = normTxt(query).trim();
-      if (qn.length < 2) { out.innerHTML = ""; return; }
-      if (!FOODS) { out.innerHTML = '<div class="tip" style="margin:8px 0 0">Carregando base de alimentos…</div>'; ensureFoods(function () { renderFoodResults(query); }); return; }
-      const hits = FOODS.filter(function (f) { return normTxt(f.n).indexOf(qn) >= 0 || normTxt(f.tags || "").indexOf(qn) >= 0; }).slice(0, 8);
-      if (!hits.length) { out.innerHTML = '<div class="tip" style="margin:8px 0 0">Nada encontrado. Vamos adicionar busca online (Open Food Facts) no próximo passo.</div>'; return; }
-      out.innerHTML = '<div class="food-results-list">' + hits.map(function (f) {
-        return '<button class="food-hit" data-add="' + encodeURIComponent(JSON.stringify({ n: f.n, k: f.kcal, p: f.p, g: f.porcao || 100 })) + '">' +
-          '<span class="food-hit-n">' + escapeHtml(f.n) + '</span>' +
-          '<span class="food-hit-k">' + f.kcal + ' kcal · ' + fmtNum(f.p) + 'g prot <small>/100g</small></span>' +
-          '<span class="food-hit-add">' + icon("plus", 16) + '</span></button>';
-      }).join("") + '</div>';
-      out.querySelectorAll(".food-hit").forEach(function (b) {
+    function foodHitBtn(f) {
+      return '<button class="food-hit" data-add="' + encodeURIComponent(JSON.stringify({ n: f.n, k: f.k, p: f.p, g: f.g || 100 })) + '">' +
+        '<span class="food-hit-n">' + escapeHtml(f.n) + '</span>' +
+        '<span class="food-hit-k">' + Math.round(f.k) + ' kcal · ' + fmtNum(f.p || 0) + 'g prot <small>/100g</small></span>' +
+        '<span class="food-hit-add">' + icon("plus", 16) + '</span></button>';
+    }
+    function bindFoodHits(container) {
+      container.querySelectorAll(".food-hit").forEach(function (b) {
         b.addEventListener("click", function () {
           const f = JSON.parse(decodeURIComponent(b.dataset.add));
           dayFood(activeUser().id).push({ n: f.n, k: f.k, p: f.p, g: f.g });
@@ -3560,6 +3562,71 @@
           renderDiary();
         });
       });
+    }
+    function renderFoodResults(query) {
+      const out = document.getElementById("food-results");
+      const online = document.getElementById("food-online");
+      if (online) online.innerHTML = "";
+      if (!out) return;
+      const qn = normTxt(query).trim();
+      if (qn.length < 2) { out.innerHTML = ""; return; }
+      if (!FOODS) { out.innerHTML = '<div class="tip" style="margin:8px 0 0">Carregando base de alimentos…</div>'; ensureFoods(function () { renderFoodResults(query); }); return; }
+      const hits = FOODS.filter(function (f) { return normTxt(f.n).indexOf(qn) >= 0 || normTxt(f.tags || "").indexOf(qn) >= 0; }).slice(0, 8);
+      const listHtml = hits.length
+        ? '<div class="food-results-list">' + hits.map(function (f) { return foodHitBtn({ n: f.n, k: f.kcal, p: f.p, g: f.porcao || 100 }); }).join("") + '</div>'
+        : '<div class="tip" style="margin:8px 0 0">Nada na base local. Busque online (embalados, marcas) abaixo.</div>';
+      out.innerHTML = listHtml +
+        '<button class="cloud-secondary food-online-go" style="margin-top:8px">' + icon("cloud", 15) + ' Buscar "' + escapeHtml(query.trim()) + '" online</button>';
+      bindFoodHits(out);
+      const go = out.querySelector(".food-online-go");
+      if (go) go.addEventListener("click", function () { offSearch(query.trim()); });
+    }
+    /* ---- Open Food Facts (online — embalados, marcas, Portugal) ---- */
+    function offNutr(nm) {
+      if (!nm) return null;
+      let k = nm["energy-kcal_100g"];
+      if (k == null && nm["energy_100g"] != null) k = nm["energy_100g"] / 4.184;
+      if (k == null) return null;
+      return { k: Math.round(k * 10) / 10, p: nm.proteins_100g != null ? nm.proteins_100g : 0 };
+    }
+    function offName(p) {
+      let brand = p.brands;
+      if (Array.isArray(brand)) brand = brand[0];
+      else if (typeof brand === "string") brand = brand.split(",")[0];
+      brand = (brand || "").trim();
+      let nm = p.product_name;
+      if (Array.isArray(nm)) nm = nm[0];
+      nm = (typeof nm === "string" ? nm : "").trim() || "Produto";
+      return nm + (brand ? " · " + brand : "");
+    }
+    function offSearch(query) {
+      const out = document.getElementById("food-online");
+      if (!out) return;
+      out.innerHTML = '<div class="tip" style="margin:8px 0 0">' + icon("cloud", 14) + ' Buscando online…</div>';
+      fetch(SUPABASE_URL + "/functions/v1/off-search?q=" + encodeURIComponent(query))
+        .then(function (r) { return r.json(); })
+        .then(function (j) {
+          const hits = (j.hits || []).map(function (p) { return { n: offName(p), nutr: offNutr(p.nutriments) }; }).filter(function (x) { return x.nutr; }).slice(0, 10);
+          if (!hits.length) { out.innerHTML = '<div class="tip" style="margin:8px 0 0">Nada encontrado online pra isso.</div>'; return; }
+          out.innerHTML = '<div class="food-results-list">' + hits.map(function (h) { return foodHitBtn({ n: h.n, k: h.nutr.k, p: h.nutr.p, g: 100 }); }).join("") + '</div>';
+          bindFoodHits(out);
+        })
+        .catch(function () { out.innerHTML = '<div class="tip" style="margin:8px 0 0">Sem conexão pra buscar online agora.</div>'; });
+    }
+    function offBarcode(code) {
+      const out = document.getElementById("food-online");
+      if (!out) return;
+      out.innerHTML = '<div class="tip" style="margin:8px 0 0">Buscando código…</div>';
+      fetch("https://world.openfoodfacts.org/api/v2/product/" + encodeURIComponent(code) + ".json?fields=product_name,brands,nutriments")
+        .then(function (r) { return r.json(); })
+        .then(function (j) {
+          if (j.status !== 1 || !j.product) { out.innerHTML = '<div class="tip" style="margin:8px 0 0">Produto não encontrado nesse código.</div>'; return; }
+          const nutr = offNutr(j.product.nutriments);
+          if (!nutr) { out.innerHTML = '<div class="tip" style="margin:8px 0 0">Produto sem dados nutricionais.</div>'; return; }
+          out.innerHTML = '<div class="food-results-list">' + foodHitBtn({ n: offName(j.product), k: nutr.k, p: nutr.p, g: 100 }) + '</div>';
+          bindFoodHits(out);
+        })
+        .catch(function () { out.innerHTML = '<div class="tip" style="margin:8px 0 0">Sem conexão pra buscar o código agora.</div>'; });
     }
     /* ---- Balança (peso) ---- */
     function renderBalanca() {
