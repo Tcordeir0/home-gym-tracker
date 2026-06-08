@@ -738,6 +738,10 @@
     .food-hit-add { flex: 0 0 auto; color: var(--accent); display: inline-flex; }
     .plate-q-title { margin: 16px 0 8px; font-size: 13px; color: var(--muted); font-weight: 800; text-transform: uppercase; letter-spacing: .5px; }
     #plate-overlay .food-name { white-space: normal; }
+    .ai-chips { display: flex; flex-wrap: wrap; gap: 7px; }
+    .ai-chip { appearance: none; cursor: pointer; border: 1px solid var(--accent); background: color-mix(in srgb, var(--accent) 12%, transparent); color: var(--text); font-family: 'Manrope', sans-serif; font-weight: 700; font-size: 13px; padding: 7px 12px; border-radius: 99px; }
+    .ai-chip small { color: var(--muted); font-weight: 700; }
+    .ai-chip:active { transform: scale(.94); }
   </style>
 </head>
 <body>
@@ -1037,6 +1041,7 @@
       <input type="file" id="plate-photo-input" accept="image/*" capture="environment" hidden />
       <button class="cloud-secondary" id="plate-photo-btn"><span data-icon="image"></span> Tirar ou escolher foto</button>
       <div id="plate-preview"></div>
+      <div id="plate-ai"></div>
       <h3 class="plate-q-title">O prato contém…?</h3>
       <div id="plate-items"></div>
       <input id="plate-q" class="set-in" style="height:44px;text-align:left;padding:0 14px;margin-top:8px" placeholder="Adicionar alimento (busca)" />
@@ -3584,6 +3589,13 @@
       hydrateIcons(plateOverlay);
     }
     function closePlate() { plateOverlay.hidden = true; }
+    function platePick(f) {
+      platePending.push({ n: f.n, k: f.k, p: f.p, g: f.g }); haptic(8);
+      document.getElementById("plate-q").value = "";
+      document.getElementById("plate-results").innerHTML = "";
+      document.getElementById("plate-online").innerHTML = "";
+      renderPlateItems();
+    }
     function renderPlateItems() {
       const box = document.getElementById("plate-items");
       if (!box) return;
@@ -3613,18 +3625,13 @@
         if (!file) return;
         resizePhoto(file, 720, function (dataUrl) {
           document.getElementById("plate-preview").innerHTML = '<img src="' + dataUrl + '" alt="prato" style="width:100%;max-height:240px;object-fit:cover;border-radius:14px;margin-top:12px;border:1px solid var(--line)" />';
+          recognizePlate(dataUrl);
         });
         pin.value = "";
       });
       const pq = document.getElementById("plate-q");
       pq.addEventListener("input", function () {
-        renderFoodSearch(pq.value, document.getElementById("plate-results"), document.getElementById("plate-online"), function (f) {
-          platePending.push({ n: f.n, k: f.k, p: f.p, g: f.g }); haptic(8);
-          document.getElementById("plate-q").value = "";
-          document.getElementById("plate-results").innerHTML = "";
-          document.getElementById("plate-online").innerHTML = "";
-          renderPlateItems();
-        });
+        renderFoodSearch(pq.value, document.getElementById("plate-results"), document.getElementById("plate-online"), platePick);
       });
       document.getElementById("plate-confirm").addEventListener("click", function () {
         if (!platePending.length) { showToast("Adicione ao menos um alimento"); return; }
@@ -3634,6 +3641,93 @@
         showToast(platePending.length + " item(ns) adicionado(s) ao diário");
         closePlate();
         renderDiary();
+      });
+    }
+    /* ---- Reconhecimento da foto (IA no navegador — Transformers.js + Food-101) ---- */
+    const FOOD101_PT = {
+      apple_pie: "torta de maçã", baby_back_ribs: "costela", baklava: "baklava", beef_carpaccio: "carpaccio", beef_tartare: "carne crua",
+      beet_salad: "salada de beterraba", beignets: "sonho", bibimbap: "bibimbap", bread_pudding: "pudim de pão", breakfast_burrito: "burrito",
+      bruschetta: "bruschetta", caesar_salad: "salada caesar", cannoli: "cannoli", caprese_salad: "salada caprese", carrot_cake: "bolo de cenoura",
+      ceviche: "ceviche", cheesecake: "cheesecake", cheese_plate: "queijo", chicken_curry: "frango ao curry", chicken_quesadilla: "quesadilla de frango",
+      chicken_wings: "asa de frango", chocolate_cake: "bolo de chocolate", chocolate_mousse: "mousse de chocolate", churros: "churros", clam_chowder: "sopa de marisco",
+      club_sandwich: "sanduíche", crab_cakes: "bolinho de caranguejo", creme_brulee: "creme brûlée", croque_madame: "croque madame", cup_cakes: "cupcake",
+      deviled_eggs: "ovo recheado", donuts: "rosquinha", dumplings: "guioza", edamame: "edamame", eggs_benedict: "ovo benedict",
+      escargots: "escargot", falafel: "falafel", filet_mignon: "filé mignon", fish_and_chips: "peixe com batata", foie_gras: "patê",
+      french_fries: "batata frita", french_onion_soup: "sopa de cebola", french_toast: "rabanada", fried_calamari: "lula frita", fried_rice: "arroz",
+      frozen_yogurt: "iogurte", garlic_bread: "pão de alho", gnocchi: "nhoque", greek_salad: "salada grega", grilled_cheese_sandwich: "sanduíche de queijo",
+      grilled_salmon: "salmão grelhado", guacamole: "guacamole", gyoza: "guioza", hamburger: "hambúrguer", hot_and_sour_soup: "sopa",
+      hot_dog: "cachorro-quente", huevos_rancheros: "ovos", hummus: "homus", ice_cream: "sorvete", lasagna: "lasanha",
+      lobster_bisque: "sopa de lagosta", lobster_roll_sandwich: "sanduíche de lagosta", macaroni_and_cheese: "macarrão com queijo", macarons: "macaron", miso_soup: "sopa miso",
+      mussels: "mexilhão", nachos: "nachos", omelette: "omelete", onion_rings: "anéis de cebola", oysters: "ostra",
+      pad_thai: "pad thai", paella: "paella", pancakes: "panqueca", panna_cotta: "panna cotta", peking_duck: "pato",
+      pho: "sopa pho", pizza: "pizza", pork_chop: "costeleta de porco", poutine: "batata frita", prime_rib: "costela",
+      pulled_pork_sandwich: "sanduíche de porco", ramen: "ramen", ravioli: "ravioli", red_velvet_cake: "bolo", risotto: "risoto",
+      samosa: "samosa", sashimi: "sashimi", scallops: "vieira", seaweed_salad: "salada de alga", shrimp_and_grits: "camarão",
+      spaghetti_bolognese: "macarrão à bolonhesa", spaghetti_carbonara: "macarrão carbonara", spring_rolls: "rolinho primavera", steak: "bife", strawberry_shortcake: "bolo de morango",
+      sushi: "sushi", tacos: "tacos", takoyaki: "takoyaki", tiramisu: "tiramisu", tuna_tartare: "atum",
+      waffles: "waffle"
+    };
+    let aiPipe = null, aiLoading = false;
+    function food101Local(term) {
+      if (!FOODS) return null;
+      const tw = normTxt(term).split(/\s+/).filter(function (w) { return w.length >= 3; });
+      if (!tw.length) return null;
+      let best = null, bestScore = 0;
+      FOODS.forEach(function (f) {
+        const nw = normTxt(f.n).split(/[^a-z0-9]+/).filter(Boolean); // palavras do nome
+        let s = 0;
+        tw.forEach(function (w) { if (nw.indexOf(w) >= 0) s++; }); // nº de palavras inteiras em comum
+        if (s > bestScore) { bestScore = s; best = f; } // pega o de maior sobreposição
+      });
+      return best;
+    }
+    function recognizePlate(dataUrl) {
+      const box = document.getElementById("plate-ai");
+      if (!box) return;
+      box.innerHTML = '<div class="tip" style="margin:12px 0 0">' + icon("sparkles", 14) + ' Analisando o prato' + (aiPipe ? "…" : " (carregando a IA na 1ª vez)…") + '</div>';
+      ensureFoods();
+      loadAiPipe(function (err) {
+        if (err || !aiPipe) { box.innerHTML = '<div class="tip" style="margin:12px 0 0">' + (navigator.onLine ? "Não consegui rodar a IA agora." : "Sem internet pra carregar a IA na 1ª vez.") + ' Monte o prato na mão abaixo. 👇</div>'; return; }
+        aiPipe(dataUrl, { top_k: 5 }).then(function (res) { showAiSuggestions(res); })
+          .catch(function () { box.innerHTML = '<div class="tip" style="margin:12px 0 0">A IA não reconheceu agora. Monte o prato na mão abaixo. 👇</div>'; });
+      });
+    }
+    function loadAiPipe(cb) {
+      if (aiPipe) { cb(); return; }
+      if (aiLoading) { cb(new Error("loading")); return; }
+      aiLoading = true;
+      import("https://cdn.jsdelivr.net/npm/@huggingface/transformers@4.2.0").then(function (t) {
+        t.env.allowLocalModels = false;
+        return t.pipeline("image-classification", "onnx-community/swin-finetuned-food101-ONNX", { dtype: "q8" });
+      }).then(function (p) { aiPipe = p; aiLoading = false; cb(); })
+        .catch(function (e) { aiLoading = false; cb(e); });
+    }
+    function showAiSuggestions(res) {
+      const box = document.getElementById("plate-ai");
+      if (!box) return;
+      const cands = (res || []).map(function (r) { return { term: FOOD101_PT[r.label] || r.label.replace(/_/g, " "), score: r.score, local: food101Local(FOOD101_PT[r.label] || r.label.replace(/_/g, " ")) }; });
+      if (!cands.length) { box.innerHTML = '<div class="tip" style="margin:12px 0 0">Não reconheci o prato. Monte na mão abaixo. 👇</div>'; return; }
+      const top = cands[0];
+      // pré-preenche o palpite mais forte se casar com a base (dados reais)
+      if (top.score >= 0.30 && top.local && !platePending.some(function (it) { return it.n === top.local.n; })) {
+        platePending.push({ n: top.local.n, k: top.local.kcal, p: top.local.p, g: top.local.porcao || 100 });
+        renderPlateItems();
+      }
+      const chips = cands.slice(0, 5).map(function (c) {
+        return '<button class="ai-chip" data-term="' + escapeHtml(c.term) + '">' + escapeHtml(c.term) + ' <small>' + Math.round(c.score * 100) + '%</small></button>';
+      }).join("");
+      box.innerHTML =
+        '<div style="margin:12px 0 0">' +
+          '<div style="font-size:13px;color:var(--muted);margin-bottom:6px">' + icon("sparkles", 13) + ' Acho que tem <b style="color:var(--text)">' + escapeHtml(top.term) + '</b>. Toque pra adicionar ou corrija na busca:</div>' +
+          '<div class="ai-chips">' + chips + '</div>' +
+        '</div>';
+      box.querySelectorAll(".ai-chip").forEach(function (b) {
+        b.addEventListener("click", function () {
+          const term = b.dataset.term;
+          const loc = food101Local(term);
+          if (loc) { platePending.push({ n: loc.n, k: loc.kcal, p: loc.p, g: loc.porcao || 100 }); haptic(8); renderPlateItems(); }
+          else { const q = document.getElementById("plate-q"); q.value = term; renderFoodSearch(term, document.getElementById("plate-results"), document.getElementById("plate-online"), platePick); }
+        });
       });
     }
     function foodHitBtn(f) {
