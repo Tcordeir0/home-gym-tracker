@@ -722,6 +722,8 @@
     #page-dieta .field select { appearance: none; -webkit-appearance: none; background-image: linear-gradient(45deg, transparent 50%, var(--muted) 50%), linear-gradient(135deg, var(--muted) 50%, transparent 50%); background-position: calc(100% - 18px) 19px, calc(100% - 13px) 19px; background-size: 5px 5px; background-repeat: no-repeat; }
     #page-dieta details summary { list-style: none; }
     #page-dieta details summary::-webkit-details-marker { display: none; }
+    .water-bar { height: 14px; background: var(--surface-2); border: 1px solid var(--line); border-radius: 99px; overflow: hidden; }
+    .water-bar span { display: block; height: 100%; background: linear-gradient(90deg, #38bdf8, #5fa8ff); border-radius: 99px; transition: width .35s cubic-bezier(.2,.7,.2,1); }
   </style>
 </head>
 <body>
@@ -1164,6 +1166,8 @@
       "trophy": "<path d=\"M10 14.66v1.626a2 2 0 0 1-.976 1.696A5 5 0 0 0 7 21.978\" /> <path d=\"M14 14.66v1.626a2 2 0 0 0 .976 1.696A5 5 0 0 1 17 21.978\" /> <path d=\"M18 9h1.5a1 1 0 0 0 0-5H18\" /> <path d=\"M4 22h16\" /> <path d=\"M6 9a6 6 0 0 0 12 0V3a1 1 0 0 0-1-1H7a1 1 0 0 0-1 1z\" /> <path d=\"M6 9H4.5a1 1 0 0 1 0-5H6\" />",
       "user-plus": "<path d=\"M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2\" /> <circle cx=\"9\" cy=\"7\" r=\"4\" /> <line x1=\"19\" x2=\"19\" y1=\"8\" y2=\"14\" /> <line x1=\"22\" x2=\"16\" y1=\"11\" y2=\"11\" />",
       "user": "<path d=\"M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2\" /> <circle cx=\"12\" cy=\"7\" r=\"4\" />",
+      "droplet": "<path d=\"M12 22a7 7 0 0 0 7-7c0-2-1-3.9-3-5.5s-3.5-4-4-6.5c-.5 2.5-2 4.9-4 6.5C6 11.1 5 13 5 15a7 7 0 0 0 7 7z\" />",
+      "scale": "<rect x=\"3\" y=\"3\" width=\"18\" height=\"18\" rx=\"3\" /> <path d=\"M12 7v2.5\" /> <circle cx=\"12\" cy=\"13\" r=\"2.2\" />",
       "utensils": "<path d=\"M3 2v7c0 1.1.9 2 2 2h0a2 2 0 0 0 2-2V2\" /> <path d=\"M7 2v20\" /> <path d=\"M21 15V2a5 5 0 0 0-5 5v6c0 1.1.9 2 2 2h3Z\" /> <path d=\"M21 15v7\" />",
       "vibrate": "<path d=\"m2 8 2 2-2 2 2 2-2 2\" /> <path d=\"m22 8-2 2 2 2-2 2 2 2\" /> <rect width=\"8\" height=\"14\" x=\"8\" y=\"5\" rx=\"1\" />",
       "volume-2": "<path d=\"M11 4.702a.705.705 0 0 0-1.203-.498L6.413 7.587A1.4 1.4 0 0 1 5.416 8H3a1 1 0 0 0-1 1v6a1 1 0 0 0 1 1h2.416a1.4 1.4 0 0 1 .997.413l3.383 3.384A.705.705 0 0 0 11 19.298z\" /> <path d=\"M16 9a5 5 0 0 1 0 6\" /> <path d=\"M19.364 18.364a9 9 0 0 0 0-12.728\" />",
@@ -1541,7 +1545,8 @@
       celebrated: {}, // celebrated[userId] = [labels de conquistas já comemoradas]
       notifs: {},   // notifs[userId] = [{ ts, type, msg, read }]
       setlog: {},   // setlog[userId][treino][exIdx] = [{ kg, reps }] (carga em andamento)
-      measures: {}  // measures[userId] = [{ date, weight, arm, chest, waist, photo }]
+      measures: {}, // measures[userId] = [{ date, weight, arm, chest, waist, photo }]
+      daily: {}     // daily[userId][date] = { water: nºcopos }
     };
 
     // Migração ÚNICA de estado — usada por loadState, applyRemoteState (nuvem) e importData (backup).
@@ -1563,6 +1568,7 @@
       raw.notifs = raw.notifs || {};
       raw.setlog = raw.setlog || {};
       raw.measures = raw.measures || {};
+      raw.daily = raw.daily || {};
       (raw.users || []).forEach(function (u, i) {
         if (!u.color) u.color = u.id === "u1" ? "#c6ff3a" : u.id === "u2" ? "#ff5fa8" : COLOR_SWATCHES[i % COLOR_SWATCHES.length];
         if (!Array.isArray(u.equipment)) u.equipment = ["bodyweight", "dumbbell"];
@@ -1644,6 +1650,7 @@
        PONTOS, SOM E CONQUISTAS (por perfil — vale para qualquer perfil)
     ===================================================================== */
     const PTS_SET = 5, PTS_TREINO = 50, PTS_CARDIO = 30;
+    const WATER_GOAL = 8; // copos de ~250ml = 2L/dia (meta de hidratação)
     function scoreOf(id) { state.scores[id] = state.scores[id] || { byDay: {} }; if (!state.scores[id].byDay) state.scores[id].byDay = {}; return state.scores[id]; }
     // Credita pontos no DIA da atividade (não em "hoje"), pra registro retroativo bater com a remoção
     function addPointsOn(date, n) { const s = scoreOf(state.active); s.byDay[date] = Math.max(0, (s.byDay[date] || 0) + n); }
@@ -1714,7 +1721,11 @@
       { icon: "zap", label: "Sequência 3", desc: "3 dias seguidos", test: function (s) { return s.streak >= 3; } },
       { icon: "flame", label: "Em chamas", desc: "7 dias seguidos", test: function (s) { return s.streak >= 7; }, milestone: true },
       { icon: "star", label: "500 pontos", desc: "500 pts", test: function (s) { return s.pts >= 500; } },
-      { icon: "award", label: "1000 pontos", desc: "1000 pts", test: function (s) { return s.pts >= 1000; }, milestone: true }
+      { icon: "award", label: "1000 pontos", desc: "1000 pts", test: function (s) { return s.pts >= 1000; }, milestone: true },
+      { icon: "scale", label: "Na balança", desc: "1ª pesagem", test: function (s) { return s.weighIns >= 1; } },
+      { icon: "trending-up", label: "Acompanhando", desc: "5 pesagens", test: function (s) { return s.weighIns >= 5; } },
+      { icon: "droplet", label: "Hidratado", desc: "meta de água num dia", test: function (s) { return s.waterDays >= 1; } },
+      { icon: "droplet", label: "Bem hidratado", desc: "meta de água em 7 dias", test: function (s) { return s.waterDays >= 7; }, milestone: true }
     ];
     function statsFor(id) {
       const list = state.history[id] || [];
@@ -1730,7 +1741,11 @@
         else if (fb > 0) { fb--; cur.setDate(cur.getDate() - 1); } // congelador "segura" um dia faltado sem quebrar
         else break;
       }
-      return { treinos: treinos, cardios: cardios, activeDays: Object.keys(days).length, streak: streak, pts: totalPoints(id) };
+      const weighIns = ((state.measures && state.measures[id]) || []).filter(function (m) { return typeof m.weight === "number"; }).length;
+      const dd = (state.daily && state.daily[id]) || {};
+      let waterDays = 0;
+      Object.keys(dd).forEach(function (date) { if ((dd[date].water || 0) >= WATER_GOAL) waterDays++; });
+      return { treinos: treinos, cardios: cardios, activeDays: Object.keys(days).length, streak: streak, pts: totalPoints(id), weighIns: weighIns, waterDays: waterDays };
     }
     function ensureCelebrated(id) {
       state.celebrated = state.celebrated || {};
@@ -3425,14 +3440,91 @@
             '<p style="margin:2px 0 0;color:var(--muted);font-size:12px">Cintura vem das suas medidas. Quadril só é usado no cálculo feminino.</p>' +
           '</details>' +
         '</div>' +
-        '<div class="card" id="dieta-results"></div>';
+        '<div class="card" id="dieta-results"></div>' +
+        '<div class="card" id="dieta-balanca"></div>' +
+        '<div class="card" id="dieta-water"></div>';
       ["d-sex", "d-age", "d-height", "d-weight", "d-activity", "d-goal", "d-neck", "d-hip"].forEach(function (fid) {
         const inp = document.getElementById(fid);
         if (!inp) return;
         inp.addEventListener("input", computeDiet);
-        inp.addEventListener("change", function () { persistDiet(); });
+        inp.addEventListener("change", function () { persistDiet(); renderBalanca(); });
       });
       computeDiet();
+      renderBalanca();
+      renderWater();
+    }
+    /* ---- Balança (peso) ---- */
+    function renderBalanca() {
+      const box = document.getElementById("dieta-balanca");
+      if (!box) return;
+      const u = activeUser();
+      const series = measureSeries("weight"); // [{x,y}] crescente
+      const cur = series.length ? series[series.length - 1].y : null;
+      const prev = series.length > 1 ? series[series.length - 2].y : null;
+      const goal = (u.body && u.body.goal) || "lose";
+      let deltaHtml = "";
+      if (cur != null && prev != null && cur !== prev) {
+        const diff = cur - prev;
+        const good = goal === "maintain" ? null : (diff < 0) === (goal === "lose" || goal === "losefast");
+        const c = good == null ? "var(--muted)" : good ? "var(--accent)" : "#ff6b6b";
+        deltaHtml = '<span style="color:' + c + ';font-weight:800;font-size:14px"> ' + (diff > 0 ? "▲ +" : "▼ ") + fmtNum(diff) + " kg</span>";
+      }
+      box.innerHTML =
+        '<div style="display:flex;align-items:center;gap:8px;margin-bottom:10px">' + icon("scale", 18) +
+          '<h2 style="margin:0;font-family:\'Anton\',sans-serif;letter-spacing:.5px">Balança</h2></div>' +
+        (cur != null
+          ? '<div style="text-align:center;margin-bottom:6px"><span style="font-family:\'Anton\',sans-serif;font-size:38px;color:var(--accent)">' + fmtNum(cur) + '<span style="font-size:16px"> kg</span></span>' + deltaHtml + '</div>'
+          : '<p style="color:var(--muted);font-size:13px;margin:0 0 10px">Registre seu peso pra acompanhar a evolução.</p>') +
+        '<div id="bal-chart" class="chart-box"></div>' +
+        '<div style="display:flex;gap:8px;margin-top:12px">' +
+          '<input id="bal-weight" class="set-in" style="flex:1;height:44px" type="number" inputmode="decimal" min="30" max="300" step="0.1" placeholder="kg de hoje" value="' + (cur != null ? cur : "") + '" />' +
+          '<button id="bal-save" class="cloud-primary" style="flex:0 0 auto;width:auto;padding:0 18px;margin:0">Pesar</button>' +
+        '</div>';
+      const chartEl = document.getElementById("bal-chart");
+      if (chartEl) renderLineChart(chartEl, series, "kg");
+      const btn = document.getElementById("bal-save");
+      if (btn) btn.addEventListener("click", function () {
+        const v = parseFloat((document.getElementById("bal-weight") || {}).value);
+        if (isNaN(v) || v <= 0) { showToast("Digite um peso válido"); return; }
+        setWeightToday(u.id, v);
+        saveState();
+        haptic(12);
+        celebrateAchievements();
+        renderBalanca();
+        computeDiet();
+        showToast("Peso registrado: " + fmtNum(v) + " kg");
+      });
+    }
+    /* ---- Hidratação ---- */
+    function dietDaily(id) { state.daily = state.daily || {}; state.daily[id] = state.daily[id] || {}; return state.daily[id]; }
+    function waterToday(id) { const d = dietDaily(id)[todayISO()]; return (d && d.water) || 0; }
+    function setWaterToday(id, n) { const dd = dietDaily(id); const t = todayISO(); dd[t] = dd[t] || {}; dd[t].water = Math.max(0, Math.min(30, n)); }
+    function renderWater() {
+      const box = document.getElementById("dieta-water");
+      if (!box) return;
+      const u = activeUser();
+      const cups = waterToday(u.id);
+      const pct = Math.min(100, Math.round((cups / WATER_GOAL) * 100));
+      const ml = (cups * 250 / 1000).toFixed(cups * 250 % 1000 === 0 ? 0 : 1);
+      box.innerHTML =
+        '<div style="display:flex;align-items:center;gap:8px;margin-bottom:10px">' + icon("droplet", 18) +
+          '<h2 style="margin:0;font-family:\'Anton\',sans-serif;letter-spacing:.5px">Hidratação</h2>' +
+          '<span style="margin-left:auto;color:var(--muted);font-size:13px;font-weight:700">' + cups + '/' + WATER_GOAL + ' copos · ' + ml + ' L</span></div>' +
+        '<div class="water-bar"><span style="width:' + pct + '%"></span></div>' +
+        '<div style="display:flex;gap:8px;margin-top:12px">' +
+          '<button id="water-minus" class="cloud-secondary" style="flex:0 0 56px;width:56px;margin:0;font-size:22px">−</button>' +
+          '<button id="water-plus" class="cloud-primary" style="flex:1;margin:0">' + icon("droplet", 15) + ' +1 copo</button>' +
+        '</div>' +
+        (cups >= WATER_GOAL ? '<div class="tip" style="margin-top:10px;color:var(--accent)"><b>Meta batida! 💧</b> Mandou bem na hidratação hoje.</div>' : "");
+      const plus = document.getElementById("water-plus"), minus = document.getElementById("water-minus");
+      if (plus) plus.addEventListener("click", function () {
+        const before = waterToday(u.id);
+        setWaterToday(u.id, before + 1);
+        saveState(); haptic(8);
+        if (before + 1 === WATER_GOAL) celebrateAchievements();
+        renderWater();
+      });
+      if (minus) minus.addEventListener("click", function () { setWaterToday(u.id, waterToday(u.id) - 1); saveState(); haptic(6); renderWater(); });
     }
     function persistDiet() {
       const u = activeUser(), b = u.body;
