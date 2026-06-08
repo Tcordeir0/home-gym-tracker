@@ -1,5 +1,30 @@
 # Changelog
 
+## [0.5.0](https://github.com/Tcordeir0/home-gym-tracker/compare/v0.4.0...v0.5.0) (2026-06-08)
+
+
+### Features
+
+* aba Dieta — calculadora de calorias (Mifflin-St Jeor) + IMC + % gordura ([#10](https://github.com/Tcordeir0/home-gym-tracker/issues/10)) ([dd3cb99](https://github.com/Tcordeir0/home-gym-tracker/commit/dd3cb999d85f9cd128056d6235a6c8dd8d295283))
+* barra de navegação inferior estilo iOS + transições de página ([#9](https://github.com/Tcordeir0/home-gym-tracker/issues/9)) ([fe04198](https://github.com/Tcordeir0/home-gym-tracker/commit/fe041986a9ae27bd48030a8d4bf31de8b946d31c))
+* Dieta — balança (peso + gráfico), hidratação e conquistas ([#11](https://github.com/Tcordeir0/home-gym-tracker/issues/11)) ([259c949](https://github.com/Tcordeir0/home-gym-tracker/commit/259c94932f92632e23f9b8576c710cae66500ff5))
+* Dieta — busca online (Open Food Facts) + código de barras ([#13](https://github.com/Tcordeir0/home-gym-tracker/issues/13)) ([38737a8](https://github.com/Tcordeir0/home-gym-tracker/commit/38737a801191343930ee5b290609b4f5118a0fc3))
+* Dieta — diário de alimentos com base curada BR+Portugal (offline) ([#12](https://github.com/Tcordeir0/home-gym-tracker/issues/12)) ([25d898a](https://github.com/Tcordeir0/home-gym-tracker/commit/25d898a54ea82808ee46460344a0980cbac0e991))
+* Dieta — foto do prato com validação manual ("O prato contém…?") ([#14](https://github.com/Tcordeir0/home-gym-tracker/issues/14)) ([0a1862d](https://github.com/Tcordeir0/home-gym-tracker/commit/0a1862d66e57e8083485c3e87a9efe0350f00973))
+* Dieta — reconhecimento da foto por IA no navegador (sem conta) ([#16](https://github.com/Tcordeir0/home-gym-tracker/issues/16)) ([602c506](https://github.com/Tcordeir0/home-gym-tracker/commit/602c5061068a79fd7845ca1f5a755f2d97deb81b))
+* **push:** notificações Web Push reais via Supabase (Edge Function + pg_cron + VAPID) ([d3d93f4](https://github.com/Tcordeir0/home-gym-tracker/commit/d3d93f4d4a5f8aee51e18e6c7a0ad4a4eb2b881d))
+* **temas:** tema Matrix (chuva de código em canvas) + temas existentes animados ([#8](https://github.com/Tcordeir0/home-gym-tracker/issues/8)) ([777aa33](https://github.com/Tcordeir0/home-gym-tracker/commit/777aa33796652d7d832b3bd086ebf9a270fd33b6))
+
+
+### Bug Fixes
+
+* **boot:** corrige TDZ (TESTER_NAME) que impedia o app de carregar ([b1ad16a](https://github.com/Tcordeir0/home-gym-tracker/commit/b1ad16ab34ddd735517805121dd1bdc4dd75b6b1))
+* conquistas novas de dieta disparam em perfis existentes + erro HTTP do OFF ([#15](https://github.com/Tcordeir0/home-gym-tracker/issues/15)) ([096bd85](https://github.com/Tcordeir0/home-gym-tracker/commit/096bd856fd3c8172332ccad021d9b3cebaa1152e))
+* **mobile:** histórico não corta mais + scroll não vaza atrás dos overlays + CI de runtime ([#6](https://github.com/Tcordeir0/home-gym-tracker/issues/6)) ([6887d87](https://github.com/Tcordeir0/home-gym-tracker/commit/6887d87c7dc9edc280c1ea572c33614501ca7887))
+* **perfil:** perfil ativo é escolha local de cada aparelho (não sincroniza) + háptico iOS ([#7](https://github.com/Tcordeir0/home-gym-tracker/issues/7)) ([659d4be](https://github.com/Tcordeir0/home-gym-tracker/commit/659d4bec4af84ef5061b787c68b8dd9892e95444))
+* **temas:** tema Noir jogava overlays pra fora da tela (filter no body quebrava position:fixed) ([9eb69ee](https://github.com/Tcordeir0/home-gym-tracker/commit/9eb69eebb592faad53cfa2a1f993f34c2c22e349))
+* **ui:** overlay de level-up preso visível bloqueava toda a tela ([f9a8322](https://github.com/Tcordeir0/home-gym-tracker/commit/f9a8322ca7889288ae0f768615c854171e44f162))
+
 ## [0.4.0](https://github.com/Tcordeir0/home-gym-tracker/compare/v0.3.1...v0.4.0) (2026-06-07)
 
 
