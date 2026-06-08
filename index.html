@@ -736,6 +736,8 @@
     .food-hit-n { flex: 1; min-width: 0; font-weight: 700; font-size: 14px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
     .food-hit-k { flex: 0 0 auto; font-size: 11px; color: var(--muted); }
     .food-hit-add { flex: 0 0 auto; color: var(--accent); display: inline-flex; }
+    .plate-q-title { margin: 16px 0 8px; font-size: 13px; color: var(--muted); font-weight: 800; text-transform: uppercase; letter-spacing: .5px; }
+    #plate-overlay .food-name { white-space: normal; }
   </style>
 </head>
 <body>
@@ -1025,6 +1027,23 @@
       <button class="cloud-primary" id="m-save">Salvar medida</button>
       <h3>Histórico de medidas</h3>
       <div id="measures-list"></div>
+    </div>
+  </div>
+
+  <!-- Foto do prato (Dieta) -->
+  <div class="overlay" id="plate-overlay" hidden>
+    <div class="sheet">
+      <div class="sheet-head"><h2>Foto do prato</h2><button id="plate-close" aria-label="Fechar" data-icon="x"></button></div>
+      <input type="file" id="plate-photo-input" accept="image/*" capture="environment" hidden />
+      <button class="cloud-secondary" id="plate-photo-btn"><span data-icon="image"></span> Tirar ou escolher foto</button>
+      <div id="plate-preview"></div>
+      <h3 class="plate-q-title">O prato contém…?</h3>
+      <div id="plate-items"></div>
+      <input id="plate-q" class="set-in" style="height:44px;text-align:left;padding:0 14px;margin-top:8px" placeholder="Adicionar alimento (busca)" />
+      <div id="plate-results"></div>
+      <div id="plate-online"></div>
+      <button class="cloud-primary" id="plate-confirm" style="margin-top:14px">Adicionar ao diário</button>
+      <p class="cloud-note">Tire a foto como referência e monte o prato. O reconhecimento automático chega em breve — por agora você confirma os itens e as gramas na mão, com dados reais.</p>
     </div>
   </div>
 
@@ -3523,7 +3542,8 @@
             '<div style="text-align:center;font-size:12px;color:' + (over ? "#ff6b6b" : "var(--muted)") + ';margin-top:6px">' + (over ? "Passou " + (kcal - tg.target) + " kcal da meta" : "Faltam " + remain + " kcal pra meta") + '</div>'
           : '<div class="tip" style="margin:0 0 10px">Preencha a calculadora (idade, altura, peso) pra ver sua meta aqui.</div>') +
         '<div style="margin-top:12px">' + list + '</div>' +
-        '<div style="margin-top:12px"><input id="food-q" class="set-in" style="height:44px;text-align:left;padding:0 14px" placeholder="Buscar alimento (ex: frango, arroz, fiambre)" /></div>' +
+        '<button class="cloud-secondary" id="diary-photo" style="margin-top:12px">' + icon("image", 15) + ' Foto do prato</button>' +
+        '<div style="margin-top:8px"><input id="food-q" class="set-in" style="height:44px;text-align:left;padding:0 14px" placeholder="Buscar alimento (ex: frango, arroz, fiambre)" /></div>' +
         '<div id="food-results"></div>' +
         '<div style="display:flex;gap:8px;margin-top:8px">' +
           '<input id="food-bc" class="set-in" style="height:40px;text-align:left;padding:0 12px;flex:1" inputmode="numeric" placeholder="Código de barras (nº do embalado)" />' +
@@ -3545,6 +3565,74 @@
       function doBc() { const code = (bc.value || "").replace(/\D/g, ""); if (code.length < 6) { showToast("Digite o código de barras"); return; } offBarcode(code); }
       if (bcGo) bcGo.addEventListener("click", doBc);
       if (bc) bc.addEventListener("keydown", function (e) { if (e.key === "Enter") doBc(); });
+      const ph = document.getElementById("diary-photo");
+      if (ph) ph.addEventListener("click", openPlate);
+    }
+    /* ---- Foto do prato — montar/validar antes de adicionar ---- */
+    let platePending = [];
+    const plateOverlay = document.getElementById("plate-overlay");
+    function openPlate() {
+      platePending = [];
+      document.getElementById("plate-preview").innerHTML = "";
+      document.getElementById("plate-q").value = "";
+      document.getElementById("plate-results").innerHTML = "";
+      document.getElementById("plate-online").innerHTML = "";
+      renderPlateItems();
+      plateOverlay.hidden = false;
+      hydrateIcons(plateOverlay);
+    }
+    function closePlate() { plateOverlay.hidden = true; }
+    function renderPlateItems() {
+      const box = document.getElementById("plate-items");
+      if (!box) return;
+      if (!platePending.length) { box.innerHTML = '<div class="tip" style="margin:0">Adicione os alimentos do prato pela busca abaixo. Ajuste as gramas de cada um.</div>'; return; }
+      box.innerHTML = platePending.map(function (it, i) {
+        return '<div class="food-row">' +
+          '<div class="food-name">' + escapeHtml(it.n) + '</div>' +
+          '<input class="food-g set-in" data-pi="' + i + '" type="number" inputmode="numeric" min="1" max="3000" step="1" value="' + it.g + '" />' +
+          '<div class="food-kcal">' + Math.round(it.k * it.g / 100) + '<small>kcal</small></div>' +
+          '<button class="food-del" data-pdel="' + i + '" aria-label="Remover">' + icon("trash-2", 15) + '</button>' +
+          '</div>';
+      }).join("");
+      box.querySelectorAll(".food-g").forEach(function (inp) {
+        inp.addEventListener("change", function () { const g = parseFloat(inp.value); if (!isNaN(g) && g > 0) { platePending[parseInt(inp.dataset.pi, 10)].g = g; renderPlateItems(); } });
+      });
+      box.querySelectorAll(".food-del").forEach(function (b) {
+        b.addEventListener("click", function () { platePending.splice(parseInt(b.dataset.pdel, 10), 1); haptic(6); renderPlateItems(); });
+      });
+    }
+    if (plateOverlay) {
+      document.getElementById("plate-close").addEventListener("click", closePlate);
+      plateOverlay.addEventListener("click", function (e) { if (e.target === plateOverlay) closePlate(); });
+      const pin = document.getElementById("plate-photo-input");
+      document.getElementById("plate-photo-btn").addEventListener("click", function () { pin.click(); });
+      pin.addEventListener("change", function () {
+        const file = pin.files && pin.files[0];
+        if (!file) return;
+        resizePhoto(file, 720, function (dataUrl) {
+          document.getElementById("plate-preview").innerHTML = '<img src="' + dataUrl + '" alt="prato" style="width:100%;max-height:240px;object-fit:cover;border-radius:14px;margin-top:12px;border:1px solid var(--line)" />';
+        });
+        pin.value = "";
+      });
+      const pq = document.getElementById("plate-q");
+      pq.addEventListener("input", function () {
+        renderFoodSearch(pq.value, document.getElementById("plate-results"), document.getElementById("plate-online"), function (f) {
+          platePending.push({ n: f.n, k: f.k, p: f.p, g: f.g }); haptic(8);
+          document.getElementById("plate-q").value = "";
+          document.getElementById("plate-results").innerHTML = "";
+          document.getElementById("plate-online").innerHTML = "";
+          renderPlateItems();
+        });
+      });
+      document.getElementById("plate-confirm").addEventListener("click", function () {
+        if (!platePending.length) { showToast("Adicione ao menos um alimento"); return; }
+        const arr = dayFood(activeUser().id);
+        platePending.forEach(function (it) { arr.push({ n: it.n, k: it.k, p: it.p, g: it.g }); });
+        saveState(); haptic(12);
+        showToast(platePending.length + " item(ns) adicionado(s) ao diário");
+        closePlate();
+        renderDiary();
+      });
     }
     function foodHitBtn(f) {
       return '<button class="food-hit" data-add="' + encodeURIComponent(JSON.stringify({ n: f.n, k: f.k, p: f.p, g: f.g || 100 })) + '">' +
@@ -3552,34 +3640,33 @@
         '<span class="food-hit-k">' + Math.round(f.k) + ' kcal · ' + fmtNum(f.p || 0) + 'g prot <small>/100g</small></span>' +
         '<span class="food-hit-add">' + icon("plus", 16) + '</span></button>';
     }
-    function bindFoodHits(container) {
+    function bindHits(container, onPick) {
       container.querySelectorAll(".food-hit").forEach(function (b) {
-        b.addEventListener("click", function () {
-          const f = JSON.parse(decodeURIComponent(b.dataset.add));
-          dayFood(activeUser().id).push({ n: f.n, k: f.k, p: f.p, g: f.g });
-          saveState(); haptic(8);
-          showToast(f.n + " adicionado");
-          renderDiary();
-        });
+        b.addEventListener("click", function () { onPick(JSON.parse(decodeURIComponent(b.dataset.add))); });
       });
     }
-    function renderFoodResults(query) {
-      const out = document.getElementById("food-results");
-      const online = document.getElementById("food-online");
-      if (online) online.innerHTML = "";
-      if (!out) return;
+    function diaryAddFood(f) {
+      dayFood(activeUser().id).push({ n: f.n, k: f.k, p: f.p, g: f.g });
+      saveState(); haptic(8); showToast(f.n + " adicionado"); renderDiary();
+    }
+    function renderFoodSearch(query, resultsEl, onlineEl, onPick) {
+      if (onlineEl) onlineEl.innerHTML = "";
+      if (!resultsEl) return;
       const qn = normTxt(query).trim();
-      if (qn.length < 2) { out.innerHTML = ""; return; }
-      if (!FOODS) { out.innerHTML = '<div class="tip" style="margin:8px 0 0">Carregando base de alimentos…</div>'; ensureFoods(function () { renderFoodResults(query); }); return; }
+      if (qn.length < 2) { resultsEl.innerHTML = ""; return; }
+      if (!FOODS) { resultsEl.innerHTML = '<div class="tip" style="margin:8px 0 0">Carregando base de alimentos…</div>'; ensureFoods(function () { renderFoodSearch(query, resultsEl, onlineEl, onPick); }); return; }
       const hits = FOODS.filter(function (f) { return normTxt(f.n).indexOf(qn) >= 0 || normTxt(f.tags || "").indexOf(qn) >= 0; }).slice(0, 8);
       const listHtml = hits.length
         ? '<div class="food-results-list">' + hits.map(function (f) { return foodHitBtn({ n: f.n, k: f.kcal, p: f.p, g: f.porcao || 100 }); }).join("") + '</div>'
         : '<div class="tip" style="margin:8px 0 0">Nada na base local. Busque online (embalados, marcas) abaixo.</div>';
-      out.innerHTML = listHtml +
+      resultsEl.innerHTML = listHtml +
         '<button class="cloud-secondary food-online-go" style="margin-top:8px">' + icon("cloud", 15) + ' Buscar "' + escapeHtml(query.trim()) + '" online</button>';
-      bindFoodHits(out);
-      const go = out.querySelector(".food-online-go");
-      if (go) go.addEventListener("click", function () { offSearch(query.trim()); });
+      bindHits(resultsEl, onPick);
+      const go = resultsEl.querySelector(".food-online-go");
+      if (go && onlineEl) go.addEventListener("click", function () { offSearchInto(query.trim(), onlineEl, onPick); });
+    }
+    function renderFoodResults(query) {
+      renderFoodSearch(query, document.getElementById("food-results"), document.getElementById("food-online"), diaryAddFood);
     }
     /* ---- Open Food Facts (online — embalados, marcas, Portugal) ---- */
     function offNutr(nm) {
@@ -3599,8 +3686,7 @@
       nm = (typeof nm === "string" ? nm : "").trim() || "Produto";
       return nm + (brand ? " · " + brand : "");
     }
-    function offSearch(query) {
-      const out = document.getElementById("food-online");
+    function offSearchInto(query, out, onPick) {
       if (!out) return;
       out.innerHTML = '<div class="tip" style="margin:8px 0 0">' + icon("cloud", 14) + ' Buscando online…</div>';
       fetch(SUPABASE_URL + "/functions/v1/off-search?q=" + encodeURIComponent(query))
@@ -3609,7 +3695,7 @@
           const hits = (j.hits || []).map(function (p) { return { n: offName(p), nutr: offNutr(p.nutriments) }; }).filter(function (x) { return x.nutr; }).slice(0, 10);
           if (!hits.length) { out.innerHTML = '<div class="tip" style="margin:8px 0 0">Nada encontrado online pra isso.</div>'; return; }
           out.innerHTML = '<div class="food-results-list">' + hits.map(function (h) { return foodHitBtn({ n: h.n, k: h.nutr.k, p: h.nutr.p, g: 100 }); }).join("") + '</div>';
-          bindFoodHits(out);
+          bindHits(out, onPick);
         })
         .catch(function () { out.innerHTML = '<div class="tip" style="margin:8px 0 0">Sem conexão pra buscar online agora.</div>'; });
     }
@@ -3624,7 +3710,7 @@
           const nutr = offNutr(j.product.nutriments);
           if (!nutr) { out.innerHTML = '<div class="tip" style="margin:8px 0 0">Produto sem dados nutricionais.</div>'; return; }
           out.innerHTML = '<div class="food-results-list">' + foodHitBtn({ n: offName(j.product), k: nutr.k, p: nutr.p, g: 100 }) + '</div>';
-          bindFoodHits(out);
+          bindHits(out, diaryAddFood);
         })
         .catch(function () { out.innerHTML = '<div class="tip" style="margin:8px 0 0">Sem conexão pra buscar o código agora.</div>'; });
     }
